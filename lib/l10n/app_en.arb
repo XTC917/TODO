@@ -1,6 +1,6 @@
 {
   "@@locale": "en",
-  "appTitle": "Soft Schedule",
+  "appTitle": "JUJU Schedule",
   "navHome": "Home",
   "navTodo": "Todo",
   "navFocus": "Focus",
@@ -21,18 +21,11 @@
   "notificationPermissionDenied": "Notifications not allowed",
   "openNotificationSettings": "Open notification settings",
   "requestNotificationPermission": "Allow notifications",
-  "testNotificationNow": "Send test notification now",
-  "testNotificationScheduled": "Schedule test in 5 seconds",
-  "testNotificationSuccess": "Test notification sent — check your status bar",
-  "testNotificationScheduledSuccess": "Test notification scheduled in 5 seconds",
+  "testNotificationNow": "Send test notification",
+  "testNotificationSuccess": "Test notification sent",
   "testNotificationFailed": "Could not send notification. Check permission and system settings.",
   "pendingNotifications": "{count} scheduled reminder(s)",
-  "@pendingNotifications": {
-    "placeholders": {
-      "count": { "type": "int" }
-    }
-  },
-  "reminderSetupHint": "Set Reminder in More options when creating a todo. Use \"At Time\" or \"5 min before\".",
+  "reminderSetupHint": "Tap Reminder when creating a task to choose when to notify.",
   "remindersDisabledHint": "Reminders are turned off in settings",
   "exportDatabase": "Export Database",
   "importDatabase": "Import Database",
@@ -188,13 +181,60 @@
   "repeatWeekly": "Every Week",
   "repeatMonthly": "Every Month",
   "reminderLabel": "Reminder",
-  "reminderNone": "No Reminder",
-  "reminderAtTime": "At Time",
-  "reminderMin5": "5 min before",
-  "reminderMin10": "10 min before",
-  "reminderMin15": "15 min before",
-  "reminderMin30": "30 min before",
-  "reminderHour1": "1 hour before",
+  "reminderNone": "No reminder",
+  "reminderAtDueTime": "At due time",
+  "reminderMinutesBeforeDue": "{count} minutes before due time",
+  "@reminderMinutesBeforeDue": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "reminderHoursBeforeDue": "{count} hours before due time",
+  "@reminderHoursBeforeDue": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "reminderDaysBeforeDue": "{count} days before due time",
+  "@reminderDaysBeforeDue": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "reminderCustomOption": "Custom…",
+  "reminderCustomTitle": "Custom reminder",
+  "reminderEnterAmount": "Amount",
+  "reminderUnitMinutes": "Minutes",
+  "reminderUnitHours": "Hours",
+  "reminderUnitDays": "Days",
+  "done": "Done",
+  "timeUntilStart": "Starts in {time}",
+  "@timeUntilStart": {
+    "placeholders": { "time": { "type": "String" } }
+  },
+  "timeUntilStartNow": "Starting now",
+  "timeUntilStartMinutes": "{count} min",
+  "@timeUntilStartMinutes": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "timeUntilStartHours": "{count} hr",
+  "@timeUntilStartHours": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "timeUntilStartHoursMinutes": "{hours} hr {minutes} min",
+  "@timeUntilStartHoursMinutes": {
+    "placeholders": {
+      "hours": { "type": "int" },
+      "minutes": { "type": "int" }
+    }
+  },
+  "timeUntilStartDays": "{count} days",
+  "@timeUntilStartDays": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "timeUntilStartDaysHours": "{days} days {hours} hr",
+  "@timeUntilStartDaysHours": {
+    "placeholders": {
+      "days": { "type": "int" },
+      "hours": { "type": "int" }
+    }
+  },
+  "detailTimeUntilStart": "Time until start",
+  "detailReminder": "Reminder",
   "focusTitle": "Focus",
   "focusPomodoro": "Pomodoro",
   "focusStopwatch": "Stopwatch",

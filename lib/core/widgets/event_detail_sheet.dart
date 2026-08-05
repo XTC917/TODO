@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../models/event.dart';
+import '../../features/schedule/event_form_page.dart';
 import '../../l10n/app_localizations.dart';
+import '../../models/event.dart';
+import '../../models/reminder_config.dart';
 import '../providers/app_providers.dart';
 import '../utils/date_time_formats.dart';
 import '../utils/event_display.dart';
+import 'swipe_event_actions.dart';
 
 Future<void> showEventDetailSheet({
   required BuildContext context,
@@ -42,11 +45,29 @@ class _EventDetailSheetState extends ConsumerState<_EventDetailSheet> {
     _completed = widget.event.isCompleted;
   }
 
+  Future<void> _edit() async {
+    Navigator.of(context).pop();
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => EventFormPage(eventId: widget.event.id),
+      ),
+    );
+  }
+
+  Future<void> _delete() async {
+    final ok = await confirmDeleteEvent(context);
+    if (!ok || !mounted) return;
+    await ref.read(eventActionsProvider).delete(widget.event.id);
+    if (!mounted) return;
+    Navigator.of(context).pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     final event = widget.event;
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
+    final scheme = theme.colorScheme;
 
     return SafeArea(
       child: Padding(
@@ -97,6 +118,58 @@ class _EventDetailSheetState extends ConsumerState<_EventDetailSheet> {
             ],
             if (event.isNoTimeTodo)
               _Row(label: l10n.detailType, value: l10n.longTermTask),
+            if (event.hasReminder) ...[
+              const SizedBox(height: 8),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Icon(
+                      Icons.notifications_none_rounded,
+                      size: 18,
+                      color: scheme.primary.withValues(alpha: 0.85),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.detailReminder,
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: scheme.onSurface.withValues(alpha: 0.5),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          formatReminderOffsetsSummary(
+                            l10n,
+                            event.reminderOffsetsSeconds,
+                          ),
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+            if (event.reminderAnchorDateTime != null) ...[
+              const SizedBox(height: 8),
+              _Row(
+                label: l10n.detailTimeUntilStart,
+                value: l10n.timeUntilStart(
+                  formatDurationUntil(
+                    l10n,
+                    event.reminderAnchorDateTime!.difference(DateTime.now()),
+                  ),
+                ),
+              ),
+            ],
             if (event.note != null && event.note!.isNotEmpty) ...[
               const SizedBox(height: 12),
               Text(l10n.detailNote, style: theme.textTheme.labelLarge),
@@ -127,6 +200,28 @@ class _EventDetailSheetState extends ConsumerState<_EventDetailSheet> {
               },
               title: Text(_completed ? l10n.completedLabel : l10n.markComplete),
               controlAffinity: ListTileControlAffinity.leading,
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _edit,
+                    child: Text(l10n.edit),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: scheme.error,
+                      foregroundColor: scheme.onError,
+                    ),
+                    onPressed: _delete,
+                    child: Text(l10n.delete),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

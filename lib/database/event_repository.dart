@@ -6,6 +6,7 @@ import '../core/utils/repeat_expander.dart';
 import '../database/app_database.dart';
 import '../models/enums.dart';
 import '../models/event.dart';
+import '../models/reminder_config.dart';
 
 class EventRepository {
   EventRepository(this._db);
@@ -85,7 +86,9 @@ class EventRepository {
         todoTimeMode: Value(draft.todoTimeMode.storage),
         repeatType: Value(draft.repeatType.storage),
         repeatGroupId: Value(groupId),
-        reminderType: Value(draft.reminderType.storage),
+        reminderOffsetsJson: Value(
+          encodeReminderOffsets(draft.reminderOffsetsSeconds),
+        ),
         createdAt: now,
         updatedAt: now,
       ),
@@ -157,7 +160,7 @@ class EventRepository {
         taskType: event.taskType,
         todoTimeMode: event.todoTimeMode,
         repeatType: RepeatType.oneTime,
-        reminderType: event.reminderType,
+        reminderOffsetsSeconds: event.reminderOffsetsSeconds,
       ),
     );
     return (await getById(newId))!;
@@ -229,7 +232,9 @@ class EventRepository {
             todoTimeMode: Value(template.todoTimeMode.storage),
             repeatType: Value(template.repeatType.storage),
             repeatGroupId: Value(groupId),
-            reminderType: Value(template.reminderType.storage),
+            reminderOffsetsJson: Value(
+              encodeReminderOffsets(template.reminderOffsetsSeconds),
+            ),
             createdAt: now,
             updatedAt: now,
           ),
@@ -253,7 +258,10 @@ class EventRepository {
       isCompleted: row.isCompleted,
       repeatType: RepeatTypeX.fromStorage(row.repeatType),
       repeatGroupId: row.repeatGroupId,
-      reminderType: ReminderTypeX.fromStorage(row.reminderType),
+      reminderOffsetsSeconds: decodeReminderOffsets(
+        json: row.reminderOffsetsJson,
+        legacySingleOffset: row.reminderOffsetSeconds,
+      ),
       focusedSeconds: row.focusedSeconds,
       completedAt: row.completedAt,
       createdAt: row.createdAt,
@@ -275,7 +283,10 @@ class EventRepository {
       isCompleted: event.isCompleted,
       repeatType: event.repeatType.storage,
       repeatGroupId: event.repeatGroupId,
-      reminderType: event.reminderType.storage,
+      reminderOffsetsJson: encodeReminderOffsets(event.reminderOffsetsSeconds),
+      reminderOffsetSeconds: event.reminderOffsetsSeconds.length == 1
+          ? event.reminderOffsetsSeconds.first
+          : null,
       focusedSeconds: event.focusedSeconds,
       completedAt: event.completedAt,
       createdAt: event.createdAt,

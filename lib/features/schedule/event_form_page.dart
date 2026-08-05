@@ -6,9 +6,11 @@ import '../../core/providers/app_providers.dart';
 import '../../core/utils/event_constants.dart';
 import '../../core/utils/theme_event_color.dart';
 import '../../core/utils/date_time_formats.dart';
+import '../../core/widgets/reminder_picker_sheet.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/enums.dart';
 import '../../models/event.dart';
+import '../../models/reminder_config.dart';
 
 class EventFormPage extends ConsumerStatefulWidget {
   const EventFormPage({
@@ -42,7 +44,7 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
   late TaskType _taskType;
   late TodoTimeMode _todoTimeMode;
   late RepeatType _repeatType;
-  late ReminderType _reminderType;
+  List<int> _reminderOffsetsSeconds = const [];
   Event? _existing;
   bool _loading = false;
   bool _initialized = false;
@@ -59,7 +61,7 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
     _taskType = widget.forceTaskType ?? TaskType.todo;
     _todoTimeMode = widget.forceTodoTimeMode ?? TodoTimeMode.timeBlock;
     _repeatType = RepeatType.oneTime;
-    _reminderType = ReminderType.none;
+    _reminderOffsetsSeconds = const [];
 
     if (widget.isEditing) {
       Future.microtask(_loadExisting);
@@ -93,7 +95,7 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
       _taskType = event.taskType;
       _todoTimeMode = event.todoTimeMode;
       _repeatType = event.repeatType;
-      _reminderType = event.reminderType;
+      _reminderOffsetsSeconds = event.reminderOffsetsSeconds;
       _initialized = true;
     });
   }
@@ -279,6 +281,15 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
         decoration: InputDecoration(labelText: l10n.noteLabel),
       ),
       const SizedBox(height: 8),
+      if (_showDate || _showStartEnd || _showDeadline)
+        _PickerTile(
+          label: l10n.reminderLabel,
+          value: formatReminderOffsetsSummary(l10n, _reminderOffsetsSeconds),
+          icon: Icons.notifications_none_rounded,
+          onTap: _pickReminder,
+        ),
+      if (_showDate || _showStartEnd || _showDeadline)
+        const SizedBox(height: 8),
       ExpansionTile(
         tilePadding: EdgeInsets.zero,
         title: Text(
@@ -296,26 +307,52 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
               onChanged: (v) => setState(() => _repeatType = v!),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: DropdownButtonFormField<ReminderType>(
-              initialValue: _reminderType,
-              isDense: true,
-              decoration: InputDecoration(labelText: l10n.reminderLabel),
-              items: ReminderType.values
-                  .map(
-                    (r) => DropdownMenuItem(
-                      value: r,
-                      child: Text(reminderTypeLabel(l10n, r)),
-                    ),
-                  )
-                  .toList(),
-              onChanged: (v) => setState(() => _reminderType = v!),
-            ),
-          ),
+          const SizedBox(height: 8),
         ],
       ),
     ];
+  }
+
+  DateTime? _reminderAnchorDateTime() {
+    final fields = _resolveFields();
+    final date = fields.$1;
+    if (date.isEmpty) return null;
+    if (_taskType == TaskType.todo && _todoTimeMode == TodoTimeMode.noTime) {
+      return null;
+    }
+    if (_taskType == TaskType.todo && _todoTimeMode == TodoTimeMode.deadline) {
+      final t = fields.$3;
+      if (t.isEmpty) return null;
+      final d = DateTime.parse(date);
+      final parts = t.split(':');
+      return DateTime(
+        d.year,
+        d.month,
+        d.day,
+        int.parse(parts[0]),
+        int.parse(parts[1]),
+      );
+    }
+    final t = fields.$2;
+    if (t.isEmpty) return null;
+    final d = DateTime.parse(date);
+    final parts = t.split(':');
+    return DateTime(
+      d.year,
+      d.month,
+      d.day,
+      int.parse(parts[0]),
+      int.parse(parts[1]),
+    );
+  }
+
+  Future<void> _pickReminder() async {
+    final picked = await showReminderPickerSheet(
+      context: context,
+      currentOffsetsSeconds: _reminderOffsetsSeconds,
+      anchorDateTime: _reminderAnchorDateTime(),
+    );
+    setState(() => _reminderOffsetsSeconds = picked);
   }
 
   Future<void> _pickDate() async {
@@ -415,7 +452,8 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
             taskType: _taskType,
             todoTimeMode: todoMode,
             repeatType: _repeatType,
-            reminderType: _reminderType,
+            reminderOffsetsSeconds: _reminderOffsetsSeconds,
+            clearReminderOffsets: _reminderOffsetsSeconds.isEmpty,
           ),
         );
       } else {
@@ -430,7 +468,7 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
             taskType: _taskType,
             todoTimeMode: todoMode,
             repeatType: _repeatType,
-            reminderType: _reminderType,
+            reminderOffsetsSeconds: _reminderOffsetsSeconds,
           ),
         );
         if (fields.$1.isNotEmpty) {

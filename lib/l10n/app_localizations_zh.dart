@@ -9,7 +9,7 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
-  String get appTitle => 'Soft Schedule';
+  String get appTitle => 'JUJU Schedule';
 
   @override
   String get navHome => '首页';
@@ -70,6 +70,23 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get requestNotificationPermission => '允许通知';
+
+  @override
+  String get testNotificationNow => '发送测试通知';
+
+  @override
+  String get testNotificationSuccess => '测试通知已发送';
+
+  @override
+  String get testNotificationFailed => '无法发送通知，请检查权限和系统设置';
+
+  @override
+  String pendingNotifications(Object count) {
+    return '已安排 $count 条提醒';
+  }
+
+  @override
+  String get reminderSetupHint => '创建任务时点击「提醒」选择通知时间。';
 
   @override
   String get remindersDisabledHint => '已在设置中关闭提醒';
@@ -371,22 +388,82 @@ class AppLocalizationsZh extends AppLocalizations {
   String get reminderNone => '不提醒';
 
   @override
-  String get reminderAtTime => '准时';
+  String get reminderAtDueTime => '准时';
 
   @override
-  String get reminderMin5 => '提前 5 分钟';
+  String reminderMinutesBeforeDue(int count) {
+    return '提前 $count 分钟';
+  }
 
   @override
-  String get reminderMin10 => '提前 10 分钟';
+  String reminderHoursBeforeDue(int count) {
+    return '提前 $count 小时';
+  }
 
   @override
-  String get reminderMin15 => '提前 15 分钟';
+  String reminderDaysBeforeDue(int count) {
+    return '提前 $count 天';
+  }
 
   @override
-  String get reminderMin30 => '提前 30 分钟';
+  String get reminderCustomOption => '自定义…';
 
   @override
-  String get reminderHour1 => '提前 1 小时';
+  String get reminderCustomTitle => '自定义提醒';
+
+  @override
+  String get reminderEnterAmount => '数量';
+
+  @override
+  String get reminderUnitMinutes => '分钟';
+
+  @override
+  String get reminderUnitHours => '小时';
+
+  @override
+  String get reminderUnitDays => '天';
+
+  @override
+  String get done => '完成';
+
+  @override
+  String timeUntilStart(String time) {
+    return '距离开始还有 $time';
+  }
+
+  @override
+  String get timeUntilStartNow => '即将开始';
+
+  @override
+  String timeUntilStartMinutes(int count) {
+    return '$count 分钟';
+  }
+
+  @override
+  String timeUntilStartHours(int count) {
+    return '$count 小时';
+  }
+
+  @override
+  String timeUntilStartHoursMinutes(int hours, int minutes) {
+    return '$hours 小时 $minutes 分钟';
+  }
+
+  @override
+  String timeUntilStartDays(int count) {
+    return '$count 天';
+  }
+
+  @override
+  String timeUntilStartDaysHours(int days, int hours) {
+    return '$days 天 $hours 小时';
+  }
+
+  @override
+  String get detailTimeUntilStart => '距离开始';
+
+  @override
+  String get detailReminder => '提醒';
 
   @override
   String get focusTitle => '专注';

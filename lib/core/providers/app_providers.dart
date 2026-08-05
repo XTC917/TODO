@@ -7,6 +7,7 @@ import '../../database/event_repository.dart';
 import '../../database/focus_repository.dart';
 import '../../models/enums.dart';
 import '../../models/event.dart';
+import '../../models/reminder_config.dart';
 import 'focus_providers.dart';
 import '../services/database_backup_service.dart';
 import '../services/notification_service.dart';
@@ -221,7 +222,7 @@ class EventActions {
       await NotificationService.instance.cancelForEvent(event.id);
       return;
     }
-    if (event.reminderType == ReminderType.none) {
+    if (!ReminderPresets.hasReminder(event.reminderOffsetsSeconds)) {
       await NotificationService.instance.cancelForEvent(event.id);
       return;
     }

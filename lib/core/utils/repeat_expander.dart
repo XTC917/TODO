@@ -54,7 +54,7 @@ class RepeatExpander {
           todoTimeMode: draft.todoTimeMode,
           isCompleted: false,
           repeatType: draft.repeatType,
-          reminderType: draft.reminderType,
+          reminderOffsetsSeconds: const [],
           focusedSeconds: 0,
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),

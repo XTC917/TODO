@@ -25,8 +25,8 @@ class Events extends Table {
   TextColumn get repeatType =>
       text().withDefault(const Constant('oneTime'))();
   TextColumn get repeatGroupId => text().nullable()();
-  TextColumn get reminderType =>
-      text().withDefault(const Constant('none'))();
+  IntColumn get reminderOffsetSeconds => integer().nullable()();
+  TextColumn get reminderOffsetsJson => text().nullable()();
   IntColumn get focusedSeconds =>
       integer().withDefault(const Constant(0))();
   DateTimeColumn get completedAt => dateTime().nullable()();
@@ -53,7 +53,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -63,13 +63,36 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(events, events.isCompleted);
             await m.addColumn(events, events.repeatType);
             await m.addColumn(events, events.repeatGroupId);
-            await m.addColumn(events, events.reminderType);
             await m.addColumn(events, events.focusedSeconds);
             await m.addColumn(events, events.completedAt);
             await m.createTable(focusRecords);
           }
           if (from < 3) {
             await m.addColumn(events, events.todoTimeMode);
+          }
+          if (from < 4) {
+            await m.addColumn(events, events.reminderOffsetSeconds);
+            if (from >= 2) {
+              await customStatement('''
+                UPDATE events SET reminder_offset_seconds = CASE reminder_type
+                  WHEN 'atTime' THEN 0
+                  WHEN 'min5' THEN 300
+                  WHEN 'min10' THEN 600
+                  WHEN 'min15' THEN 900
+                  WHEN 'min30' THEN 1800
+                  WHEN 'hour1' THEN 3600
+                  ELSE NULL
+                END
+              ''');
+            }
+          }
+          if (from < 5) {
+            await m.addColumn(events, events.reminderOffsetsJson);
+            await customStatement('''
+              UPDATE events
+              SET reminder_offsets_json = '[' || reminder_offset_seconds || ']'
+              WHERE reminder_offset_seconds IS NOT NULL
+            ''');
           }
         },
       );

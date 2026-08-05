@@ -101,7 +101,7 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
-  /// **'Soft Schedule'**
+  /// **'JUJU Schedule'**
   String get appTitle;
 
   /// No description provided for @navHome.
@@ -223,6 +223,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Allow notifications'**
   String get requestNotificationPermission;
+
+  /// No description provided for @testNotificationNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Send test notification'**
+  String get testNotificationNow;
+
+  /// No description provided for @testNotificationSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Test notification sent'**
+  String get testNotificationSuccess;
+
+  /// No description provided for @testNotificationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not send notification. Check permission and system settings.'**
+  String get testNotificationFailed;
+
+  /// No description provided for @pendingNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} scheduled reminder(s)'**
+  String pendingNotifications(Object count);
+
+  /// No description provided for @reminderSetupHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap Reminder when creating a task to choose when to notify.'**
+  String get reminderSetupHint;
 
   /// No description provided for @remindersDisabledHint.
   ///
@@ -767,44 +797,128 @@ abstract class AppLocalizations {
   /// No description provided for @reminderNone.
   ///
   /// In en, this message translates to:
-  /// **'No Reminder'**
+  /// **'No reminder'**
   String get reminderNone;
 
-  /// No description provided for @reminderAtTime.
+  /// No description provided for @reminderAtDueTime.
   ///
   /// In en, this message translates to:
-  /// **'At Time'**
-  String get reminderAtTime;
+  /// **'At due time'**
+  String get reminderAtDueTime;
 
-  /// No description provided for @reminderMin5.
+  /// No description provided for @reminderMinutesBeforeDue.
   ///
   /// In en, this message translates to:
-  /// **'5 min before'**
-  String get reminderMin5;
+  /// **'{count} minutes before due time'**
+  String reminderMinutesBeforeDue(int count);
 
-  /// No description provided for @reminderMin10.
+  /// No description provided for @reminderHoursBeforeDue.
   ///
   /// In en, this message translates to:
-  /// **'10 min before'**
-  String get reminderMin10;
+  /// **'{count} hours before due time'**
+  String reminderHoursBeforeDue(int count);
 
-  /// No description provided for @reminderMin15.
+  /// No description provided for @reminderDaysBeforeDue.
   ///
   /// In en, this message translates to:
-  /// **'15 min before'**
-  String get reminderMin15;
+  /// **'{count} days before due time'**
+  String reminderDaysBeforeDue(int count);
 
-  /// No description provided for @reminderMin30.
+  /// No description provided for @reminderCustomOption.
   ///
   /// In en, this message translates to:
-  /// **'30 min before'**
-  String get reminderMin30;
+  /// **'Custom…'**
+  String get reminderCustomOption;
 
-  /// No description provided for @reminderHour1.
+  /// No description provided for @reminderCustomTitle.
   ///
   /// In en, this message translates to:
-  /// **'1 hour before'**
-  String get reminderHour1;
+  /// **'Custom reminder'**
+  String get reminderCustomTitle;
+
+  /// No description provided for @reminderEnterAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get reminderEnterAmount;
+
+  /// No description provided for @reminderUnitMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'Minutes'**
+  String get reminderUnitMinutes;
+
+  /// No description provided for @reminderUnitHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Hours'**
+  String get reminderUnitHours;
+
+  /// No description provided for @reminderUnitDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Days'**
+  String get reminderUnitDays;
+
+  /// No description provided for @done.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get done;
+
+  /// No description provided for @timeUntilStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Starts in {time}'**
+  String timeUntilStart(String time);
+
+  /// No description provided for @timeUntilStartNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting now'**
+  String get timeUntilStartNow;
+
+  /// No description provided for @timeUntilStartMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} min'**
+  String timeUntilStartMinutes(int count);
+
+  /// No description provided for @timeUntilStartHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} hr'**
+  String timeUntilStartHours(int count);
+
+  /// No description provided for @timeUntilStartHoursMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours} hr {minutes} min'**
+  String timeUntilStartHoursMinutes(int hours, int minutes);
+
+  /// No description provided for @timeUntilStartDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} days'**
+  String timeUntilStartDays(int count);
+
+  /// No description provided for @timeUntilStartDaysHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{days} days {hours} hr'**
+  String timeUntilStartDaysHours(int days, int hours);
+
+  /// No description provided for @detailTimeUntilStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Time until start'**
+  String get detailTimeUntilStart;
+
+  /// No description provided for @detailReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder'**
+  String get detailReminder;
 
   /// No description provided for @focusTitle.
   ///

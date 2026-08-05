@@ -2,6 +2,7 @@ import 'package:app_settings/app_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/config/app_config.dart';
 import '../../core/providers/app_providers.dart';
 import '../../core/services/notification_service.dart';
 import '../../l10n/app_localizations.dart';
@@ -232,29 +233,10 @@ class SettingsPage extends ConsumerWidget {
                         ),
                         Padding(
                           padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              OutlinedButton.icon(
-                                onPressed: () => _sendTestNotification(
-                                  context,
-                                  ref,
-                                  immediate: true,
-                                ),
-                                icon: const Icon(Icons.notifications_active),
-                                label: Text(l10n.testNotificationNow),
-                              ),
-                              const SizedBox(height: 8),
-                              OutlinedButton.icon(
-                                onPressed: () => _sendTestNotification(
-                                  context,
-                                  ref,
-                                  immediate: false,
-                                ),
-                                icon: const Icon(Icons.timer_outlined),
-                                label: Text(l10n.testNotificationScheduled),
-                              ),
-                            ],
+                          child: OutlinedButton.icon(
+                            onPressed: () => _sendTestNotification(context, ref),
+                            icon: const Icon(Icons.notifications_active),
+                            label: Text(l10n.testNotificationNow),
                           ),
                         ),
                       ],
@@ -295,11 +277,11 @@ class SettingsPage extends ConsumerWidget {
                 ListTile(
                   leading: const Icon(Icons.info_outline_rounded),
                   title: Text(l10n.about),
-                  subtitle: Text(l10n.aboutSubtitle('2.0.5')),
+                  subtitle: Text(l10n.aboutSubtitle(AppConfig.appVersion)),
                   onTap: () => showAboutDialog(
                     context: context,
-                    applicationName: 'Soft Schedule',
-                    applicationVersion: '2.0.5',
+                    applicationName: AppConfig.appName,
+                    applicationVersion: AppConfig.appVersion,
                     applicationLegalese: l10n.aboutLegalese,
                   ),
                 ),
@@ -332,22 +314,15 @@ class SettingsPage extends ConsumerWidget {
 
   Future<void> _sendTestNotification(
     BuildContext context,
-    WidgetRef ref, {
-    required bool immediate,
-  }) async {
+    WidgetRef ref,
+  ) async {
     final l10n = AppLocalizations.of(context);
-    final ok = immediate
-        ? await NotificationService.instance.showTestNotification()
-        : await NotificationService.instance.scheduleTestNotification();
+    final ok = await NotificationService.instance.showTestNotification();
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          ok
-              ? (immediate
-                  ? l10n.testNotificationSuccess
-                  : l10n.testNotificationScheduledSuccess)
-              : l10n.testNotificationFailed,
+          ok ? l10n.testNotificationSuccess : l10n.testNotificationFailed,
         ),
       ),
     );

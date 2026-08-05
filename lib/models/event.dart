@@ -15,7 +15,7 @@ class Event {
     required this.isCompleted,
     required this.repeatType,
     this.repeatGroupId,
-    required this.reminderType,
+    this.reminderOffsetsSeconds = const [],
     required this.focusedSeconds,
     this.completedAt,
     required this.createdAt,
@@ -34,7 +34,8 @@ class Event {
   final bool isCompleted;
   final RepeatType repeatType;
   final String? repeatGroupId;
-  final ReminderType reminderType;
+  /// Seconds before [reminderAnchorDateTime] to fire. Empty = no reminder.
+  final List<int> reminderOffsetsSeconds;
   final int focusedSeconds;
   final DateTime? completedAt;
   final DateTime createdAt;
@@ -44,6 +45,7 @@ class Event {
   bool get isSchedule => taskType == TaskType.schedule;
   bool get hasDate => date.isNotEmpty;
   bool get isNoTimeTodo => isTodo && todoTimeMode == TodoTimeMode.noTime;
+  bool get hasReminder => reminderOffsetsSeconds.isNotEmpty;
 
   /// Appears on the home Timeline (schedules + timed todos with date).
   bool get showsInTimeline =>
@@ -119,7 +121,8 @@ class Event {
     RepeatType? repeatType,
     String? repeatGroupId,
     bool clearRepeatGroupId = false,
-    ReminderType? reminderType,
+    List<int>? reminderOffsetsSeconds,
+    bool clearReminderOffsets = false,
     int? focusedSeconds,
     DateTime? completedAt,
     bool clearCompletedAt = false,
@@ -139,7 +142,9 @@ class Event {
       isCompleted: isCompleted ?? this.isCompleted,
       repeatType: repeatType ?? this.repeatType,
       repeatGroupId: clearRepeatGroupId ? null : (repeatGroupId ?? this.repeatGroupId),
-      reminderType: reminderType ?? this.reminderType,
+      reminderOffsetsSeconds: clearReminderOffsets
+          ? const []
+          : (reminderOffsetsSeconds ?? this.reminderOffsetsSeconds),
       focusedSeconds: focusedSeconds ?? this.focusedSeconds,
       completedAt: clearCompletedAt ? null : (completedAt ?? this.completedAt),
       createdAt: createdAt ?? this.createdAt,
@@ -160,7 +165,7 @@ class EventDraft {
     this.todoTimeMode = TodoTimeMode.timeBlock,
     this.repeatType = RepeatType.oneTime,
     this.repeatGroupId,
-    this.reminderType = ReminderType.none,
+    this.reminderOffsetsSeconds = const [],
   });
 
   final String title;
@@ -173,7 +178,7 @@ class EventDraft {
   final TodoTimeMode todoTimeMode;
   final RepeatType repeatType;
   final String? repeatGroupId;
-  final ReminderType reminderType;
+  final List<int> reminderOffsetsSeconds;
 }
 
 class FocusRecord {

@@ -6,14 +6,14 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
+import '../config/app_config.dart';
 import '../../database/event_repository.dart';
-import '../../models/enums.dart';
 import '../../models/event.dart';
+import '../../models/reminder_config.dart';
 
 const _channelId = 'soft_schedule_reminders';
 const _channelName = 'Reminders';
 const _androidIcon = '@drawable/ic_notification';
-const notificationTitle = 'Reminder';
 const eventPayloadPrefix = 'event:';
 const testNotificationId = 999999;
 
@@ -30,12 +30,17 @@ class NotificationService {
   bool _remindersEnabled = true;
   NotificationTapHandler? _onTap;
 
+  /// Optional hook to build localized notification body suffix.
+  String Function(int offsetSeconds)? notificationTimeUntilStartBuilder;
+
   void configure({
     required bool remindersEnabled,
     NotificationTapHandler? onTap,
+    String Function(int offsetSeconds)? timeUntilStartBuilder,
   }) {
     _remindersEnabled = remindersEnabled;
     _onTap = onTap;
+    notificationTimeUntilStartBuilder = timeUntilStartBuilder;
   }
 
   set remindersEnabled(bool value) => _remindersEnabled = value;
@@ -61,8 +66,7 @@ class NotificationService {
     );
 
     if (Platform.isAndroid) {
-      final androidPlugin = _androidPlugin;
-      await androidPlugin?.createNotificationChannel(
+      await _androidPlugin?.createNotificationChannel(
         const AndroidNotificationChannel(
           _channelId,
           _channelName,
@@ -149,7 +153,6 @@ class NotificationService {
     return pending.length;
   }
 
-  /// Fires a notification immediately — use to verify the phone can display alerts.
   Future<bool> showTestNotification() async {
     await initialize();
     if (!await hasPermission()) {
@@ -160,42 +163,13 @@ class NotificationService {
     try {
       await _plugin.show(
         testNotificationId,
-        notificationTitle,
-        'Test notification — reminders are working',
+        AppConfig.appName,
+        AppConfig.testNotificationBody,
         _notificationDetails(),
       );
-      debugPrint('Test notification shown');
       return true;
     } catch (e, st) {
       debugPrint('Test notification failed: $e\n$st');
-      return false;
-    }
-  }
-
-  /// Schedules a test notification [seconds] from now.
-  Future<bool> scheduleTestNotification({int seconds = 5}) async {
-    await initialize();
-    if (!await hasPermission()) {
-      await requestPermissions();
-      if (!await hasPermission()) return false;
-    }
-
-    final when = tz.TZDateTime.now(tz.local).add(Duration(seconds: seconds));
-    try {
-      await _plugin.zonedSchedule(
-        testNotificationId - 1,
-        notificationTitle,
-        'Scheduled test — fired after $seconds seconds',
-        when,
-        _notificationDetails(),
-        androidScheduleMode: await _pickScheduleMode(),
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-      );
-      debugPrint('Test notification scheduled for $when');
-      return true;
-    } catch (e, st) {
-      debugPrint('Scheduled test notification failed: $e\n$st');
       return false;
     }
   }
@@ -208,13 +182,15 @@ class NotificationService {
     }
     if (!await hasPermission()) return;
 
+    if (Platform.isAndroid) {
+      await _androidPlugin?.requestExactAlarmsPermission();
+    }
+
     await cancelAll();
     final rows = await repository.getAllEvents();
     var scheduled = 0;
     for (final event in rows) {
-      if (await scheduleForEvent(event, skipPermissionCheck: true)) {
-        scheduled++;
-      }
+      scheduled += await scheduleForEvent(event, skipPermissionCheck: true);
     }
     debugPrint('Rescheduled $scheduled notification(s)');
   }
@@ -223,65 +199,120 @@ class NotificationService {
     await _plugin.cancelAll();
   }
 
-  Future<bool> scheduleForEvent(
+  /// Schedules all reminder offsets for [event]. Returns count scheduled.
+  Future<int> scheduleForEvent(
     Event event, {
     bool skipPermissionCheck = false,
   }) async {
     await initialize();
     await cancelForEvent(event.id);
 
-    if (!_remindersEnabled) return false;
-    if (event.reminderType == ReminderType.none) return false;
-    if (event.isCompleted) return false;
+    if (!_remindersEnabled) return 0;
+    if (!ReminderPresets.hasReminder(event.reminderOffsetsSeconds)) return 0;
+    if (event.isCompleted) return 0;
 
     if (!skipPermissionCheck && !await hasPermission()) {
       debugPrint(
         'Skipping notification for event ${event.id}: permission not granted',
       );
-      return false;
+      return 0;
     }
 
-    final offset = event.reminderType.offset;
-    if (offset == null) return false;
+    if (Platform.isAndroid && !skipPermissionCheck) {
+      await _androidPlugin?.requestExactAlarmsPermission();
+    }
 
     final anchor = event.reminderAnchorDateTime;
     if (anchor == null) {
       debugPrint(
         'Skipping notification for event ${event.id}: no reminder anchor',
       );
-      return false;
+      return 0;
     }
 
-    final scheduledLocal = anchor.subtract(offset);
-    final scheduled = tz.TZDateTime.from(scheduledLocal, tz.local);
     final now = tz.TZDateTime.now(tz.local);
-    if (!scheduled.isAfter(now)) {
-      debugPrint(
-        'Skipping event ${event.id}: fire time $scheduled is not after now $now',
-      );
-      return false;
-    }
+    var scheduled = 0;
+    final offsets = [...event.reminderOffsetsSeconds]
+      ..sort((a, b) => b.compareTo(a));
 
-    try {
-      await _plugin.zonedSchedule(
-        event.id,
-        notificationTitle,
-        event.title,
-        scheduled,
-        _notificationDetails(),
-        androidScheduleMode: await _pickScheduleMode(),
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
+    for (var i = 0; i < offsets.length && i < kMaxRemindersPerEvent; i++) {
+      final offsetSeconds = offsets[i];
+      final offset = ReminderPresets.toDuration(offsetSeconds);
+      if (offset == null) continue;
+
+      final scheduledLocal = anchor.subtract(offset);
+      final scheduledTime = tz.TZDateTime.from(scheduledLocal, tz.local);
+      if (!scheduledTime.isAfter(now)) {
+        debugPrint(
+          'Skipping event ${event.id} offset $offsetSeconds: fire time in past',
+        );
+        continue;
+      }
+
+      final notificationId = notificationIdForEvent(event.id, i);
+      final untilStart = notificationTimeUntilStartBuilder?.call(offsetSeconds) ??
+          _fallbackTimeUntilStart(offsetSeconds);
+      final body = '${event.title}\n$untilStart';
+
+      final ok = await _zonedScheduleWithFallback(
+        notificationId,
+        AppConfig.appName,
+        body,
+        scheduledTime,
         payload: '$eventPayloadPrefix${event.id}',
       );
-      debugPrint(
-        'Scheduled notification ${event.id} at $scheduled for "${event.title}"',
-      );
-      return true;
-    } catch (e, st) {
-      debugPrint('Failed to schedule notification for event ${event.id}: $e\n$st');
-      return false;
+      if (ok) {
+        scheduled++;
+        debugPrint(
+          'Scheduled notification $notificationId at $scheduledTime for "${event.title}"',
+        );
+      }
     }
+    return scheduled;
+  }
+
+  Future<bool> _zonedScheduleWithFallback(
+    int id,
+    String title,
+    String body,
+    tz.TZDateTime scheduled,
+    {required String payload}
+  ) async {
+    final modes = <AndroidScheduleMode>[
+      if (Platform.isAndroid && await canScheduleExactAlarms())
+        AndroidScheduleMode.alarmClock,
+      if (Platform.isAndroid)
+        AndroidScheduleMode.exactAllowWhileIdle,
+      AndroidScheduleMode.inexactAllowWhileIdle,
+    ];
+
+    for (final mode in modes) {
+      try {
+        await _plugin.zonedSchedule(
+          id,
+          title,
+          body,
+          scheduled,
+          _notificationDetails(),
+          androidScheduleMode: mode,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+          payload: payload,
+        );
+        return true;
+      } catch (e) {
+        debugPrint('Schedule mode $mode failed for id $id: $e');
+      }
+    }
+    return false;
+  }
+
+  String _fallbackTimeUntilStart(int offsetSeconds) {
+    if (offsetSeconds <= 0) return 'Starting now';
+    final d = Duration(seconds: offsetSeconds);
+    if (d.inDays > 0) return 'Starts in ${d.inDays}d';
+    if (d.inHours > 0) return 'Starts in ${d.inHours}h ${d.inMinutes % 60}m';
+    return 'Starts in ${d.inMinutes}m';
   }
 
   NotificationDetails _notificationDetails() {
@@ -296,6 +327,7 @@ class NotificationService {
         playSound: true,
         enableVibration: true,
         visibility: NotificationVisibility.public,
+        category: AndroidNotificationCategory.reminder,
       ),
       iOS: DarwinNotificationDetails(
         presentAlert: true,
@@ -305,15 +337,10 @@ class NotificationService {
     );
   }
 
-  Future<AndroidScheduleMode> _pickScheduleMode() async {
-    if (Platform.isAndroid && await canScheduleExactAlarms()) {
-      return AndroidScheduleMode.exactAllowWhileIdle;
-    }
-    return AndroidScheduleMode.inexactAllowWhileIdle;
-  }
-
   Future<void> cancelForEvent(int eventId) async {
-    await _plugin.cancel(eventId);
+    for (var i = 0; i < kMaxRemindersPerEvent; i++) {
+      await _plugin.cancel(notificationIdForEvent(eventId, i));
+    }
   }
 
   @pragma('vm:entry-point')
@@ -352,10 +379,6 @@ class NotificationService {
     if (fallback != null) {
       tz.setLocalLocation(tz.getLocation(fallback));
       debugPrint('Notification timezone fallback: $fallback');
-    } else {
-      debugPrint(
-        'Notification timezone: using offset ${offset.inHours}h (local wall clock)',
-      );
     }
   }
 }

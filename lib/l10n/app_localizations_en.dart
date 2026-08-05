@@ -9,7 +9,7 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appTitle => 'Soft Schedule';
+  String get appTitle => 'JUJU Schedule';
 
   @override
   String get navHome => 'Home';
@@ -70,6 +70,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get requestNotificationPermission => 'Allow notifications';
+
+  @override
+  String get testNotificationNow => 'Send test notification';
+
+  @override
+  String get testNotificationSuccess => 'Test notification sent';
+
+  @override
+  String get testNotificationFailed =>
+      'Could not send notification. Check permission and system settings.';
+
+  @override
+  String pendingNotifications(Object count) {
+    return '$count scheduled reminder(s)';
+  }
+
+  @override
+  String get reminderSetupHint =>
+      'Tap Reminder when creating a task to choose when to notify.';
 
   @override
   String get remindersDisabledHint => 'Reminders are turned off in settings';
@@ -369,25 +388,85 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reminderLabel => 'Reminder';
 
   @override
-  String get reminderNone => 'No Reminder';
+  String get reminderNone => 'No reminder';
 
   @override
-  String get reminderAtTime => 'At Time';
+  String get reminderAtDueTime => 'At due time';
 
   @override
-  String get reminderMin5 => '5 min before';
+  String reminderMinutesBeforeDue(int count) {
+    return '$count minutes before due time';
+  }
 
   @override
-  String get reminderMin10 => '10 min before';
+  String reminderHoursBeforeDue(int count) {
+    return '$count hours before due time';
+  }
 
   @override
-  String get reminderMin15 => '15 min before';
+  String reminderDaysBeforeDue(int count) {
+    return '$count days before due time';
+  }
 
   @override
-  String get reminderMin30 => '30 min before';
+  String get reminderCustomOption => 'Custom…';
 
   @override
-  String get reminderHour1 => '1 hour before';
+  String get reminderCustomTitle => 'Custom reminder';
+
+  @override
+  String get reminderEnterAmount => 'Amount';
+
+  @override
+  String get reminderUnitMinutes => 'Minutes';
+
+  @override
+  String get reminderUnitHours => 'Hours';
+
+  @override
+  String get reminderUnitDays => 'Days';
+
+  @override
+  String get done => 'Done';
+
+  @override
+  String timeUntilStart(String time) {
+    return 'Starts in $time';
+  }
+
+  @override
+  String get timeUntilStartNow => 'Starting now';
+
+  @override
+  String timeUntilStartMinutes(int count) {
+    return '$count min';
+  }
+
+  @override
+  String timeUntilStartHours(int count) {
+    return '$count hr';
+  }
+
+  @override
+  String timeUntilStartHoursMinutes(int hours, int minutes) {
+    return '$hours hr $minutes min';
+  }
+
+  @override
+  String timeUntilStartDays(int count) {
+    return '$count days';
+  }
+
+  @override
+  String timeUntilStartDaysHours(int days, int hours) {
+    return '$days days $hours hr';
+  }
+
+  @override
+  String get detailTimeUntilStart => 'Time until start';
+
+  @override
+  String get detailReminder => 'Reminder';
 
   @override
   String get focusTitle => 'Focus';

@@ -10,18 +10,6 @@ String repeatTypeLabel(AppLocalizations l10n, RepeatType type) {
   };
 }
 
-String reminderTypeLabel(AppLocalizations l10n, ReminderType type) {
-  return switch (type) {
-    ReminderType.none => l10n.reminderNone,
-    ReminderType.atTime => l10n.reminderAtTime,
-    ReminderType.min5 => l10n.reminderMin5,
-    ReminderType.min10 => l10n.reminderMin10,
-    ReminderType.min15 => l10n.reminderMin15,
-    ReminderType.min30 => l10n.reminderMin30,
-    ReminderType.hour1 => l10n.reminderHour1,
-  };
-}
-
 String focusModeLabel(AppLocalizations l10n, FocusMode mode) {
   return switch (mode) {
     FocusMode.pomodoro => l10n.focusPomodoro,

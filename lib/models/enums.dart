@@ -8,16 +8,6 @@ enum TodoTimeMode { timeBlock, deadline, noTime }
 
 enum RepeatType { oneTime, daily, weekly, monthly }
 
-enum ReminderType {
-  none,
-  atTime,
-  min5,
-  min10,
-  min15,
-  min30,
-  hour1,
-}
-
 enum FocusMode { pomodoro, stopwatch }
 
 enum DeleteRepeatScope { onlyThis, thisAndFuture, all }
@@ -61,33 +51,6 @@ extension RepeatTypeX on RepeatType {
 
   static RepeatType fromStorage(String value) =>
       RepeatType.values.firstWhere((e) => e.name == value, orElse: () => RepeatType.oneTime);
-}
-
-extension ReminderTypeX on ReminderType {
-  String get storage => name;
-
-  String get label => switch (this) {
-        ReminderType.none => 'No Reminder',
-        ReminderType.atTime => 'At Time',
-        ReminderType.min5 => '5 min before',
-        ReminderType.min10 => '10 min before',
-        ReminderType.min15 => '15 min before',
-        ReminderType.min30 => '30 min before',
-        ReminderType.hour1 => '1 hour before',
-      };
-
-  Duration? get offset => switch (this) {
-        ReminderType.none => null,
-        ReminderType.atTime => Duration.zero,
-        ReminderType.min5 => const Duration(minutes: 5),
-        ReminderType.min10 => const Duration(minutes: 10),
-        ReminderType.min15 => const Duration(minutes: 15),
-        ReminderType.min30 => const Duration(minutes: 30),
-        ReminderType.hour1 => const Duration(hours: 1),
-      };
-
-  static ReminderType fromStorage(String value) =>
-      ReminderType.values.firstWhere((e) => e.name == value, orElse: () => ReminderType.none);
 }
 
 extension FocusModeX on FocusMode {
