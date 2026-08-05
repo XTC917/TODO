@@ -221,6 +221,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get titleRequired => '请输入任务标题。';
 
   @override
+  String titleTooLong(int max) {
+    return '标题不能超过 $max 字。';
+  }
+
+  @override
+  String noteTooLong(int max) {
+    return '备注不能超过 $max 字。';
+  }
+
+  @override
   String get saveFailedRetry => '保存失败，请稍后重试。';
 
   @override
@@ -424,6 +434,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get reminderUnitDays => '天';
 
   @override
+  String reminderSelectedCount(int count) {
+    return '已选 $count 项提醒';
+  }
+
+  @override
   String get done => '完成';
 
   @override
@@ -436,27 +451,27 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String timeUntilStartMinutes(int count) {
-    return '$count 分钟';
+    return '$count 分钟后';
   }
 
   @override
   String timeUntilStartHours(int count) {
-    return '$count 小时';
+    return '$count 小时后';
   }
 
   @override
   String timeUntilStartHoursMinutes(int hours, int minutes) {
-    return '$hours 小时 $minutes 分钟';
+    return '$hours 小时 $minutes 分钟后';
   }
 
   @override
   String timeUntilStartDays(int count) {
-    return '$count 天';
+    return '$count 天后';
   }
 
   @override
   String timeUntilStartDaysHours(int days, int hours) {
-    return '$days 天 $hours 小时';
+    return '$days 天 $hours 小时后';
   }
 
   @override

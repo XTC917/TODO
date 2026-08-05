@@ -33,212 +33,269 @@ class CalendarPage extends ConsumerWidget {
     final scheme = theme.colorScheme;
     final calendarKey = ValueKey('${theme.brightness}-${scheme.primary}');
     final l10n = AppLocalizations.of(context);
+    final landscape = MediaQuery.sizeOf(context).width >
+        MediaQuery.sizeOf(context).height;
+
+    Widget buildCalendar({required bool compact}) {
+      return Padding(
+        padding: EdgeInsets.fromLTRB(compact ? 8 : 12, 4, compact ? 8 : 12, 0),
+        child: TableCalendar(
+          key: calendarKey,
+          firstDay: DateTime.utc(2020, 1, 1),
+          lastDay: DateTime.utc(2040, 12, 31),
+          focusedDay: focused,
+          selectedDayPredicate: (day) =>
+              DateTimeFormats.isSameDay(day, selected),
+          calendarFormat: CalendarFormat.month,
+          startingDayOfWeek: StartingDayOfWeek.monday,
+          rowHeight: compact ? 28 : 38,
+          daysOfWeekHeight: compact ? 20 : 26,
+          headerStyle: HeaderStyle(
+            titleCentered: true,
+            formatButtonVisible: false,
+            titleTextStyle: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: scheme.onSurface,
+                  fontSize: compact ? 12 : null,
+                ) ??
+                TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: scheme.onSurface,
+                  fontSize: compact ? 12 : 14,
+                ),
+            leftChevronIcon: Icon(
+              Icons.chevron_left,
+              color: scheme.onSurface,
+              size: compact ? 20 : 24,
+            ),
+            rightChevronIcon: Icon(
+              Icons.chevron_right,
+              color: scheme.onSurface,
+              size: compact ? 20 : 24,
+            ),
+          ),
+          calendarStyle: CalendarStyle(
+            outsideDaysVisible: false,
+            cellMargin: EdgeInsets.all(compact ? 1 : 2),
+            markerSize: compact ? 3 : 4,
+            markersAnchor: 1.05,
+            defaultTextStyle: TextStyle(
+              color: scheme.onSurface,
+              fontSize: compact ? 11 : 13,
+            ),
+            weekendTextStyle: TextStyle(
+              color: scheme.onSurface.withValues(alpha: 0.65),
+              fontSize: compact ? 11 : 13,
+            ),
+            outsideTextStyle: TextStyle(
+              color: scheme.onSurface.withValues(alpha: 0.35),
+              fontSize: compact ? 11 : 13,
+            ),
+            todayDecoration: BoxDecoration(
+              color: scheme.primaryContainer,
+              shape: BoxShape.circle,
+            ),
+            todayTextStyle: TextStyle(
+              color: scheme.onPrimaryContainer,
+              fontWeight: FontWeight.w600,
+              fontSize: compact ? 11 : 13,
+            ),
+            selectedDecoration: BoxDecoration(
+              color: scheme.primary,
+              shape: BoxShape.circle,
+            ),
+            selectedTextStyle: TextStyle(
+              color: scheme.onPrimary,
+              fontWeight: FontWeight.w700,
+              fontSize: compact ? 11 : 13,
+            ),
+            markerDecoration: BoxDecoration(
+              color: scheme.primary,
+              shape: BoxShape.circle,
+            ),
+          ),
+          daysOfWeekStyle: DaysOfWeekStyle(
+            weekdayStyle: TextStyle(
+              color: scheme.onSurface.withValues(alpha: 0.55),
+              fontSize: compact ? 10 : 11,
+            ),
+            weekendStyle: TextStyle(
+              color: scheme.onSurface.withValues(alpha: 0.55),
+              fontSize: compact ? 10 : 11,
+            ),
+          ),
+          eventLoader: (day) {
+            final key = DateTimeFormats.formatDate(day);
+            return marked.contains(key) ? const [1] : const [];
+          },
+          onDaySelected: (day, focusedDay) {
+            ref.read(calendarSelectedDateProvider.notifier).state =
+                DateTimeFormats.dateOnly(day);
+            ref.read(calendarFocusedMonthProvider.notifier).state =
+                DateTime(focusedDay.year, focusedDay.month);
+            ref.read(homeSelectedDateProvider.notifier).state =
+                DateTimeFormats.dateOnly(day);
+          },
+          onPageChanged: (focusedDay) {
+            ref.read(calendarFocusedMonthProvider.notifier).state =
+                DateTime(focusedDay.year, focusedDay.month);
+          },
+        ),
+      );
+    }
+
+    Widget dateHeader({EdgeInsetsGeometry? padding}) {
+      return Padding(
+        padding: padding ?? const EdgeInsets.fromLTRB(16, 8, 16, 4),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            DateTimeFormats.formatSectionDate(selected, l10n),
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      );
+    }
+
+    Widget buildEventsPanel(List<Event> events) {
+      final timeline = TimelineView(
+        events: events,
+        compact: true,
+        batchActive: batch.active,
+        selectedIds: batch.selectedIds,
+        onEventTap: (e) => _onItemTap(context, ref, e, batch),
+        onEventLongPress: (e) =>
+            ref.read(calendarBatchProvider.notifier).enterWith(e.id),
+        onToggleComplete: batch.active
+            ? null
+            : (e) => ref
+                .read(eventActionsProvider)
+                .toggleTimeline(e.id, !e.isCompleted),
+        onSwipeEdit: (e) => _editEvent(context, e),
+        onSwipeDuplicate: (e) =>
+            ref.read(eventActionsProvider).duplicate(e.id),
+        onSwipeDelete: (e) => _deleteEvent(context, ref, e),
+      );
+      final todoPanel = _CalendarTodoPanel(
+        events: events,
+        dateKey: dateKey,
+        batch: batch,
+        onItemTap: (e) => _onItemTap(context, ref, e, batch),
+        onEnterBatch: (id) =>
+            ref.read(calendarBatchProvider.notifier).enterWith(id),
+        onToggleTodo: (id, v) =>
+            ref.read(eventActionsProvider).toggleTodo(id, v),
+        onSwipeEdit: (e) => _editEvent(context, e),
+        onSwipeDuplicate: (e) =>
+            ref.read(eventActionsProvider).duplicate(e.id),
+        onSwipeDelete: (e) => _deleteEvent(context, ref, e),
+      );
+
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                border: Border(
+                  right: BorderSide(
+                    color: theme.dividerColor.withValues(alpha: 0.5),
+                  ),
+                ),
+              ),
+              child: ListView(
+                padding: const EdgeInsets.only(bottom: 12),
+                children: [timeline],
+              ),
+            ),
+          ),
+          Expanded(child: todoPanel),
+        ],
+      );
+    }
+
+    final batchToolbar = BatchToolbar(
+      batchProvider: calendarBatchProvider,
+      events: eventsAsync.valueOrNull ?? const [],
+      onEditSingle: batch.selectedIds.length == 1
+          ? () {
+              final id = batch.selectedIds.first;
+              ref.read(calendarBatchProvider.notifier).cancel();
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => EventFormPage(eventId: id),
+                ),
+              );
+            }
+          : null,
+    );
+
+    final eventsBody = eventsAsync.when(
+      data: (events) => buildEventsPanel(events),
+      loading: () =>
+          const Center(child: CircularProgressIndicator.adaptive()),
+      error: (e, _) => Center(child: Text(l10n.errorGeneric('$e'))),
+    );
+
+    if (landscape) {
+      return Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        body: SafeArea(
+          child: Column(
+            children: [
+              batchToolbar,
+              Expanded(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: SingleChildScrollView(
+                        child: buildCalendar(compact: true),
+                      ),
+                    ),
+                    VerticalDivider(
+                      width: 1,
+                      color: theme.dividerColor.withValues(alpha: 0.5),
+                    ),
+                    Expanded(
+                      flex: 3,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          dateHeader(
+                            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+                          ),
+                          Expanded(child: eventsBody),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
-            BatchToolbar(
-              batchProvider: calendarBatchProvider,
-              events: eventsAsync.valueOrNull ?? const [],
-              onEditSingle: batch.selectedIds.length == 1
-                  ? () {
-                      final id = batch.selectedIds.first;
-                      ref.read(calendarBatchProvider.notifier).cancel();
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => EventFormPage(eventId: id),
-                        ),
-                      );
-                    }
-                  : null,
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
-              child: TableCalendar(
-                key: calendarKey,
-                firstDay: DateTime.utc(2020, 1, 1),
-                lastDay: DateTime.utc(2040, 12, 31),
-                focusedDay: focused,
-                selectedDayPredicate: (day) =>
-                    DateTimeFormats.isSameDay(day, selected),
-                calendarFormat: CalendarFormat.month,
-                startingDayOfWeek: StartingDayOfWeek.monday,
-                rowHeight: 38,
-                daysOfWeekHeight: 26,
-                headerStyle: HeaderStyle(
-                  titleCentered: true,
-                  formatButtonVisible: false,
-                  titleTextStyle: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: scheme.onSurface,
-                      ) ??
-                      TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: scheme.onSurface,
-                      ),
-                  leftChevronIcon: Icon(
-                    Icons.chevron_left,
-                    color: scheme.onSurface,
-                  ),
-                  rightChevronIcon: Icon(
-                    Icons.chevron_right,
-                    color: scheme.onSurface,
-                  ),
-                ),
-                calendarStyle: CalendarStyle(
-                  outsideDaysVisible: false,
-                  cellMargin: const EdgeInsets.all(2),
-                  markerSize: 4,
-                  markersAnchor: 1.05,
-                  defaultTextStyle: TextStyle(
-                    color: scheme.onSurface,
-                    fontSize: 13,
-                  ),
-                  weekendTextStyle: TextStyle(
-                    color: scheme.onSurface.withValues(alpha: 0.65),
-                    fontSize: 13,
-                  ),
-                  outsideTextStyle: TextStyle(
-                    color: scheme.onSurface.withValues(alpha: 0.35),
-                    fontSize: 13,
-                  ),
-                  todayDecoration: BoxDecoration(
-                    color: scheme.primaryContainer,
-                    shape: BoxShape.circle,
-                  ),
-                  todayTextStyle: TextStyle(
-                    color: scheme.onPrimaryContainer,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                  ),
-                  selectedDecoration: BoxDecoration(
-                    color: scheme.primary,
-                    shape: BoxShape.circle,
-                  ),
-                  selectedTextStyle: TextStyle(
-                    color: scheme.onPrimary,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                  ),
-                  markerDecoration: BoxDecoration(
-                    color: scheme.primary,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                daysOfWeekStyle: DaysOfWeekStyle(
-                  weekdayStyle: TextStyle(
-                    color: scheme.onSurface.withValues(alpha: 0.55),
-                    fontSize: 11,
-                  ),
-                  weekendStyle: TextStyle(
-                    color: scheme.onSurface.withValues(alpha: 0.55),
-                    fontSize: 11,
-                  ),
-                ),
-                eventLoader: (day) {
-                  final key = DateTimeFormats.formatDate(day);
-                  return marked.contains(key) ? const [1] : const [];
-                },
-                onDaySelected: (day, focusedDay) {
-                  ref.read(calendarSelectedDateProvider.notifier).state =
-                      DateTimeFormats.dateOnly(day);
-                  ref.read(calendarFocusedMonthProvider.notifier).state =
-                      DateTime(focusedDay.year, focusedDay.month);
-                  ref.read(homeSelectedDateProvider.notifier).state =
-                      DateTimeFormats.dateOnly(day);
-                },
-                onPageChanged: (focusedDay) {
-                  ref.read(calendarFocusedMonthProvider.notifier).state =
-                      DateTime(focusedDay.year, focusedDay.month);
-                },
-              ),
-            ),
+            batchToolbar,
+            buildCalendar(compact: false),
             Divider(
               height: 1,
               color: theme.dividerColor.withValues(alpha: 0.5),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  DateTimeFormats.formatSectionDate(selected, l10n),
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-            Expanded(
-              child: eventsAsync.when(
-                data: (events) => Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Expanded(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          border: Border(
-                            right: BorderSide(
-                              color: theme.dividerColor.withValues(alpha: 0.5),
-                            ),
-                          ),
-                        ),
-                        child: ListView(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          children: [
-                            TimelineView(
-                              events: events,
-                              compact: true,
-                              batchActive: batch.active,
-                              selectedIds: batch.selectedIds,
-                              onEventTap: (e) =>
-                                  _onItemTap(context, ref, e, batch),
-                              onEventLongPress: (e) => ref
-                                  .read(calendarBatchProvider.notifier)
-                                  .enterWith(e.id),
-                              onToggleComplete: batch.active
-                                  ? null
-                                  : (e) => ref
-                                      .read(eventActionsProvider)
-                                      .toggleTimeline(e.id, !e.isCompleted),
-                              onSwipeEdit: (e) => _editEvent(context, e),
-                              onSwipeDuplicate: (e) => ref
-                                  .read(eventActionsProvider)
-                                  .duplicate(e.id),
-                              onSwipeDelete: (e) =>
-                                  _deleteEvent(context, ref, e),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: _CalendarTodoPanel(
-                        events: events,
-                        dateKey: dateKey,
-                        batch: batch,
-                        onItemTap: (e) => _onItemTap(context, ref, e, batch),
-                        onEnterBatch: (id) => ref
-                            .read(calendarBatchProvider.notifier)
-                            .enterWith(id),
-                        onToggleTodo: (id, v) => ref
-                            .read(eventActionsProvider)
-                            .toggleTodo(id, v),
-                        onSwipeEdit: (e) => _editEvent(context, e),
-                        onSwipeDuplicate: (e) =>
-                            ref.read(eventActionsProvider).duplicate(e.id),
-                        onSwipeDelete: (e) => _deleteEvent(context, ref, e),
-                      ),
-                    ),
-                  ],
-                ),
-                loading: () =>
-                    const Center(child: CircularProgressIndicator.adaptive()),
-                error: (e, _) => Center(child: Text(l10n.errorGeneric('$e'))),
-              ),
-            ),
+            dateHeader(),
+            Expanded(child: eventsBody),
           ],
         ),
       ),

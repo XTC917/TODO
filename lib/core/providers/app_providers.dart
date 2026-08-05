@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../database/app_database.dart';
@@ -22,6 +23,10 @@ enum AppLanguage { system, zh, en }
 
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
   throw UnimplementedError('SharedPreferences must be overridden in main()');
+});
+
+final packageInfoProvider = Provider<PackageInfo>((ref) {
+  throw UnimplementedError('PackageInfo must be overridden in main()');
 });
 
 final appDatabaseProvider = Provider<AppDatabase>((ref) {

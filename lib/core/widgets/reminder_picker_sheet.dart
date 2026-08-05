@@ -40,33 +40,29 @@ class _ReminderPickerSheet extends StatefulWidget {
 
 class _ReminderPickerSheetState extends State<_ReminderPickerSheet> {
   late Set<int> _selected;
+  /// Custom offsets visible as list rows this session; removed when unchecked.
+  late Set<int> _visibleCustomOffsets;
 
   @override
   void initState() {
     super.initState();
     _selected = widget.currentOffsetsSeconds.toSet();
+    _visibleCustomOffsets =
+        ReminderPresets.customOffsetsFrom(widget.currentOffsetsSeconds).toSet();
   }
 
-  bool _isPreset(int? value) {
-    if (value == null || value == kReminderCustomPicker) return false;
-    return ReminderPresets.selectableValues.contains(value);
-  }
-
-  bool _isCustomSelected() =>
-      _selected.any((o) => !_isPreset(o));
-
-  String _customLabel(AppLocalizations l10n) {
-    final customs = _selected.where((o) => !_isPreset(o)).toList()
-      ..sort((a, b) => b.compareTo(a));
-    if (customs.isEmpty) return l10n.reminderCustomOption;
-    if (customs.length == 1) return formatReminderOffset(l10n, customs.first);
-    return customs.map((o) => formatReminderOffset(l10n, o)).join(' · ');
+  List<int> get _sortedVisibleCustoms {
+    final list = _visibleCustomOffsets.toList()..sort((a, b) => b.compareTo(a));
+    return list;
   }
 
   void _toggle(int offset) {
     setState(() {
       if (_selected.contains(offset)) {
         _selected.remove(offset);
+        if (!ReminderPresets.isPresetOffset(offset)) {
+          _visibleCustomOffsets.remove(offset);
+        }
       } else if (_selected.length < kMaxRemindersPerEvent) {
         _selected.add(offset);
       }
@@ -80,8 +76,10 @@ class _ReminderPickerSheetState extends State<_ReminderPickerSheet> {
     );
     if (custom == null || !mounted) return;
     setState(() {
-      if (_selected.length < kMaxRemindersPerEvent) {
-        _selected.add(custom);
+      if (_selected.length >= kMaxRemindersPerEvent) return;
+      _selected.add(custom);
+      if (!ReminderPresets.isPresetOffset(custom)) {
+        _visibleCustomOffsets.add(custom);
       }
     });
   }
@@ -114,7 +112,7 @@ class _ReminderPickerSheetState extends State<_ReminderPickerSheet> {
                 if (untilStart != null) ...[
                   const SizedBox(height: 8),
                   Text(
-                    l10n.timeUntilStart(formatDurationUntil(l10n, untilStart)),
+                    formatDurationUntil(l10n, untilStart),
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.primary,
                       fontWeight: FontWeight.w600,
@@ -125,6 +123,8 @@ class _ReminderPickerSheetState extends State<_ReminderPickerSheet> {
                   const SizedBox(height: 6),
                   Text(
                     formatReminderOffsetsSummary(l10n, _selected.toList()),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
@@ -142,18 +142,13 @@ class _ReminderPickerSheetState extends State<_ReminderPickerSheet> {
                   trailing: _selected.isEmpty
                       ? Icon(Icons.check, color: theme.colorScheme.primary)
                       : null,
-                  onTap: () => setState(() => _selected.clear()),
+                  onTap: () => setState(() {
+                    _selected.clear();
+                    _visibleCustomOffsets.clear();
+                  }),
                 ),
                 for (final value in ReminderPresets.selectableValues)
-                  if (value == kReminderCustomPicker)
-                    ListTile(
-                      title: Text(_customLabel(l10n)),
-                      trailing: _isCustomSelected()
-                          ? Icon(Icons.check, color: theme.colorScheme.primary)
-                          : null,
-                      onTap: _addCustom,
-                    )
-                  else
+                  if (value != kReminderCustomPicker)
                     ListTile(
                       title: Text(formatReminderOffset(l10n, value)),
                       trailing: _selected.contains(value!)
@@ -161,6 +156,19 @@ class _ReminderPickerSheetState extends State<_ReminderPickerSheet> {
                           : null,
                       onTap: () => _toggle(value),
                     ),
+                for (final offset in _sortedVisibleCustoms)
+                  ListTile(
+                    title: Text(formatReminderOffset(l10n, offset)),
+                    trailing: _selected.contains(offset)
+                        ? Icon(Icons.check, color: theme.colorScheme.primary)
+                        : null,
+                    onTap: () => _toggle(offset),
+                  ),
+                ListTile(
+                  title: Text(l10n.reminderCustomOption),
+                  trailing: const Icon(Icons.add),
+                  onTap: _addCustom,
+                ),
               ],
             ),
           ),

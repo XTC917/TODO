@@ -70,29 +70,35 @@ class _EventDetailSheetState extends ConsumerState<_EventDetailSheet> {
     final scheme = theme.colorScheme;
 
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: theme.dividerColor,
-                  borderRadius: BorderRadius.circular(2),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * 0.85,
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: theme.dividerColor,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              event.title,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w700,
+              const SizedBox(height: 20),
+              Text(
+                event.title,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-            ),
             const SizedBox(height: 16),
             _Row(
               label: l10n.detailType,
@@ -148,6 +154,8 @@ class _EventDetailSheetState extends ConsumerState<_EventDetailSheet> {
                             l10n,
                             event.reminderOffsetsSeconds,
                           ),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.bodyLarge?.copyWith(
                             fontWeight: FontWeight.w500,
                           ),
@@ -162,11 +170,9 @@ class _EventDetailSheetState extends ConsumerState<_EventDetailSheet> {
               const SizedBox(height: 8),
               _Row(
                 label: l10n.detailTimeUntilStart,
-                value: l10n.timeUntilStart(
-                  formatDurationUntil(
-                    l10n,
-                    event.reminderAnchorDateTime!.difference(DateTime.now()),
-                  ),
+                value: formatDurationUntil(
+                  l10n,
+                  event.reminderAnchorDateTime!.difference(DateTime.now()),
                 ),
               ),
             ],
@@ -176,6 +182,8 @@ class _EventDetailSheetState extends ConsumerState<_EventDetailSheet> {
               const SizedBox(height: 4),
               Text(
                 event.note!,
+                maxLines: 6,
+                overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
@@ -226,7 +234,8 @@ class _EventDetailSheetState extends ConsumerState<_EventDetailSheet> {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 }
 
@@ -256,6 +265,8 @@ class _Row extends StatelessWidget {
         Expanded(
           child: Text(
             value,
+            maxLines: 4,
+            overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   fontWeight: FontWeight.w500,
                 ),

@@ -482,6 +482,18 @@ abstract class AppLocalizations {
   /// **'Please enter a task title.'**
   String get titleRequired;
 
+  /// No description provided for @titleTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Title must be at most {max} characters.'**
+  String titleTooLong(int max);
+
+  /// No description provided for @noteTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Note must be at most {max} characters.'**
+  String noteTooLong(int max);
+
   /// No description provided for @saveFailedRetry.
   ///
   /// In en, this message translates to:
@@ -860,6 +872,12 @@ abstract class AppLocalizations {
   /// **'Days'**
   String get reminderUnitDays;
 
+  /// No description provided for @reminderSelectedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} reminders selected'**
+  String reminderSelectedCount(int count);
+
   /// No description provided for @done.
   ///
   /// In en, this message translates to:
@@ -881,31 +899,31 @@ abstract class AppLocalizations {
   /// No description provided for @timeUntilStartMinutes.
   ///
   /// In en, this message translates to:
-  /// **'{count} min'**
+  /// **'in {count} min'**
   String timeUntilStartMinutes(int count);
 
   /// No description provided for @timeUntilStartHours.
   ///
   /// In en, this message translates to:
-  /// **'{count} hr'**
+  /// **'in {count} hr'**
   String timeUntilStartHours(int count);
 
   /// No description provided for @timeUntilStartHoursMinutes.
   ///
   /// In en, this message translates to:
-  /// **'{hours} hr {minutes} min'**
+  /// **'in {hours} hr {minutes} min'**
   String timeUntilStartHoursMinutes(int hours, int minutes);
 
   /// No description provided for @timeUntilStartDays.
   ///
   /// In en, this message translates to:
-  /// **'{count} days'**
+  /// **'in {count} days'**
   String timeUntilStartDays(int count);
 
   /// No description provided for @timeUntilStartDaysHours.
   ///
   /// In en, this message translates to:
-  /// **'{days} days {hours} hr'**
+  /// **'in {days} days {hours} hr'**
   String timeUntilStartDaysHours(int days, int hours);
 
   /// No description provided for @detailTimeUntilStart.

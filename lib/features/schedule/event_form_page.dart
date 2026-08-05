@@ -183,11 +183,18 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
     return [
       TextFormField(
         controller: _titleController,
-        decoration: InputDecoration(labelText: l10n.titleLabel),
+        maxLength: kMaxEventTitleLength,
+        decoration: InputDecoration(
+          labelText: l10n.titleLabel,
+          counterText: '',
+        ),
         autovalidateMode: AutovalidateMode.onUserInteraction,
         validator: (v) {
           if (v == null || v.trim().isEmpty) {
             return l10n.titleRequired;
+          }
+          if (v.length > kMaxEventTitleLength) {
+            return l10n.titleTooLong(kMaxEventTitleLength);
           }
           return null;
         },
@@ -277,14 +284,25 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
       TextFormField(
         controller: _noteController,
         minLines: 1,
-        maxLines: 3,
-        decoration: InputDecoration(labelText: l10n.noteLabel),
+        maxLines: 5,
+        maxLength: kMaxEventNoteLength,
+        decoration: InputDecoration(
+          labelText: l10n.noteLabel,
+          alignLabelWithHint: true,
+        ),
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+        validator: (v) {
+          if (v != null && v.length > kMaxEventNoteLength) {
+            return l10n.noteTooLong(kMaxEventNoteLength);
+          }
+          return null;
+        },
       ),
       const SizedBox(height: 8),
       if (_showDate || _showStartEnd || _showDeadline)
         _PickerTile(
           label: l10n.reminderLabel,
-          value: formatReminderOffsetsSummary(l10n, _reminderOffsetsSeconds),
+          value: formatReminderOffsetsForTile(l10n, _reminderOffsetsSeconds),
           icon: Icons.notifications_none_rounded,
           onTap: _pickReminder,
         ),
@@ -541,17 +559,25 @@ class _PickerTile extends StatelessWidget {
             children: [
               Icon(icon, size: 20),
               const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(label,
-                      style: Theme.of(context).textTheme.labelMedium),
-                  Text(value,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: Theme.of(context).textTheme.labelMedium,
+                    ),
+                    Text(
+                      value,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: Theme.of(context)
                           .textTheme
                           .titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w600)),
-                ],
+                          ?.copyWith(fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

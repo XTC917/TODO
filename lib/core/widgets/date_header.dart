@@ -33,7 +33,10 @@ class DateHeader extends StatelessWidget {
             child: Column(
               children: [
                 Text(
-                  DateTimeFormats.formatHeader(selected),
+                  DateTimeFormats.formatHeader(
+                    selected,
+                    Localizations.localeOf(context),
+                  ),
                   textAlign: TextAlign.center,
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w700,

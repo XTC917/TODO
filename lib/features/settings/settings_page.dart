@@ -20,6 +20,7 @@ class SettingsPage extends ConsumerWidget {
     final remindersEnabled = ref.watch(remindersEnabledProvider);
     final language = ref.watch(appLanguageProvider);
     final permissionAsync = ref.watch(notificationPermissionProvider);
+    final appVersion = ref.watch(packageInfoProvider).version;
 
     return Scaffold(
       body: SafeArea(
@@ -277,11 +278,11 @@ class SettingsPage extends ConsumerWidget {
                 ListTile(
                   leading: const Icon(Icons.info_outline_rounded),
                   title: Text(l10n.about),
-                  subtitle: Text(l10n.aboutSubtitle(AppConfig.appVersion)),
+                  subtitle: Text(l10n.aboutSubtitle(appVersion)),
                   onTap: () => showAboutDialog(
                     context: context,
                     applicationName: AppConfig.appName,
-                    applicationVersion: AppConfig.appVersion,
+                    applicationVersion: appVersion,
                     applicationLegalese: l10n.aboutLegalese,
                   ),
                 ),

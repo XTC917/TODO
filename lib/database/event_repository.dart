@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 
 import '../core/utils/date_time_formats.dart';
+import '../core/utils/event_constants.dart';
 import '../core/utils/repeat_expander.dart';
 import '../database/app_database.dart';
 import '../models/enums.dart';
@@ -69,6 +70,13 @@ class EventRepository {
     if (title.isEmpty) {
       throw ArgumentError('Title cannot be empty');
     }
+    if (title.length > kMaxEventTitleLength) {
+      throw ArgumentError('Title too long');
+    }
+    final note = _nullableNote(draft.note);
+    if (note != null && note.length > kMaxEventNoteLength) {
+      throw ArgumentError('Note too long');
+    }
     final now = DateTime.now();
     final groupId = draft.repeatType == RepeatType.oneTime
         ? null
@@ -101,6 +109,16 @@ class EventRepository {
   }
 
   Future<void> update(Event event) async {
+    if (event.title.trim().isEmpty) {
+      throw ArgumentError('Title cannot be empty');
+    }
+    if (event.title.length > kMaxEventTitleLength) {
+      throw ArgumentError('Title too long');
+    }
+    final note = _nullableNote(event.note);
+    if (note != null && note.length > kMaxEventNoteLength) {
+      throw ArgumentError('Note too long');
+    }
     await _db.updateEventRow(_toRow(event.copyWith(updatedAt: DateTime.now())));
   }
 

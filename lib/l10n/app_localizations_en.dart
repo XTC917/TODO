@@ -224,6 +224,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get titleRequired => 'Please enter a task title.';
 
   @override
+  String titleTooLong(int max) {
+    return 'Title must be at most $max characters.';
+  }
+
+  @override
+  String noteTooLong(int max) {
+    return 'Note must be at most $max characters.';
+  }
+
+  @override
   String get saveFailedRetry => 'Save failed. Please try again.';
 
   @override
@@ -427,6 +437,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reminderUnitDays => 'Days';
 
   @override
+  String reminderSelectedCount(int count) {
+    return '$count reminders selected';
+  }
+
+  @override
   String get done => 'Done';
 
   @override
@@ -439,27 +454,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String timeUntilStartMinutes(int count) {
-    return '$count min';
+    return 'in $count min';
   }
 
   @override
   String timeUntilStartHours(int count) {
-    return '$count hr';
+    return 'in $count hr';
   }
 
   @override
   String timeUntilStartHoursMinutes(int hours, int minutes) {
-    return '$hours hr $minutes min';
+    return 'in $hours hr $minutes min';
   }
 
   @override
   String timeUntilStartDays(int count) {
-    return '$count days';
+    return 'in $count days';
   }
 
   @override
   String timeUntilStartDaysHours(int days, int hours) {
-    return '$days days $hours hr';
+    return 'in $days days $hours hr';
   }
 
   @override

@@ -30,6 +30,16 @@ class ReminderPresets {
   static Duration? toDuration(int offsetSeconds) =>
       Duration(seconds: offsetSeconds);
 
+  /// Preset offsets shown in the picker (excludes the custom sentinel).
+  static bool isPresetOffset(int offsetSeconds) {
+    return selectableValues.contains(offsetSeconds);
+  }
+
+  /// Offsets that are not built-in presets (session-only custom rows).
+  static List<int> customOffsetsFrom(Iterable<int> offsets) {
+    return offsets.where((o) => !isPresetOffset(o)).toList();
+  }
+
   /// Maps legacy enum storage strings to seconds (schema v3 → v4 migration).
   static int? fromLegacyStorage(String value) {
     return switch (value) {
@@ -101,7 +111,17 @@ String formatReminderOffsetsSummary(AppLocalizations l10n, List<int> offsets) {
   return sorted.map((o) => formatReminderOffset(l10n, o)).join(' · ');
 }
 
-/// Countdown until anchor time, e.g. "2 hours 15 minutes".
+/// Compact label for form tiles when many reminders are selected.
+String formatReminderOffsetsForTile(AppLocalizations l10n, List<int> offsets) {
+  if (offsets.isEmpty) return l10n.reminderNone;
+  final sorted = [...offsets]..sort((a, b) => b.compareTo(a));
+  if (sorted.length == 1) {
+    return formatReminderOffset(l10n, sorted.first);
+  }
+  return l10n.reminderSelectedCount(sorted.length);
+}
+
+/// Countdown until anchor time, e.g. "2 hours 15 minutes later".
 String formatDurationUntil(AppLocalizations l10n, Duration duration) {
   if (duration.isNegative || duration.inSeconds <= 0) {
     return l10n.timeUntilStartNow;

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../l10n/app_localizations.dart';
@@ -10,7 +11,6 @@ class DateTimeFormats {
   static final ymd = DateFormat('yyyy-MM-dd');
   static final displayDate = DateFormat('yyyy-MM-dd');
   static final monthDay = DateFormat('MM/dd');
-  static final headerDate = DateFormat('MMM d · EEEE');
   static final sectionDate = DateFormat('yyyy.MM.dd');
   static final hm = DateFormat('HH:mm');
   static final hms = DateFormat('HH:mm:ss');
@@ -19,7 +19,11 @@ class DateTimeFormats {
 
   static String formatWeekday(DateTime date) => weekday.format(date);
 
-  static String formatHeader(DateTime date) => headerDate.format(date);
+  static String formatHeader(DateTime date, Locale locale) {
+    final code = locale.languageCode.startsWith('zh') ? 'zh_CN' : 'en_US';
+    final pattern = code.startsWith('zh') ? 'M月d日 · EEEE' : 'MMM d · EEEE';
+    return DateFormat(pattern, code).format(date);
+  }
 
   static String formatMonthDay(DateTime date) => monthDay.format(date);
 

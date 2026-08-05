@@ -109,6 +109,14 @@
     }
   },
   "titleRequired": "Please enter a task title.",
+  "titleTooLong": "Title must be at most {max} characters.",
+  "@titleTooLong": {
+    "placeholders": { "max": { "type": "int" } }
+  },
+  "noteTooLong": "Note must be at most {max} characters.",
+  "@noteTooLong": {
+    "placeholders": { "max": { "type": "int" } }
+  },
   "saveFailedRetry": "Save failed. Please try again.",
   "confirmDeleteTitle": "Delete",
   "confirmDeleteMessage": "Delete this item?",
@@ -201,32 +209,36 @@
   "reminderUnitMinutes": "Minutes",
   "reminderUnitHours": "Hours",
   "reminderUnitDays": "Days",
+  "reminderSelectedCount": "{count} reminders selected",
+  "@reminderSelectedCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
   "done": "Done",
   "timeUntilStart": "Starts in {time}",
   "@timeUntilStart": {
     "placeholders": { "time": { "type": "String" } }
   },
   "timeUntilStartNow": "Starting now",
-  "timeUntilStartMinutes": "{count} min",
+  "timeUntilStartMinutes": "in {count} min",
   "@timeUntilStartMinutes": {
     "placeholders": { "count": { "type": "int" } }
   },
-  "timeUntilStartHours": "{count} hr",
+  "timeUntilStartHours": "in {count} hr",
   "@timeUntilStartHours": {
     "placeholders": { "count": { "type": "int" } }
   },
-  "timeUntilStartHoursMinutes": "{hours} hr {minutes} min",
+  "timeUntilStartHoursMinutes": "in {hours} hr {minutes} min",
   "@timeUntilStartHoursMinutes": {
     "placeholders": {
       "hours": { "type": "int" },
       "minutes": { "type": "int" }
     }
   },
-  "timeUntilStartDays": "{count} days",
+  "timeUntilStartDays": "in {count} days",
   "@timeUntilStartDays": {
     "placeholders": { "count": { "type": "int" } }
   },
-  "timeUntilStartDaysHours": "{days} days {hours} hr",
+  "timeUntilStartDaysHours": "in {days} days {hours} hr",
   "@timeUntilStartDaysHours": {
     "placeholders": {
       "days": { "type": "int" },
