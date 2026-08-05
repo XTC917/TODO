@@ -184,6 +184,17 @@ class EventActions {
     await NotificationService.instance.cancelForEvent(event.id);
     await _ref.read(eventRepositoryProvider).deleteWithScope(event, scope);
   }
+
+  Future<void> batchDelete(Set<int> ids) async {
+    for (final id in ids) {
+      await NotificationService.instance.cancelForEvent(id);
+    }
+    await _ref.read(eventRepositoryProvider).batchDelete(ids);
+  }
+
+  Future<void> batchUpdateDate(Set<int> ids, String newDate) {
+    return _ref.read(eventRepositoryProvider).batchUpdateDate(ids, newDate);
+  }
 }
 
 final eventActionsProvider = Provider<EventActions>((ref) {

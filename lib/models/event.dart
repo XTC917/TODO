@@ -42,13 +42,20 @@ class Event {
 
   bool get isTodo => taskType == TaskType.todo;
   bool get isSchedule => taskType == TaskType.schedule;
+  bool get hasDate => date.isNotEmpty;
+  bool get isNoTimeTodo => isTodo && todoTimeMode == TodoTimeMode.noTime;
 
-  /// Appears on the home Timeline (schedules + time-block todos).
+  /// Appears on the home Timeline (schedules + time-block todos with date).
   bool get showsInTimeline =>
-      isSchedule || (isTodo && todoTimeMode == TodoTimeMode.timeBlock);
+      hasDate &&
+      (isSchedule || (isTodo && todoTimeMode == TodoTimeMode.timeBlock));
 
   /// Appears in Todo list (all todo modes).
   bool get showsInTodoList => isTodo;
+
+  /// Todos tied to a specific calendar day on Home.
+  bool showsOnHomeDate(String dateKey) =>
+      showsInTodoList && hasDate && date == dateKey;
 
   /// Visual completion state for timeline rows.
   bool isTimelineDone(DateTime now) {
@@ -61,11 +68,13 @@ class Event {
   bool isTodoDone() => isTodo && isCompleted;
 
   bool _isPastEnd(DateTime now) {
+    if (!hasDate || startTime.isEmpty || endTime.isEmpty) return false;
     final end = _dateTimeAt(endTime);
     return !now.isBefore(end);
   }
 
   DateTime _dateTimeAt(String time) {
+    if (!hasDate || time.isEmpty) return DateTime.now();
     final parts = time.split(':');
     final d = DateTime.parse(date);
     return DateTime(d.year, d.month, d.day, int.parse(parts[0]), int.parse(parts[1]));
@@ -75,13 +84,20 @@ class Event {
   DateTime get endDateTime => _dateTimeAt(endTime);
 
   String get timeLabel {
+    if (isNoTimeTodo) return '';
     if (isSchedule || todoTimeMode == TodoTimeMode.timeBlock) {
+      if (startTime.isEmpty || endTime.isEmpty) return '';
       return '$startTime – $endTime';
     }
     if (todoTimeMode == TodoTimeMode.deadline) {
-      return 'Deadline $endTime';
+      return endTime.isEmpty ? '' : 'Deadline $endTime';
     }
     return '';
+  }
+
+  String get dateLabel {
+    if (!hasDate) return '';
+    return date;
   }
 
   Event copyWith({

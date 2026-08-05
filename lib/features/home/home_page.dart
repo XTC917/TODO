@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/providers/app_providers.dart';
+import '../../../core/providers/batch_providers.dart';
 import '../../../core/providers/focus_providers.dart';
 import '../../../core/utils/date_time_formats.dart';
+import '../../../core/widgets/batch_toolbar.dart';
 import '../../../core/widgets/compact_todo_card.dart';
 import '../../../core/widgets/date_header.dart';
 import '../../../core/widgets/day_info_bar.dart';
+import '../../../core/widgets/event_detail_sheet.dart';
 import '../../../models/event.dart';
 import '../schedule/event_form_page.dart';
 import 'widgets/timeline_view.dart';
@@ -24,174 +27,237 @@ class _HomePageState extends ConsumerState<HomePage> {
     final selected = ref.watch(homeSelectedDateProvider);
     final eventsAsync = ref.watch(eventsForDateProvider(selected));
     final summaryAsync = ref.watch(daySummaryProvider(selected));
+    final batch = ref.watch(homeBatchProvider);
+    final dateKey = DateTimeFormats.formatDate(selected);
 
     return Scaffold(
       body: SafeArea(
-        child: GestureDetector(
-          behavior: HitTestBehavior.translucent,
-          onHorizontalDragEnd: (details) {
-            final velocity = details.primaryVelocity ?? 0;
-            if (velocity < -200) {
-              ref.read(homeSelectedDateProvider.notifier).state =
-                  selected.add(const Duration(days: 1));
-            } else if (velocity > 200) {
-              ref.read(homeSelectedDateProvider.notifier).state =
-                  selected.subtract(const Duration(days: 1));
-            }
-          },
-          child: eventsAsync.when(
-            data: (events) {
-              final todos = events.where((e) => e.showsInTodoList).toList()
-                ..sort((a, b) {
-                  if (a.isCompleted != b.isCompleted) {
-                    return a.isCompleted ? 1 : -1;
-                  }
-                  return a.startTime.compareTo(b.startTime);
-                });
-              final pending =
-                  todos.where((e) => !e.isCompleted).toList(growable: false);
-              final done =
-                  todos.where((e) => e.isCompleted).toList(growable: false);
+        child: Column(
+          children: [
+            BatchToolbar(
+              batchProvider: homeBatchProvider,
+              events: eventsAsync.valueOrNull ?? const [],
+              onEditSingle: batch.selectedIds.length == 1
+                  ? () {
+                      final id = batch.selectedIds.first;
+                      ref.read(homeBatchProvider.notifier).cancel();
+                      _openForm(eventId: id);
+                    }
+                  : null,
+            ),
+            Expanded(
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onHorizontalDragEnd: batch.active
+                    ? null
+                    : (details) {
+                        final velocity = details.primaryVelocity ?? 0;
+                        if (velocity < -200) {
+                          ref.read(homeSelectedDateProvider.notifier).state =
+                              selected.add(const Duration(days: 1));
+                        } else if (velocity > 200) {
+                          ref.read(homeSelectedDateProvider.notifier).state =
+                              selected.subtract(const Duration(days: 1));
+                        }
+                      },
+                child: eventsAsync.when(
+                  data: (events) {
+                    final todos = events
+                        .where((e) => e.showsOnHomeDate(dateKey))
+                        .toList()
+                      ..sort((a, b) => a.startTime.compareTo(b.startTime));
+                    final pending =
+                        todos.where((e) => !e.isCompleted).toList();
+                    final done =
+                        todos.where((e) => e.isCompleted).toList();
 
-              return CustomScrollView(
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: DateHeader(
-                      selected: selected,
-                      onBackToToday: () {
-                        ref.read(homeSelectedDateProvider.notifier).state =
-                            DateTimeFormats.dateOnly(DateTime.now());
-                      },
-                    ),
-                  ),
-                  SliverToBoxAdapter(
-                    child: summaryAsync.when(
-                      data: (s) => DayInfoBar(summary: s),
-                      loading: () => const SizedBox(height: 40),
-                      error: (_, __) => const SizedBox.shrink(),
-                    ),
-                  ),
-                  SliverToBoxAdapter(
-                    child: TimelineView(
-                      events: events,
-                      onEventTap: (e) => _openForm(eventId: e.id),
-                      onEventLongPress: (e) => _showMenu(e),
-                      onToggleComplete: (e) => _toggleTimeline(e),
-                    ),
-                  ),
-                  const SliverToBoxAdapter(child: SizedBox(height: 20)),
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Text(
-                        "Today's Todo",
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                      ),
-                    ),
-                  ),
-                  SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final todo = pending.elementAt(index);
-                        return Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 6, 20, 0),
-                          child: _AnimatedTodoCard(
-                            key: ValueKey('pending-${todo.id}'),
-                            event: todo,
-                            completed: false,
-                            onTap: () => _openForm(eventId: todo.id),
-                            onToggle: (v) => _toggleTodo(todo, v),
-                            onLongPress: () => _showMenu(todo),
+                    return CustomScrollView(
+                      slivers: [
+                        SliverToBoxAdapter(
+                          child: DateHeader(
+                            selected: selected,
+                            onBackToToday: () {
+                              ref
+                                  .read(homeSelectedDateProvider.notifier)
+                                  .state = DateTimeFormats.dateOnly(
+                                DateTime.now(),
+                              );
+                            },
                           ),
-                        );
-                      },
-                      childCount: pending.length,
-                    ),
-                  ),
-                  if (done.isNotEmpty) ...[
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                        child: InkWell(
-                          onTap: () {
-                            ref
-                                .read(completedSectionExpandedProvider.notifier)
-                                .state =
-                                !ref.read(completedSectionExpandedProvider);
-                          },
-                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        SliverToBoxAdapter(
+                          child: summaryAsync.when(
+                            data: (s) => DayInfoBar(summary: s),
+                            loading: () => const SizedBox(height: 40),
+                            error: (_, __) => const SizedBox.shrink(),
+                          ),
+                        ),
+                        SliverToBoxAdapter(
+                          child: TimelineView(
+                            events: events,
+                            batchActive: batch.active,
+                            selectedIds: batch.selectedIds,
+                            onEventTap: (e) => _onTimelineTap(e),
+                            onEventLongPress: (e) => _enterBatch(e.id),
+                            onToggleComplete: batch.active
+                                ? null
+                                : (e) => _toggleTimeline(e),
+                          ),
+                        ),
+                        const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                        SliverToBoxAdapter(
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 6),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  ref.watch(completedSectionExpandedProvider)
-                                      ? Icons.expand_less
-                                      : Icons.expand_more,
-                                  size: 18,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'Completed (${done.length})',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .labelLarge
-                                      ?.copyWith(fontWeight: FontWeight.w600),
-                                ),
-                              ],
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 20),
+                            child: Text(
+                              "Today's Todo",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w700),
                             ),
                           ),
                         ),
-                      ),
-                    ),
-                    if (ref.watch(completedSectionExpandedProvider))
-                      SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final todo = done.elementAt(index);
-                            return Padding(
-                              padding: const EdgeInsets.fromLTRB(20, 6, 20, 0),
-                              child: _AnimatedTodoCard(
-                                key: ValueKey('done-${todo.id}'),
-                                event: todo,
-                                completed: true,
-                                onTap: () => _openForm(eventId: todo.id),
-                                onToggle: (v) => _toggleTodo(todo, v),
-                                onLongPress: () => _showMenu(todo),
-                              ),
-                            );
-                          },
-                          childCount: done.length,
+                        SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                              final todo = pending[index];
+                              return Padding(
+                                padding:
+                                    const EdgeInsets.fromLTRB(20, 6, 20, 0),
+                                child: CompactTodoCard(
+                                  key: ValueKey('pending-${todo.id}'),
+                                  event: todo,
+                                  completed: false,
+                                  batchActive: batch.active,
+                                  selected:
+                                      batch.selectedIds.contains(todo.id),
+                                  onTap: () => _onTodoTap(todo),
+                                  onLongPress: () => _enterBatch(todo.id),
+                                  onToggle: (v) =>
+                                      ref.read(eventActionsProvider).toggleTodo(
+                                            todo.id,
+                                            v,
+                                          ),
+                                ),
+                              );
+                            },
+                            childCount: pending.length,
+                          ),
                         ),
-                      ),
-                  ],
-                  const SliverToBoxAdapter(child: SizedBox(height: 100)),
-                ],
-              );
-            },
-            loading: () =>
-                const Center(child: CircularProgressIndicator.adaptive()),
-            error: (e, _) => Center(child: Text('Load failed: $e')),
-          ),
+                        if (done.isNotEmpty) ...[
+                          SliverToBoxAdapter(
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                              child: InkWell(
+                                onTap: () {
+                                  ref
+                                      .read(completedSectionExpandedProvider
+                                          .notifier)
+                                      .state = !ref.read(
+                                    completedSectionExpandedProvider,
+                                  );
+                                },
+                                child: Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 6),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        ref.watch(
+                                                completedSectionExpandedProvider)
+                                            ? Icons.expand_less
+                                            : Icons.expand_more,
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'Completed (${done.length})',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelLarge
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          if (ref.watch(completedSectionExpandedProvider))
+                            SliverList(
+                              delegate: SliverChildBuilderDelegate(
+                                (context, index) {
+                                  final todo = done[index];
+                                  return Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                        20, 6, 20, 0),
+                                    child: CompactTodoCard(
+                                      key: ValueKey('done-${todo.id}'),
+                                      event: todo,
+                                      completed: true,
+                                      batchActive: batch.active,
+                                      selected: batch.selectedIds
+                                          .contains(todo.id),
+                                      onTap: () => _onTodoTap(todo),
+                                      onLongPress: () =>
+                                          _enterBatch(todo.id),
+                                      onToggle: (v) => ref
+                                          .read(eventActionsProvider)
+                                          .toggleTodo(todo.id, v),
+                                    ),
+                                  );
+                                },
+                                childCount: done.length,
+                              ),
+                            ),
+                        ],
+                        const SliverToBoxAdapter(child: SizedBox(height: 100)),
+                      ],
+                    );
+                  },
+                  loading: () => const Center(
+                    child: CircularProgressIndicator.adaptive(),
+                  ),
+                  error: (e, _) => Center(child: Text('Load failed: $e')),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _openForm(initialDate: selected),
-        child: const Icon(Icons.add_rounded),
-      ),
+      floatingActionButton: batch.active
+          ? null
+          : FloatingActionButton(
+              onPressed: () => _openForm(initialDate: selected),
+              child: const Icon(Icons.add_rounded),
+            ),
     );
   }
 
-  void _showMenu(Event event) {
-    showEventContextMenu(
-      context: context,
-      ref: ref,
-      event: event,
-      onEdit: () => _openForm(eventId: event.id),
-      onDeleted: () {},
-    );
+  void _enterBatch(int id) {
+    ref.read(homeBatchProvider.notifier).enterWith(id);
+  }
+
+  void _onTimelineTap(Event event) {
+    final batch = ref.read(homeBatchProvider);
+    if (batch.active) {
+      ref.read(homeBatchProvider.notifier).toggle(event.id);
+      return;
+    }
+    showEventDetailSheet(context: context, ref: ref, event: event);
+  }
+
+  void _onTodoTap(Event todo) {
+    final batch = ref.read(homeBatchProvider);
+    if (batch.active) {
+      ref.read(homeBatchProvider.notifier).toggle(todo.id);
+      return;
+    }
+    showEventDetailSheet(context: context, ref: ref, event: todo);
   }
 
   Future<void> _toggleTimeline(Event event) async {
@@ -201,10 +267,6 @@ class _HomePageState extends ConsumerState<HomePage> {
         .toggleTimeline(event.id, !done);
   }
 
-  Future<void> _toggleTodo(Event todo, bool completed) async {
-    await ref.read(eventActionsProvider).toggleTodo(todo.id, completed);
-  }
-
   Future<void> _openForm({int? eventId, DateTime? initialDate}) {
     return Navigator.of(context).push(
       MaterialPageRoute(
@@ -212,67 +274,6 @@ class _HomePageState extends ConsumerState<HomePage> {
           eventId: eventId,
           initialDate: initialDate,
         ),
-      ),
-    );
-  }
-}
-
-class _AnimatedTodoCard extends StatefulWidget {
-  const _AnimatedTodoCard({
-    super.key,
-    required this.event,
-    required this.completed,
-    required this.onTap,
-    required this.onToggle,
-    this.onLongPress,
-  });
-
-  final Event event;
-  final bool completed;
-  final VoidCallback onTap;
-  final ValueChanged<bool> onToggle;
-  final VoidCallback? onLongPress;
-
-  @override
-  State<_AnimatedTodoCard> createState() => _AnimatedTodoCardState();
-}
-
-class _AnimatedTodoCardState extends State<_AnimatedTodoCard>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scale;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 350),
-    );
-    _scale = Tween<double>(begin: 1, end: 0.97).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ScaleTransition(
-      scale: _scale,
-      child: CompactTodoCard(
-        event: widget.event,
-        completed: widget.completed,
-        onTap: widget.onTap,
-        onLongPress: widget.onLongPress,
-        onToggle: (v) {
-          _controller.forward().then((_) => _controller.reverse());
-          widget.onToggle(v);
-        },
       ),
     );
   }

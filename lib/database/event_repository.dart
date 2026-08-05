@@ -17,7 +17,9 @@ class EventRepository {
     return _db.watchAllEvents().asyncMap((rows) async {
       await _autoCompleteSchedules(rows);
       final domain = rows.map(_toDomain).toList();
-      return RepeatExpander.expandForDate(domain, DateTime.parse(date));
+      return RepeatExpander.expandForDate(domain, DateTime.parse(date))
+          .where((e) => e.hasDate && e.date == date)
+          .toList();
     });
   }
 
@@ -59,6 +61,10 @@ class EventRepository {
   }
 
   Future<int> create(EventDraft draft) async {
+    final title = draft.title.trim();
+    if (title.isEmpty) {
+      throw ArgumentError('Title cannot be empty');
+    }
     final now = DateTime.now();
     final groupId = draft.repeatType == RepeatType.oneTime
         ? null
@@ -66,7 +72,7 @@ class EventRepository {
 
     final id = await _db.insertEvent(
       EventsCompanion.insert(
-        title: draft.title.trim(),
+        title: title,
         date: draft.date,
         startTime: draft.startTime,
         endTime: draft.endTime,
@@ -155,6 +161,20 @@ class EventRepository {
   }
 
   Future<void> delete(int id) => _db.deleteEvent(id);
+
+  Future<void> batchDelete(Set<int> ids) async {
+    for (final id in ids) {
+      await delete(id);
+    }
+  }
+
+  Future<void> batchUpdateDate(Set<int> ids, String newDate) async {
+    for (final id in ids) {
+      final event = await getById(id);
+      if (event == null || !event.hasDate) continue;
+      await update(event.copyWith(date: newDate));
+    }
+  }
 
   Future<void> deleteWithScope(
     Event event,

@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../models/event.dart';
-import '../theme/app_colors.dart';
 
-/// Compact todo row (~55% height of full EventCard).
+/// Compact todo card — distinct from Timeline axis rows.
 class CompactTodoCard extends StatelessWidget {
   const CompactTodoCard({
     super.key,
@@ -12,6 +11,8 @@ class CompactTodoCard extends StatelessWidget {
     required this.onTap,
     required this.onToggle,
     this.onLongPress,
+    this.selected = false,
+    this.batchActive = false,
   });
 
   final Event event;
@@ -19,11 +20,13 @@ class CompactTodoCard extends StatelessWidget {
   final VoidCallback onTap;
   final ValueChanged<bool> onToggle;
   final VoidCallback? onLongPress;
+  final bool selected;
+  final bool batchActive;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final accent = AppColors.fromHex(event.color);
+    final primary = theme.colorScheme.primary;
     final timeLabel = event.timeLabel;
 
     return Material(
@@ -34,13 +37,21 @@ class CompactTodoCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         child: Ink(
           decoration: BoxDecoration(
-            color: theme.cardTheme.color,
+            color: selected
+                ? primary.withValues(alpha: 0.1)
+                : theme.cardTheme.color,
             borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: selected
+                  ? primary
+                  : Colors.transparent,
+              width: selected ? 1.5 : 0,
+            ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
               ),
             ],
           ),
@@ -50,28 +61,40 @@ class CompactTodoCard extends StatelessWidget {
                 width: 4,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: accent,
+                  color: primary.withValues(alpha: completed ? 0.35 : 1),
                   borderRadius: const BorderRadius.horizontal(
                     left: Radius.circular(14),
                   ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.only(left: 6),
-                child: SizedBox(
-                  width: 32,
-                  height: 32,
-                  child: Checkbox(
-                    value: completed,
-                    onChanged: (v) => onToggle(v ?? false),
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    visualDensity: VisualDensity.compact,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(4),
+              if (batchActive)
+                Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: Icon(
+                    selected
+                        ? Icons.check_circle
+                        : Icons.radio_button_unchecked,
+                    color: selected ? primary : theme.dividerColor,
+                    size: 22,
+                  ),
+                )
+              else
+                Padding(
+                  padding: const EdgeInsets.only(left: 6),
+                  child: SizedBox(
+                    width: 32,
+                    height: 32,
+                    child: Checkbox(
+                      value: completed,
+                      onChanged: (v) => onToggle(v ?? false),
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      visualDensity: VisualDensity.compact,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4),
+                      ),
                     ),
                   ),
                 ),
-              ),
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(4, 8, 12, 8),

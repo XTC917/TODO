@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/providers/app_providers.dart';
-import '../../core/theme/app_colors.dart';
+import '../../core/utils/event_constants.dart';
+import '../../core/utils/theme_event_color.dart';
 import '../../core/utils/date_time_formats.dart';
 import '../../models/enums.dart';
 import '../../models/event.dart';
@@ -34,7 +35,6 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
   late TimeOfDay _start;
   late TimeOfDay _end;
   late TimeOfDay _deadline;
-  late String _color;
   late TaskType _taskType;
   late TodoTimeMode _todoTimeMode;
   late RepeatType _repeatType;
@@ -51,8 +51,7 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
     _start = TimeOfDay(hour: now.hour, minute: (now.minute ~/ 5) * 5);
     final endMinutes = _start.hour * 60 + _start.minute + 60;
     _end = TimeOfDay(hour: (endMinutes ~/ 60) % 24, minute: endMinutes % 60);
-    _deadline = TimeOfDay(hour: 18, minute: 0);
-    _color = AppColors.toHex(AppColors.eventPalette.first);
+    _deadline = const TimeOfDay(hour: 18, minute: 0);
     _taskType = widget.forceTaskType ?? TaskType.todo;
     _todoTimeMode = TodoTimeMode.timeBlock;
     _repeatType = RepeatType.oneTime;
@@ -77,11 +76,16 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
       _existing = event;
       _titleController.text = event.title;
       _noteController.text = event.note ?? '';
-      _date = DateTimeFormats.parseDate(event.date);
-      _start = _parseTime(event.startTime);
-      _end = _parseTime(event.endTime);
-      _deadline = _parseTime(event.endTime);
-      _color = event.color;
+      _date = event.hasDate
+          ? DateTimeFormats.parseDate(event.date)
+          : DateTimeFormats.dateOnly(DateTime.now());
+      if (event.startTime.isNotEmpty) {
+        _start = _parseTime(event.startTime);
+      }
+      if (event.endTime.isNotEmpty) {
+        _end = _parseTime(event.endTime);
+        _deadline = _parseTime(event.endTime);
+      }
       _taskType = event.taskType;
       _todoTimeMode = event.todoTimeMode;
       _repeatType = event.repeatType;
@@ -115,6 +119,11 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
   bool get _showDeadline =>
       _taskType == TaskType.todo && _todoTimeMode == TodoTimeMode.deadline;
 
+  bool get _showNoTime =>
+      _taskType == TaskType.todo && _todoTimeMode == TodoTimeMode.noTime;
+
+  bool get _showDate => !_showNoTime;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -138,8 +147,13 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
                   TextFormField(
                     controller: _titleController,
                     decoration: const InputDecoration(labelText: 'Title'),
-                    validator: (v) =>
-                        v == null || v.trim().isEmpty ? 'Required' : null,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return '请输入任务标题。';
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 16),
                   if (widget.forceTaskType == null) ...[
@@ -183,13 +197,15 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
                       onChanged: (v) => setState(() => _todoTimeMode = v!),
                     ),
                   ],
-                  const SizedBox(height: 8),
-                  _PickerTile(
-                    label: 'Date',
-                    value: DateTimeFormats.formatDate(_date),
-                    icon: Icons.calendar_today_rounded,
-                    onTap: _pickDate,
-                  ),
+                  if (_showDate) ...[
+                    const SizedBox(height: 8),
+                    _PickerTile(
+                      label: 'Date',
+                      value: DateTimeFormats.formatDate(_date),
+                      icon: Icons.calendar_today_rounded,
+                      onTap: _pickDate,
+                    ),
+                  ],
                   if (_showStartEnd) ...[
                     const SizedBox(height: 12),
                     Row(
@@ -245,32 +261,6 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
                             DropdownMenuItem(value: r, child: Text(r.label)))
                         .toList(),
                     onChanged: (v) => setState(() => _reminderType = v!),
-                  ),
-                  const SizedBox(height: 16),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: AppColors.eventPalette.map((color) {
-                      final hex = AppColors.toHex(color);
-                      final selected = hex == _color;
-                      return GestureDetector(
-                        onTap: () => setState(() => _color = hex),
-                        child: Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: color,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: selected
-                                  ? Theme.of(context).colorScheme.onSurface
-                                  : Colors.transparent,
-                              width: 2.5,
-                            ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
@@ -337,18 +327,29 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
     if (picked != null) setState(() => _deadline = picked);
   }
 
-  (String start, String end) _resolveTimes() {
+  (String date, String start, String end) _resolveFields() {
+    if (_showNoTime) {
+      return (kNoDate, '', '');
+    }
+    final dateStr = DateTimeFormats.formatDate(_date);
     if (_taskType == TaskType.schedule ||
         _todoTimeMode == TodoTimeMode.timeBlock) {
-      return (_formatTime(_start), _formatTime(_end));
+      return (dateStr, _formatTime(_start), _formatTime(_end));
     }
     if (_todoTimeMode == TodoTimeMode.deadline) {
-      return ('00:00', _formatTime(_deadline));
+      return (dateStr, '00:00', _formatTime(_deadline));
     }
-    return ('00:00', '00:00');
+    return (dateStr, '00:00', '00:00');
   }
 
   Future<void> _save() async {
+    final title = _titleController.text.trim();
+    if (title.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('请输入任务标题。')),
+      );
+      return;
+    }
     if (!_formKey.currentState!.validate()) return;
 
     if (_showStartEnd) {
@@ -364,8 +365,8 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
 
     setState(() => _loading = true);
     final actions = ref.read(eventActionsProvider);
-    final date = DateTimeFormats.formatDate(_date);
-    final times = _resolveTimes();
+    final fields = _resolveFields();
+    final color = themeEventColorHex(ref);
     final todoMode =
         _taskType == TaskType.schedule ? TodoTimeMode.timeBlock : _todoTimeMode;
 
@@ -373,12 +374,12 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
       if (widget.isEditing && _existing != null) {
         await actions.update(
           _existing!.copyWith(
-            title: _titleController.text,
-            date: date,
-            startTime: times.$1,
-            endTime: times.$2,
+            title: title,
+            date: fields.$1,
+            startTime: fields.$2,
+            endTime: fields.$3,
             note: _noteController.text,
-            color: _color,
+            color: color,
             taskType: _taskType,
             todoTimeMode: todoMode,
             repeatType: _repeatType,
@@ -388,26 +389,30 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
       } else {
         await actions.create(
           EventDraft(
-            title: _titleController.text,
-            date: date,
-            startTime: times.$1,
-            endTime: times.$2,
+            title: title,
+            date: fields.$1,
+            startTime: fields.$2,
+            endTime: fields.$3,
             note: _noteController.text,
-            color: _color,
+            color: color,
             taskType: _taskType,
             todoTimeMode: todoMode,
             repeatType: _repeatType,
             reminderType: _reminderType,
           ),
         );
-        ref.read(homeSelectedDateProvider.notifier).state = _date;
+        if (fields.$1.isNotEmpty) {
+          ref.read(homeSelectedDateProvider.notifier).state =
+              DateTimeFormats.parseDate(fields.$1);
+        }
       }
       if (!mounted) return;
       Navigator.of(context).pop();
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Save failed: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('保存失败，请稍后重试。')),
+      );
     } finally {
       if (mounted) setState(() => _loading = false);
     }
