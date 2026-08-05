@@ -33,8 +33,10 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
   late DateTime _date;
   late TimeOfDay _start;
   late TimeOfDay _end;
+  late TimeOfDay _deadline;
   late String _color;
   late TaskType _taskType;
+  late TodoTimeMode _todoTimeMode;
   late RepeatType _repeatType;
   late ReminderType _reminderType;
   Event? _existing;
@@ -49,8 +51,10 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
     _start = TimeOfDay(hour: now.hour, minute: (now.minute ~/ 5) * 5);
     final endMinutes = _start.hour * 60 + _start.minute + 60;
     _end = TimeOfDay(hour: (endMinutes ~/ 60) % 24, minute: endMinutes % 60);
+    _deadline = TimeOfDay(hour: 18, minute: 0);
     _color = AppColors.toHex(AppColors.eventPalette.first);
-    _taskType = widget.forceTaskType ?? TaskType.schedule;
+    _taskType = widget.forceTaskType ?? TaskType.todo;
+    _todoTimeMode = TodoTimeMode.timeBlock;
     _repeatType = RepeatType.oneTime;
     _reminderType = ReminderType.none;
 
@@ -76,8 +80,10 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
       _date = DateTimeFormats.parseDate(event.date);
       _start = _parseTime(event.startTime);
       _end = _parseTime(event.endTime);
+      _deadline = _parseTime(event.endTime);
       _color = event.color;
       _taskType = event.taskType;
+      _todoTimeMode = event.todoTimeMode;
       _repeatType = event.repeatType;
       _reminderType = event.reminderType;
       _initialized = true;
@@ -101,6 +107,13 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
     _noteController.dispose();
     super.dispose();
   }
+
+  bool get _showStartEnd =>
+      _taskType == TaskType.schedule ||
+      (_taskType == TaskType.todo && _todoTimeMode == TodoTimeMode.timeBlock);
+
+  bool get _showDeadline =>
+      _taskType == TaskType.todo && _todoTimeMode == TodoTimeMode.deadline;
 
   @override
   Widget build(BuildContext context) {
@@ -130,49 +143,86 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
                   ),
                   const SizedBox(height: 16),
                   if (widget.forceTaskType == null) ...[
-                    Text('Task Type',
-                        style: Theme.of(context).textTheme.titleSmall),
-                    RadioListTile<TaskType>(
-                      title: const Text('Schedule'),
-                      value: TaskType.schedule,
-                      groupValue: _taskType,
-                      onChanged: (v) => setState(() => _taskType = v!),
-                    ),
+                    Text('Type', style: Theme.of(context).textTheme.titleSmall),
                     RadioListTile<TaskType>(
                       title: const Text('Todo'),
                       value: TaskType.todo,
                       groupValue: _taskType,
                       onChanged: (v) => setState(() => _taskType = v!),
                     ),
+                    RadioListTile<TaskType>(
+                      title: const Text('Schedule'),
+                      value: TaskType.schedule,
+                      groupValue: _taskType,
+                      onChanged: (v) => setState(() => _taskType = v!),
+                    ),
                   ],
+                  if (_taskType == TaskType.todo) ...[
+                    const SizedBox(height: 8),
+                    Text('Todo Time',
+                        style: Theme.of(context).textTheme.titleSmall),
+                    RadioListTile<TodoTimeMode>(
+                      title: const Text('Time Block'),
+                      subtitle: const Text('Shows in Timeline & Todo'),
+                      value: TodoTimeMode.timeBlock,
+                      groupValue: _todoTimeMode,
+                      onChanged: (v) => setState(() => _todoTimeMode = v!),
+                    ),
+                    RadioListTile<TodoTimeMode>(
+                      title: const Text('Deadline'),
+                      subtitle: const Text('Todo only, due by time'),
+                      value: TodoTimeMode.deadline,
+                      groupValue: _todoTimeMode,
+                      onChanged: (v) => setState(() => _todoTimeMode = v!),
+                    ),
+                    RadioListTile<TodoTimeMode>(
+                      title: const Text('No Time'),
+                      subtitle: const Text('Todo only, no time'),
+                      value: TodoTimeMode.noTime,
+                      groupValue: _todoTimeMode,
+                      onChanged: (v) => setState(() => _todoTimeMode = v!),
+                    ),
+                  ],
+                  const SizedBox(height: 8),
                   _PickerTile(
                     label: 'Date',
                     value: DateTimeFormats.formatDate(_date),
                     icon: Icons.calendar_today_rounded,
                     onTap: _pickDate,
                   ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _PickerTile(
-                          label: 'Start',
-                          value: _formatTime(_start),
-                          icon: Icons.schedule_rounded,
-                          onTap: () => _pickTime(isStart: true),
+                  if (_showStartEnd) ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _PickerTile(
+                            label: 'Start',
+                            value: _formatTime(_start),
+                            icon: Icons.schedule_rounded,
+                            onTap: () => _pickTime(isStart: true),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _PickerTile(
-                          label: 'End',
-                          value: _formatTime(_end),
-                          icon: Icons.schedule_rounded,
-                          onTap: () => _pickTime(isStart: false),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _PickerTile(
+                            label: 'End',
+                            value: _formatTime(_end),
+                            icon: Icons.schedule_rounded,
+                            onTap: () => _pickTime(isStart: false),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+                  ],
+                  if (_showDeadline) ...[
+                    const SizedBox(height: 12),
+                    _PickerTile(
+                      label: 'Deadline',
+                      value: _formatTime(_deadline),
+                      icon: Icons.access_time_rounded,
+                      onTap: _pickDeadline,
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   Text('Repeat',
                       style: Theme.of(context).textTheme.titleSmall),
@@ -188,7 +238,7 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
                   Text('Reminder',
                       style: Theme.of(context).textTheme.titleSmall),
                   DropdownButtonFormField<ReminderType>(
-                    value: _reminderType,
+                    initialValue: _reminderType,
                     decoration: const InputDecoration(labelText: 'Reminder'),
                     items: ReminderType.values
                         .map((r) =>
@@ -275,20 +325,49 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
     });
   }
 
+  Future<void> _pickDeadline() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _deadline,
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+        child: child!,
+      ),
+    );
+    if (picked != null) setState(() => _deadline = picked);
+  }
+
+  (String start, String end) _resolveTimes() {
+    if (_taskType == TaskType.schedule ||
+        _todoTimeMode == TodoTimeMode.timeBlock) {
+      return (_formatTime(_start), _formatTime(_end));
+    }
+    if (_todoTimeMode == TodoTimeMode.deadline) {
+      return ('00:00', _formatTime(_deadline));
+    }
+    return ('00:00', '00:00');
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-    final startMin = _start.hour * 60 + _start.minute;
-    final endMin = _end.hour * 60 + _end.minute;
-    if (endMin <= startMin) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('End time must be after start time')),
-      );
-      return;
+
+    if (_showStartEnd) {
+      final startMin = _start.hour * 60 + _start.minute;
+      final endMin = _end.hour * 60 + _end.minute;
+      if (endMin <= startMin) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('End time must be after start time')),
+        );
+        return;
+      }
     }
 
     setState(() => _loading = true);
     final actions = ref.read(eventActionsProvider);
     final date = DateTimeFormats.formatDate(_date);
+    final times = _resolveTimes();
+    final todoMode =
+        _taskType == TaskType.schedule ? TodoTimeMode.timeBlock : _todoTimeMode;
 
     try {
       if (widget.isEditing && _existing != null) {
@@ -296,11 +375,12 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
           _existing!.copyWith(
             title: _titleController.text,
             date: date,
-            startTime: _formatTime(_start),
-            endTime: _formatTime(_end),
+            startTime: times.$1,
+            endTime: times.$2,
             note: _noteController.text,
             color: _color,
             taskType: _taskType,
+            todoTimeMode: todoMode,
             repeatType: _repeatType,
             reminderType: _reminderType,
           ),
@@ -310,11 +390,12 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
           EventDraft(
             title: _titleController.text,
             date: date,
-            startTime: _formatTime(_start),
-            endTime: _formatTime(_end),
+            startTime: times.$1,
+            endTime: times.$2,
             note: _noteController.text,
             color: _color,
             taskType: _taskType,
+            todoTimeMode: todoMode,
             repeatType: _repeatType,
             reminderType: _reminderType,
           ),

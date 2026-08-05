@@ -124,14 +124,14 @@ final daySummaryProvider =
 
   await for (final events in eventRepo.watchByDate(dateKey)) {
     final records = await focusRepo.watchByDate(dateKey).first;
-    final now = DateTime.now();
     final todos = events.where((e) => e.isTodo).toList();
-    final completed =
-        todos.where((e) => e.isEffectivelyCompleted(now)).length;
+    final schedules = events.where((e) => e.isSchedule).toList();
+    final completed = todos.where((e) => e.isTodoDone()).length;
     final focusSeconds =
         records.fold<int>(0, (s, r) => s + r.durationSeconds);
     yield DaySummary(
       focusSeconds: focusSeconds,
+      scheduleTotal: schedules.length,
       todoCompleted: completed,
       todoTotal: todos.length,
     );
@@ -159,6 +159,13 @@ class EventActions {
 
   Future<void> toggleTodo(int id, bool completed) {
     return _ref.read(eventRepositoryProvider).toggleTodoComplete(
+          id,
+          completed: completed,
+        );
+  }
+
+  Future<void> toggleTimeline(int id, bool completed) {
+    return _ref.read(eventRepositoryProvider).toggleTimelineComplete(
           id,
           completed: completed,
         );

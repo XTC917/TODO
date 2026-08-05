@@ -7,80 +7,58 @@ import '../providers/app_providers.dart';
 import '../providers/focus_providers.dart';
 import '../utils/date_time_formats.dart';
 
-class SwipeableDateHeader extends ConsumerWidget {
-  const SwipeableDateHeader({
+/// Date display header (swipe handled by parent page).
+class DateHeader extends StatelessWidget {
+  const DateHeader({
     super.key,
     required this.selected,
-    required this.onDateChanged,
+    this.onBackToToday,
   });
 
   final DateTime selected;
-  final ValueChanged<DateTime> onDateChanged;
+  final VoidCallback? onBackToToday;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final isToday = DateTimeFormats.isSameDay(selected, DateTime.now());
 
-    return GestureDetector(
-      onHorizontalDragEnd: (details) {
-        final velocity = details.primaryVelocity ?? 0;
-        if (velocity < -200) {
-          onDateChanged(selected.add(const Duration(days: 1)));
-        } else if (velocity > 200) {
-          onDateChanged(selected.subtract(const Duration(days: 1)));
-        }
-      },
-      child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300),
-        transitionBuilder: (child, animation) {
-          return FadeTransition(
-            opacity: animation,
-            child: SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0.05, 0),
-                end: Offset.zero,
-              ).animate(CurvedAnimation(
-                parent: animation,
-                curve: Curves.easeOutCubic,
-              )),
-              child: child,
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      child: Padding(
+        key: ValueKey(selected),
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 4),
+        child: Column(
+          children: [
+            Text(
+              DateTimeFormats.formatHeader(selected),
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.3,
+                  ),
             ),
-          );
-        },
-        child: Padding(
-          key: ValueKey(selected),
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
-          child: Column(
-            children: [
-              Text(
-                DateTimeFormats.formatHeader(selected),
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.3,
-                    ),
-              ),
+            const SizedBox(height: 4),
+            Text(
+              '← swipe anywhere to change day →',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.4),
+                  ),
+            ),
+            if (!isToday && onBackToToday != null) ...[
               const SizedBox(height: 4),
-              Text(
-                '← swipe to change day →',
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withValues(alpha: 0.4),
-                    ),
-              ),
-              if (!isToday) ...[
-                const SizedBox(height: 8),
-                TextButton.icon(
-                  onPressed: () =>
-                      onDateChanged(DateTimeFormats.dateOnly(DateTime.now())),
-                  icon: const Icon(Icons.today_rounded, size: 18),
-                  label: const Text('Back to Today'),
+              TextButton.icon(
+                onPressed: onBackToToday,
+                icon: const Icon(Icons.today_rounded, size: 16),
+                label: const Text('Back to Today'),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
                 ),
-              ],
+              ),
             ],
-          ),
+          ],
         ),
       ),
     );
@@ -94,6 +72,8 @@ void showEventContextMenu({
   required VoidCallback onEdit,
   required VoidCallback onDeleted,
 }) {
+  final canComplete = event.isTodo || event.isSchedule;
+
   showModalBottomSheet(
     context: context,
     shape: const RoundedRectangleBorder(
@@ -104,16 +84,20 @@ void showEventContextMenu({
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (event.isTodo)
+            if (canComplete)
               ListTile(
                 leading: const Icon(Icons.check_circle_outline),
-                title: Text(event.isCompleted ? 'Mark Incomplete' : 'Complete'),
+                title: Text(
+                  event.isTimelineDone(DateTime.now())
+                      ? 'Mark Incomplete'
+                      : 'Complete',
+                ),
                 onTap: () async {
                   Navigator.pop(ctx);
-                  await ref.read(eventActionsProvider).toggleTodo(
-                        event.id,
-                        !event.isCompleted,
-                      );
+                  final done = event.isTimelineDone(DateTime.now());
+                  await ref
+                      .read(eventActionsProvider)
+                      .toggleTimeline(event.id, !done);
                 },
               ),
             ListTile(
@@ -172,8 +156,7 @@ Future<void> _confirmDelete(
         title: const Text('Delete recurring event'),
         children: [
           SimpleDialogOption(
-            onPressed: () =>
-                Navigator.pop(ctx, DeleteRepeatScope.onlyThis),
+            onPressed: () => Navigator.pop(ctx, DeleteRepeatScope.onlyThis),
             child: const Text('Only this event'),
           ),
           SimpleDialogOption(

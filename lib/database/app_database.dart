@@ -17,7 +17,9 @@ class Events extends Table {
   TextColumn get note => text().nullable()();
   TextColumn get color => text()();
   TextColumn get taskType =>
-      text().withDefault(const Constant('schedule'))();
+      text().withDefault(const Constant('todo'))();
+  TextColumn get todoTimeMode =>
+      text().withDefault(const Constant('timeBlock'))();
   BoolColumn get isCompleted =>
       boolean().withDefault(const Constant(false))();
   TextColumn get repeatType =>
@@ -51,7 +53,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -65,6 +67,9 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(events, events.focusedSeconds);
             await m.addColumn(events, events.completedAt);
             await m.createTable(focusRecords);
+          }
+          if (from < 3) {
+            await m.addColumn(events, events.todoTimeMode);
           }
         },
       );

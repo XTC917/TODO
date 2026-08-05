@@ -51,6 +51,7 @@ class RepeatExpander {
           endTime: draft.endTime,
           color: draft.color,
           taskType: draft.taskType,
+          todoTimeMode: draft.todoTimeMode,
           isCompleted: false,
           repeatType: draft.repeatType,
           reminderType: draft.reminderType,

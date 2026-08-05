@@ -123,11 +123,11 @@ class SettingsPage extends ConsumerWidget {
                 ListTile(
                   leading: const Icon(Icons.info_outline_rounded),
                   title: const Text('About'),
-                  subtitle: const Text('Soft Schedule 2.0.0'),
+                  subtitle: const Text('Soft Schedule 2.0.1'),
                   onTap: () => showAboutDialog(
                     context: context,
                     applicationName: 'Soft Schedule',
-                    applicationVersion: '2.0.0',
+                    applicationVersion: '2.0.1',
                     applicationLegalese:
                         'Personal schedule book\nData stored locally only',
                   ),

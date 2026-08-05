@@ -11,6 +11,7 @@ class Event {
     this.note,
     required this.color,
     required this.taskType,
+    required this.todoTimeMode,
     required this.isCompleted,
     required this.repeatType,
     this.repeatGroupId,
@@ -29,6 +30,7 @@ class Event {
   final String? note;
   final String color;
   final TaskType taskType;
+  final TodoTimeMode todoTimeMode;
   final bool isCompleted;
   final RepeatType repeatType;
   final String? repeatGroupId;
@@ -41,10 +43,24 @@ class Event {
   bool get isTodo => taskType == TaskType.todo;
   bool get isSchedule => taskType == TaskType.schedule;
 
-  /// Whether a schedule block has passed its end time.
-  bool isEffectivelyCompleted(DateTime now) {
-    if (isTodo) return isCompleted;
-    if (isCompleted) return true;
+  /// Appears on the home Timeline (schedules + time-block todos).
+  bool get showsInTimeline =>
+      isSchedule || (isTodo && todoTimeMode == TodoTimeMode.timeBlock);
+
+  /// Appears in Todo list (all todo modes).
+  bool get showsInTodoList => isTodo;
+
+  /// Visual completion state for timeline rows.
+  bool isTimelineDone(DateTime now) {
+    if (isSchedule) return isCompleted || _isPastEnd(now);
+    if (isTodo && todoTimeMode == TodoTimeMode.timeBlock) return isCompleted;
+    return false;
+  }
+
+  /// Todo completion for stats and todo list (manual only).
+  bool isTodoDone() => isTodo && isCompleted;
+
+  bool _isPastEnd(DateTime now) {
     final end = _dateTimeAt(endTime);
     return !now.isBefore(end);
   }
@@ -58,6 +74,16 @@ class Event {
   DateTime get startDateTime => _dateTimeAt(startTime);
   DateTime get endDateTime => _dateTimeAt(endTime);
 
+  String get timeLabel {
+    if (isSchedule || todoTimeMode == TodoTimeMode.timeBlock) {
+      return '$startTime – $endTime';
+    }
+    if (todoTimeMode == TodoTimeMode.deadline) {
+      return 'Deadline $endTime';
+    }
+    return '';
+  }
+
   Event copyWith({
     int? id,
     String? title,
@@ -68,6 +94,7 @@ class Event {
     bool clearNote = false,
     String? color,
     TaskType? taskType,
+    TodoTimeMode? todoTimeMode,
     bool? isCompleted,
     RepeatType? repeatType,
     String? repeatGroupId,
@@ -88,6 +115,7 @@ class Event {
       note: clearNote ? null : (note ?? this.note),
       color: color ?? this.color,
       taskType: taskType ?? this.taskType,
+      todoTimeMode: todoTimeMode ?? this.todoTimeMode,
       isCompleted: isCompleted ?? this.isCompleted,
       repeatType: repeatType ?? this.repeatType,
       repeatGroupId: clearRepeatGroupId ? null : (repeatGroupId ?? this.repeatGroupId),
@@ -108,7 +136,8 @@ class EventDraft {
     required this.endTime,
     this.note,
     required this.color,
-    this.taskType = TaskType.schedule,
+    this.taskType = TaskType.todo,
+    this.todoTimeMode = TodoTimeMode.timeBlock,
     this.repeatType = RepeatType.oneTime,
     this.repeatGroupId,
     this.reminderType = ReminderType.none,
@@ -121,6 +150,7 @@ class EventDraft {
   final String? note;
   final String color;
   final TaskType taskType;
+  final TodoTimeMode todoTimeMode;
   final RepeatType repeatType;
   final String? repeatGroupId;
   final ReminderType reminderType;
@@ -165,11 +195,13 @@ class FocusLaunchConfig {
 class DaySummary {
   const DaySummary({
     required this.focusSeconds,
+    required this.scheduleTotal,
     required this.todoCompleted,
     required this.todoTotal,
   });
 
   final int focusSeconds;
+  final int scheduleTotal;
   final int todoCompleted;
   final int todoTotal;
 

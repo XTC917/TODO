@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
-/// Task category: time-blocked schedule vs completable todo.
+/// Task category: fixed schedule vs completable todo.
 enum TaskType { schedule, todo }
+
+/// How a todo relates to time (only for [TaskType.todo]).
+enum TodoTimeMode { timeBlock, deadline, noTime }
 
 enum RepeatType { oneTime, daily, weekly, monthly }
 
@@ -22,8 +25,28 @@ enum DeleteRepeatScope { onlyThis, thisAndFuture, all }
 extension TaskTypeX on TaskType {
   String get storage => name;
 
+  String get label => switch (this) {
+        TaskType.schedule => 'Schedule',
+        TaskType.todo => 'Todo',
+      };
+
   static TaskType fromStorage(String value) =>
-      TaskType.values.firstWhere((e) => e.name == value, orElse: () => TaskType.schedule);
+      TaskType.values.firstWhere((e) => e.name == value, orElse: () => TaskType.todo);
+}
+
+extension TodoTimeModeX on TodoTimeMode {
+  String get storage => name;
+
+  String get label => switch (this) {
+        TodoTimeMode.timeBlock => 'Time Block',
+        TodoTimeMode.deadline => 'Deadline',
+        TodoTimeMode.noTime => 'No Time',
+      };
+
+  static TodoTimeMode fromStorage(String value) => TodoTimeMode.values.firstWhere(
+        (e) => e.name == value,
+        orElse: () => TodoTimeMode.timeBlock,
+      );
 }
 
 extension RepeatTypeX on RepeatType {

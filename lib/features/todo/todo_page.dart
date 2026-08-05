@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers/app_providers.dart';
 import '../../core/providers/focus_providers.dart';
 import '../../core/utils/date_time_formats.dart';
+import '../../core/widgets/compact_todo_card.dart';
 import '../../core/widgets/date_header.dart';
-import '../../core/widgets/event_card.dart';
 import '../../models/enums.dart';
 import '../../models/event.dart';
 import '../schedule/event_form_page.dart';
@@ -36,7 +36,13 @@ class TodoPage extends ConsumerWidget {
               itemCount: dates.length,
               itemBuilder: (context, index) {
                 final dateKey = dates[index];
-                final items = grouped[dateKey]!;
+                final items = grouped[dateKey]!
+                  ..sort((a, b) {
+                    if (a.isCompleted != b.isCompleted) {
+                      return a.isCompleted ? 1 : -1;
+                    }
+                    return a.startTime.compareTo(b.startTime);
+                  });
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -54,9 +60,8 @@ class TodoPage extends ConsumerWidget {
                     ...items.map(
                       (todo) => Padding(
                         padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-                        child: EventCard(
+                        child: CompactTodoCard(
                           event: todo,
-                          showCheckbox: true,
                           completed: todo.isCompleted,
                           onTap: () {
                             ref.read(homeSelectedDateProvider.notifier).state =

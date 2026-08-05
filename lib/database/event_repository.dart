@@ -73,6 +73,7 @@ class EventRepository {
         note: Value(_nullableNote(draft.note)),
         color: draft.color,
         taskType: Value(draft.taskType.storage),
+        todoTimeMode: Value(draft.todoTimeMode.storage),
         repeatType: Value(draft.repeatType.storage),
         repeatGroupId: Value(groupId),
         reminderType: Value(draft.reminderType.storage),
@@ -104,6 +105,29 @@ class EventRepository {
     );
   }
 
+  Future<void> toggleScheduleComplete(int id, {required bool completed}) async {
+    final event = await getById(id);
+    if (event == null || !event.isSchedule) return;
+    await update(
+      event.copyWith(
+        isCompleted: completed,
+        completedAt: completed ? DateTime.now() : null,
+        clearCompletedAt: !completed,
+        updatedAt: DateTime.now(),
+      ),
+    );
+  }
+
+  Future<void> toggleTimelineComplete(int id, {required bool completed}) async {
+    final event = await getById(id);
+    if (event == null) return;
+    if (event.isTodo) {
+      await toggleTodoComplete(id, completed: completed);
+    } else {
+      await toggleScheduleComplete(id, completed: completed);
+    }
+  }
+
   Future<void> addFocusedSeconds(int eventId, int seconds) async {
     final event = await getById(eventId);
     if (event == null) return;
@@ -122,6 +146,7 @@ class EventRepository {
         note: event.note,
         color: event.color,
         taskType: event.taskType,
+        todoTimeMode: event.todoTimeMode,
         repeatType: RepeatType.oneTime,
         reminderType: event.reminderType,
       ),
@@ -161,7 +186,7 @@ class EventRepository {
     for (final row in rows) {
       if (row.taskType != TaskType.schedule.storage || row.isCompleted) continue;
       final event = _toDomain(row);
-      if (event.isEffectivelyCompleted(now)) {
+      if (!now.isBefore(event.endDateTime)) {
         await _db.updateEventRow(
           row.copyWith(
             isCompleted: true,
@@ -195,6 +220,7 @@ class EventRepository {
             note: Value(_nullableNote(template.note)),
             color: template.color,
             taskType: Value(template.taskType.storage),
+            todoTimeMode: Value(template.todoTimeMode.storage),
             repeatType: Value(template.repeatType.storage),
             repeatGroupId: Value(groupId),
             reminderType: Value(template.reminderType.storage),
@@ -217,6 +243,7 @@ class EventRepository {
       note: row.note,
       color: row.color,
       taskType: TaskTypeX.fromStorage(row.taskType),
+      todoTimeMode: TodoTimeModeX.fromStorage(row.todoTimeMode),
       isCompleted: row.isCompleted,
       repeatType: RepeatTypeX.fromStorage(row.repeatType),
       repeatGroupId: row.repeatGroupId,
@@ -238,6 +265,7 @@ class EventRepository {
       note: _nullableNote(event.note),
       color: event.color,
       taskType: event.taskType.storage,
+      todoTimeMode: event.todoTimeMode.storage,
       isCompleted: event.isCompleted,
       repeatType: event.repeatType.storage,
       repeatGroupId: event.repeatGroupId,
