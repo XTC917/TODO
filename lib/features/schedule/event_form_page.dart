@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/l10n/enum_labels.dart';
 import '../../core/providers/app_providers.dart';
 import '../../core/utils/event_constants.dart';
 import '../../core/utils/theme_event_color.dart';
 import '../../core/utils/date_time_formats.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/enums.dart';
 import '../../models/event.dart';
 
@@ -14,11 +16,13 @@ class EventFormPage extends ConsumerStatefulWidget {
     this.eventId,
     this.initialDate,
     this.forceTaskType,
+    this.forceTodoTimeMode,
   });
 
   final int? eventId;
   final DateTime? initialDate;
   final TaskType? forceTaskType;
+  final TodoTimeMode? forceTodoTimeMode;
 
   bool get isEditing => eventId != null;
 
@@ -53,7 +57,7 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
     _end = TimeOfDay(hour: (endMinutes ~/ 60) % 24, minute: endMinutes % 60);
     _deadline = const TimeOfDay(hour: 18, minute: 0);
     _taskType = widget.forceTaskType ?? TaskType.todo;
-    _todoTimeMode = TodoTimeMode.timeBlock;
+    _todoTimeMode = widget.forceTodoTimeMode ?? TodoTimeMode.timeBlock;
     _repeatType = RepeatType.oneTime;
     _reminderType = ReminderType.none;
 
@@ -126,9 +130,10 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isEditing ? 'Edit' : 'Add'),
+        title: Text(widget.isEditing ? l10n.editTitle : l10n.addTitle),
         actions: [
           if (widget.isEditing)
             IconButton(
@@ -141,149 +146,176 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
           ? const Center(child: CircularProgressIndicator.adaptive())
           : Form(
               key: _formKey,
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+              child: Column(
                 children: [
-                  TextFormField(
-                    controller: _titleController,
-                    decoration: const InputDecoration(labelText: 'Title'),
-                    autovalidateMode: AutovalidateMode.onUserInteraction,
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) {
-                        return '请输入任务标题。';
-                      }
-                      return null;
-                    },
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+                      children: _formFields(context),
+                    ),
                   ),
-                  const SizedBox(height: 16),
-                  if (widget.forceTaskType == null) ...[
-                    Text('Type', style: Theme.of(context).textTheme.titleSmall),
-                    RadioListTile<TaskType>(
-                      title: const Text('Todo'),
-                      value: TaskType.todo,
-                      groupValue: _taskType,
-                      onChanged: (v) => setState(() => _taskType = v!),
-                    ),
-                    RadioListTile<TaskType>(
-                      title: const Text('Schedule'),
-                      value: TaskType.schedule,
-                      groupValue: _taskType,
-                      onChanged: (v) => setState(() => _taskType = v!),
-                    ),
-                  ],
-                  if (_taskType == TaskType.todo) ...[
-                    const SizedBox(height: 8),
-                    Text('Todo Time',
-                        style: Theme.of(context).textTheme.titleSmall),
-                    RadioListTile<TodoTimeMode>(
-                      title: const Text('Time Block'),
-                      subtitle: const Text('Shows in Timeline & Todo'),
-                      value: TodoTimeMode.timeBlock,
-                      groupValue: _todoTimeMode,
-                      onChanged: (v) => setState(() => _todoTimeMode = v!),
-                    ),
-                    RadioListTile<TodoTimeMode>(
-                      title: const Text('Deadline'),
-                      subtitle: const Text('Todo only, due by time'),
-                      value: TodoTimeMode.deadline,
-                      groupValue: _todoTimeMode,
-                      onChanged: (v) => setState(() => _todoTimeMode = v!),
-                    ),
-                    RadioListTile<TodoTimeMode>(
-                      title: const Text('No Time'),
-                      subtitle: const Text('Todo only, no time'),
-                      value: TodoTimeMode.noTime,
-                      groupValue: _todoTimeMode,
-                      onChanged: (v) => setState(() => _todoTimeMode = v!),
-                    ),
-                  ],
-                  if (_showDate) ...[
-                    const SizedBox(height: 8),
-                    _PickerTile(
-                      label: 'Date',
-                      value: DateTimeFormats.formatDate(_date),
-                      icon: Icons.calendar_today_rounded,
-                      onTap: _pickDate,
-                    ),
-                  ],
-                  if (_showStartEnd) ...[
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _PickerTile(
-                            label: 'Start',
-                            value: _formatTime(_start),
-                            icon: Icons.schedule_rounded,
-                            onTap: () => _pickTime(isStart: true),
+                  SafeArea(
+                    top: false,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+                      child: FilledButton(
+                        onPressed: _loading ? null : _save,
+                        style: FilledButton.styleFrom(
+                          minimumSize: const Size.fromHeight(48),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _PickerTile(
-                            label: 'End',
-                            value: _formatTime(_end),
-                            icon: Icons.schedule_rounded,
-                            onTap: () => _pickTime(isStart: false),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                  if (_showDeadline) ...[
-                    const SizedBox(height: 12),
-                    _PickerTile(
-                      label: 'Deadline',
-                      value: _formatTime(_deadline),
-                      icon: Icons.access_time_rounded,
-                      onTap: _pickDeadline,
-                    ),
-                  ],
-                  const SizedBox(height: 16),
-                  Text('Repeat',
-                      style: Theme.of(context).textTheme.titleSmall),
-                  ...RepeatType.values.map(
-                    (r) => RadioListTile<RepeatType>(
-                      title: Text(r.label),
-                      value: r,
-                      groupValue: _repeatType,
-                      onChanged: (v) => setState(() => _repeatType = v!),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text('Reminder',
-                      style: Theme.of(context).textTheme.titleSmall),
-                  DropdownButtonFormField<ReminderType>(
-                    initialValue: _reminderType,
-                    decoration: const InputDecoration(labelText: 'Reminder'),
-                    items: ReminderType.values
-                        .map((r) =>
-                            DropdownMenuItem(value: r, child: Text(r.label)))
-                        .toList(),
-                    onChanged: (v) => setState(() => _reminderType = v!),
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _noteController,
-                    minLines: 2,
-                    maxLines: 4,
-                    decoration: const InputDecoration(labelText: 'Note'),
-                  ),
-                  const SizedBox(height: 24),
-                  FilledButton(
-                    onPressed: _loading ? null : _save,
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size.fromHeight(52),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
+                        child: Text(widget.isEditing ? l10n.save : l10n.create),
                       ),
                     ),
-                    child: Text(widget.isEditing ? 'Save' : 'Create'),
                   ),
                 ],
               ),
             ),
     );
+  }
+
+  List<Widget> _formFields(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return [
+      TextFormField(
+        controller: _titleController,
+        decoration: InputDecoration(labelText: l10n.titleLabel),
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+        validator: (v) {
+          if (v == null || v.trim().isEmpty) {
+            return l10n.titleRequired;
+          }
+          return null;
+        },
+      ),
+      const SizedBox(height: 10),
+      if (widget.forceTaskType == null) ...[
+        Text(l10n.typeLabel, style: Theme.of(context).textTheme.labelLarge),
+        const SizedBox(height: 6),
+        SegmentedButton<TaskType>(
+          segments: [
+            ButtonSegment(value: TaskType.todo, label: Text(l10n.taskTypeTodo)),
+            ButtonSegment(
+              value: TaskType.schedule,
+              label: Text(l10n.taskTypeSchedule),
+            ),
+          ],
+          selected: {_taskType},
+          onSelectionChanged: (s) => setState(() => _taskType = s.first),
+        ),
+        const SizedBox(height: 10),
+      ],
+      if (_taskType == TaskType.todo && widget.forceTodoTimeMode == null) ...[
+        Text(l10n.timeModeLabel, style: Theme.of(context).textTheme.labelLarge),
+        const SizedBox(height: 6),
+        SegmentedButton<TodoTimeMode>(
+          segments: [
+            ButtonSegment(
+              value: TodoTimeMode.timeBlock,
+              label: Text(l10n.timeBlock),
+            ),
+            ButtonSegment(
+              value: TodoTimeMode.deadline,
+              label: Text(l10n.deadline),
+            ),
+            ButtonSegment(
+              value: TodoTimeMode.noTime,
+              label: Text(l10n.noTime),
+            ),
+          ],
+          selected: {_todoTimeMode},
+          onSelectionChanged: (s) => setState(() => _todoTimeMode = s.first),
+        ),
+        const SizedBox(height: 10),
+      ],
+      if (_showDate) ...[
+        _PickerTile(
+          label: l10n.dateLabel,
+          value: DateTimeFormats.formatDate(_date),
+          icon: Icons.calendar_today_rounded,
+          onTap: _pickDate,
+        ),
+        const SizedBox(height: 8),
+      ],
+      if (_showStartEnd) ...[
+        Row(
+          children: [
+            Expanded(
+              child: _PickerTile(
+                label: l10n.startLabel,
+                value: _formatTime(_start),
+                icon: Icons.schedule_rounded,
+                onTap: () => _pickTime(isStart: true),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _PickerTile(
+                label: l10n.endLabel,
+                value: _formatTime(_end),
+                icon: Icons.schedule_rounded,
+                onTap: () => _pickTime(isStart: false),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+      ],
+      if (_showDeadline) ...[
+        _PickerTile(
+          label: l10n.deadlineLabel,
+          value: _formatTime(_deadline),
+          icon: Icons.access_time_rounded,
+          onTap: _pickDeadline,
+        ),
+        const SizedBox(height: 8),
+      ],
+      TextFormField(
+        controller: _noteController,
+        minLines: 1,
+        maxLines: 3,
+        decoration: InputDecoration(labelText: l10n.noteLabel),
+      ),
+      const SizedBox(height: 8),
+      ExpansionTile(
+        tilePadding: EdgeInsets.zero,
+        title: Text(
+          l10n.moreOptions,
+          style: Theme.of(context).textTheme.labelLarge,
+        ),
+        children: [
+          ...RepeatType.values.map(
+            (r) => RadioListTile<RepeatType>(
+              dense: true,
+              visualDensity: VisualDensity.compact,
+              title: Text(repeatTypeLabel(l10n, r)),
+              value: r,
+              groupValue: _repeatType,
+              onChanged: (v) => setState(() => _repeatType = v!),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: DropdownButtonFormField<ReminderType>(
+              initialValue: _reminderType,
+              isDense: true,
+              decoration: InputDecoration(labelText: l10n.reminderLabel),
+              items: ReminderType.values
+                  .map(
+                    (r) => DropdownMenuItem(
+                      value: r,
+                      child: Text(reminderTypeLabel(l10n, r)),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (v) => setState(() => _reminderType = v!),
+            ),
+          ),
+        ],
+      ),
+    ];
   }
 
   Future<void> _pickDate() async {
@@ -346,7 +378,7 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
     final title = _titleController.text.trim();
     if (title.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请输入任务标题。')),
+        SnackBar(content: Text(AppLocalizations.of(context).titleRequired)),
       );
       return;
     }
@@ -357,7 +389,7 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
       final endMin = _end.hour * 60 + _end.minute;
       if (endMin <= startMin) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('End time must be after start time')),
+          SnackBar(content: Text(AppLocalizations.of(context).endTimeAfterStart)),
         );
         return;
       }
@@ -411,7 +443,7 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('保存失败，请稍后重试。')),
+        SnackBar(content: Text(AppLocalizations.of(context).saveFailedRetry)),
       );
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -419,19 +451,20 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
   }
 
   Future<void> _confirmDelete() async {
+    final l10n = AppLocalizations.of(context);
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete'),
-        content: const Text('Delete this item?'),
+        title: Text(l10n.confirmDeleteTitle),
+        content: Text(l10n.confirmDeleteMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -465,7 +498,7 @@ class _PickerTile extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(
             children: [
               Icon(icon, size: 20),

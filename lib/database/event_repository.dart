@@ -14,8 +14,7 @@ class EventRepository {
   static const _uuid = Uuid();
 
   Stream<List<Event>> watchByDate(String date) {
-    return _db.watchAllEvents().asyncMap((rows) async {
-      await _autoCompleteSchedules(rows);
+    return _db.watchAllEvents().map((rows) {
       final domain = rows.map(_toDomain).toList();
       return RepeatExpander.expandForDate(domain, DateTime.parse(date))
           .where((e) => e.hasDate && e.date == date)
@@ -24,8 +23,7 @@ class EventRepository {
   }
 
   Stream<List<Event>> watchInRange(String startDate, String endDate) {
-    return _db.watchEventsInRange(startDate, endDate).asyncMap((rows) async {
-      await _autoCompleteSchedules(rows);
+    return _db.watchEventsInRange(startDate, endDate).map((rows) {
       final domain = rows.map(_toDomain).toList();
       return RepeatExpander.expandForRange(
         domain,
@@ -42,6 +40,11 @@ class EventRepository {
   Future<Event?> getById(int id) async {
     final row = await _db.getEventById(id);
     return row == null ? null : _toDomain(row);
+  }
+
+  Future<List<Event>> getAllEvents() async {
+    final rows = await _db.getAllEvents();
+    return rows.map(_toDomain).toList();
   }
 
   Future<Set<String>> datesWithEvents(String startDate, String endDate) async {
@@ -199,23 +202,6 @@ class EventRepository {
   Future<FilePath> databasePath() async {
     final file = await _db.databaseFile();
     return FilePath(file.path);
-  }
-
-  Future<void> _autoCompleteSchedules(List<EventRow> rows) async {
-    final now = DateTime.now();
-    for (final row in rows) {
-      if (row.taskType != TaskType.schedule.storage || row.isCompleted) continue;
-      final event = _toDomain(row);
-      if (!now.isBefore(event.endDateTime)) {
-        await _db.updateEventRow(
-          row.copyWith(
-            isCompleted: true,
-            completedAt: Value(now),
-            updatedAt: now,
-          ),
-        );
-      }
-    }
   }
 
   Future<void> _materializeRepeats(

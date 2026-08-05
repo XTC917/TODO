@@ -13,6 +13,10 @@ import '../utils/date_time_formats.dart';
 
 const _themeModeKey = 'theme_mode';
 const _accentColorKey = 'accent_color';
+const _remindersEnabledKey = 'reminders_enabled';
+const _appLanguageKey = 'app_language';
+
+enum AppLanguage { system, zh, en }
 
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
   throw UnimplementedError('SharedPreferences must be overridden in main()');
@@ -77,6 +81,71 @@ class AccentColorController extends StateNotifier<AccentColor> {
     await _prefs.setString(_accentColorKey, color.storage);
   }
 }
+
+class RemindersEnabledController extends StateNotifier<bool> {
+  RemindersEnabledController(this._prefs, this._ref)
+      : super(_prefs.getBool(_remindersEnabledKey) ?? true) {
+    NotificationService.instance.remindersEnabled = state;
+  }
+
+  final SharedPreferences _prefs;
+  final Ref _ref;
+
+  Future<void> setEnabled(bool enabled) async {
+    state = enabled;
+    await _prefs.setBool(_remindersEnabledKey, enabled);
+    NotificationService.instance.remindersEnabled = enabled;
+    if (!enabled) {
+      await NotificationService.instance.cancelAll();
+    } else {
+      await NotificationService.instance.rescheduleAll(
+        _ref.read(eventRepositoryProvider),
+      );
+    }
+  }
+}
+
+class AppLanguageController extends StateNotifier<AppLanguage> {
+  AppLanguageController(this._prefs)
+      : super(_readLanguage(_prefs));
+
+  final SharedPreferences _prefs;
+
+  static AppLanguage _readLanguage(SharedPreferences prefs) {
+    return AppLanguage.values.firstWhere(
+      (e) => e.name == prefs.getString(_appLanguageKey),
+      orElse: () => AppLanguage.system,
+    );
+  }
+
+  Locale? get localeOverride => switch (state) {
+        AppLanguage.system => null,
+        AppLanguage.zh => const Locale('zh'),
+        AppLanguage.en => const Locale('en'),
+      };
+
+  Future<void> setLanguage(AppLanguage language) async {
+    state = language;
+    await _prefs.setString(_appLanguageKey, language.name);
+  }
+}
+
+final remindersEnabledProvider =
+    StateNotifierProvider<RemindersEnabledController, bool>((ref) {
+  return RemindersEnabledController(ref.watch(sharedPreferencesProvider), ref);
+});
+
+final appLanguageProvider =
+    StateNotifierProvider<AppLanguageController, AppLanguage>((ref) {
+  return AppLanguageController(ref.watch(sharedPreferencesProvider));
+});
+
+final notificationPermissionProvider = FutureProvider<bool>((ref) async {
+  ref.watch(remindersEnabledProvider);
+  return NotificationService.instance.hasPermission();
+});
+
+final pendingNotificationEventIdProvider = StateProvider<int?>((ref) => null);
 
 // --- Event providers ---
 
@@ -146,7 +215,7 @@ class EventActions {
   Future<int> create(EventDraft draft) async {
     final id = await _ref.read(eventRepositoryProvider).create(draft);
     final event = await _ref.read(eventRepositoryProvider).getById(id);
-    if (event != null) {
+    if (event != null && _ref.read(remindersEnabledProvider)) {
       await NotificationService.instance.scheduleForEvent(event);
     }
     return id;
@@ -154,25 +223,49 @@ class EventActions {
 
   Future<void> update(Event event) async {
     await _ref.read(eventRepositoryProvider).update(event);
-    await NotificationService.instance.scheduleForEvent(event);
+    if (_ref.read(remindersEnabledProvider)) {
+      await NotificationService.instance.scheduleForEvent(event);
+    } else {
+      await NotificationService.instance.cancelForEvent(event.id);
+    }
   }
 
-  Future<void> toggleTodo(int id, bool completed) {
-    return _ref.read(eventRepositoryProvider).toggleTodoComplete(
+  Future<void> toggleTodo(int id, bool completed) async {
+    await _ref.read(eventRepositoryProvider).toggleTodoComplete(
           id,
           completed: completed,
         );
+    if (completed) {
+      await NotificationService.instance.cancelForEvent(id);
+    } else if (_ref.read(remindersEnabledProvider)) {
+      final event = await _ref.read(eventRepositoryProvider).getById(id);
+      if (event != null) {
+        await NotificationService.instance.scheduleForEvent(event);
+      }
+    }
   }
 
-  Future<void> toggleTimeline(int id, bool completed) {
-    return _ref.read(eventRepositoryProvider).toggleTimelineComplete(
+  Future<void> toggleTimeline(int id, bool completed) async {
+    await _ref.read(eventRepositoryProvider).toggleTimelineComplete(
           id,
           completed: completed,
         );
+    if (completed) {
+      await NotificationService.instance.cancelForEvent(id);
+    } else if (_ref.read(remindersEnabledProvider)) {
+      final event = await _ref.read(eventRepositoryProvider).getById(id);
+      if (event != null) {
+        await NotificationService.instance.scheduleForEvent(event);
+      }
+    }
   }
 
-  Future<Event> duplicate(int id) {
-    return _ref.read(eventRepositoryProvider).duplicate(id);
+  Future<Event> duplicate(int id) async {
+    final event = await _ref.read(eventRepositoryProvider).duplicate(id);
+    if (_ref.read(remindersEnabledProvider)) {
+      await NotificationService.instance.scheduleForEvent(event);
+    }
+    return event;
   }
 
   Future<void> delete(int id) async {
@@ -192,8 +285,15 @@ class EventActions {
     await _ref.read(eventRepositoryProvider).batchDelete(ids);
   }
 
-  Future<void> batchUpdateDate(Set<int> ids, String newDate) {
-    return _ref.read(eventRepositoryProvider).batchUpdateDate(ids, newDate);
+  Future<void> batchUpdateDate(Set<int> ids, String newDate) async {
+    await _ref.read(eventRepositoryProvider).batchUpdateDate(ids, newDate);
+    if (!_ref.read(remindersEnabledProvider)) return;
+    for (final id in ids) {
+      final event = await _ref.read(eventRepositoryProvider).getById(id);
+      if (event != null) {
+        await NotificationService.instance.scheduleForEvent(event);
+      }
+    }
   }
 }
 

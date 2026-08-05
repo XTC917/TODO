@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/event.dart';
+import '../providers/l10n_providers.dart';
+import '../utils/event_display.dart';
 
 /// Compact todo card — distinct from Timeline axis rows.
-class CompactTodoCard extends StatelessWidget {
+class CompactTodoCard extends ConsumerWidget {
   const CompactTodoCard({
     super.key,
     required this.event,
@@ -24,13 +27,16 @@ class CompactTodoCard extends StatelessWidget {
   final bool batchActive;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
-    final timeLabel = event.timeLabel;
+    final l10n = ref.watch(appLocalizationsProvider);
+    final timeLabel = eventTimeLabel(event, l10n);
 
     return Material(
-      color: Colors.transparent,
+      color: theme.cardTheme.color ?? theme.colorScheme.surface,
+      borderRadius: BorderRadius.circular(14),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
         onLongPress: onLongPress,
@@ -42,9 +48,7 @@ class CompactTodoCard extends StatelessWidget {
                 : theme.cardTheme.color,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: selected
-                  ? primary
-                  : Colors.transparent,
+              color: selected ? primary : Colors.transparent,
               width: selected ? 1.5 : 0,
             ),
             boxShadow: [
@@ -117,11 +121,15 @@ class CompactTodoCard extends StatelessWidget {
                         ),
                       ),
                       if (timeLabel.isNotEmpty)
-                        Text(
-                          timeLabel,
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: theme.colorScheme.onSurface
-                                .withValues(alpha: completed ? 0.35 : 0.5),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(
+                            timeLabel,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: completed ? 0.35 : 0.5,
+                              ),
+                            ),
                           ),
                         ),
                     ],

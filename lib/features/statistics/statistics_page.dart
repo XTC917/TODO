@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/providers/app_providers.dart';
 import '../../core/utils/date_time_formats.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/event.dart';
 
 enum StatsRange { day, week }
@@ -22,6 +23,7 @@ class _StatisticsPageState extends ConsumerState<StatisticsPage> {
   Widget build(BuildContext context) {
     final today = DateTimeFormats.dateOnly(DateTime.now());
     final summary = ref.watch(daySummaryProvider(today));
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       body: SafeArea(
@@ -29,16 +31,19 @@ class _StatisticsPageState extends ConsumerState<StatisticsPage> {
           padding: const EdgeInsets.all(20),
           children: [
             Text(
-              'Statistics',
+              l10n.statsTitle,
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
             ),
             const SizedBox(height: 16),
             SegmentedButton<StatsRange>(
-              segments: const [
-                ButtonSegment(value: StatsRange.day, label: Text('Day')),
-                ButtonSegment(value: StatsRange.week, label: Text('Week')),
+              segments: [
+                ButtonSegment(value: StatsRange.day, label: Text(l10n.statsDay)),
+                ButtonSegment(
+                  value: StatsRange.week,
+                  label: Text(l10n.statsWeek),
+                ),
               ],
               selected: {_range},
               onSelectionChanged: (s) => setState(() => _range = s.first),
@@ -51,7 +56,9 @@ class _StatisticsPageState extends ConsumerState<StatisticsPage> {
             ),
             const SizedBox(height: 24),
             Text(
-              _range == StatsRange.day ? 'Daily Focus' : 'Weekly Focus',
+              _range == StatsRange.day
+                  ? l10n.statsDailyFocus
+                  : l10n.statsWeeklyFocus,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -64,8 +71,8 @@ class _StatisticsPageState extends ConsumerState<StatisticsPage> {
             const SizedBox(height: 24),
             Text(
               _range == StatsRange.day
-                  ? 'Daily Todo Completion'
-                  : 'Weekly Completion',
+                  ? l10n.statsDailyTodo
+                  : l10n.statsWeeklyTodo,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -89,22 +96,28 @@ class _TodayCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Today',
+            Text(l10n.today,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     )),
             const SizedBox(height: 12),
-            Text(
-                'Focus: ${DateTimeFormats.formatDuration(summary.focusSeconds)}'),
-            Text('Tasks: ${summary.todoCompleted}/${summary.todoTotal}'),
-            Text(
-                'Progress: ${(summary.progress * 100).round()}%'),
+            Text(l10n.statsFocusLabel(
+              DateTimeFormats.formatDuration(summary.focusSeconds),
+            )),
+            Text(l10n.statsTasksLabel(
+              summary.todoCompleted,
+              summary.todoTotal,
+            )),
+            Text(l10n.statsProgressLabel(
+              (summary.progress * 100).round(),
+            )),
           ],
         ),
       ),

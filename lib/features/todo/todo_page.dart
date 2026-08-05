@@ -6,6 +6,8 @@ import '../../core/providers/batch_providers.dart';
 import '../../core/widgets/batch_toolbar.dart';
 import '../../core/widgets/compact_todo_card.dart';
 import '../../core/widgets/event_detail_sheet.dart';
+import '../../core/widgets/swipe_event_actions.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/enums.dart';
 import '../../models/event.dart';
 import '../schedule/event_form_page.dart';
@@ -60,7 +62,9 @@ class TodoPage extends ConsumerWidget {
                 ),
                 loading: () =>
                     const Center(child: CircularProgressIndicator.adaptive()),
-                error: (e, _) => Center(child: Text('Error: $e')),
+                error: (e, _) => Center(
+                  child: Text(AppLocalizations.of(context).errorGeneric('$e')),
+                ),
               ),
             ),
           ],
@@ -99,12 +103,11 @@ class _TodoListBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (todos.isEmpty) {
-      return const Center(child: Text('No todos yet'));
+      return Center(child: Text(AppLocalizations.of(context).noTodosYet));
     }
 
-    final pendingTimed = todos
-        .where((t) => !t.isNoTimeTodo && !t.isCompleted)
-        .toList();
+    final pendingTimed =
+        todos.where((t) => !t.isNoTimeTodo && !t.isCompleted).toList();
     final pendingNoTime =
         todos.where((t) => t.isNoTimeTodo && !t.isCompleted).toList();
     final completed = todos.where((t) => t.isCompleted).toList();
@@ -115,29 +118,70 @@ class _TodoListBody extends ConsumerWidget {
       grouped.putIfAbsent(t.date, () => []).add(t);
     }
     final dates = grouped.keys.toList()..sort();
+    final longTermExpanded = ref.watch(longTermTasksExpandedProvider);
 
-    return ListView(
+    Widget wrapSwipe(Event todo, Widget child) {
+      return SwipeEventActions(
+        event: todo,
+        enabled: !batch.active,
+        onEdit: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => EventFormPage(eventId: todo.id),
+          ),
+        ),
+        onDuplicate: () =>
+            ref.read(eventActionsProvider).duplicate(todo.id),
+        onDelete: () async {
+          if (!await confirmDeleteEvent(context)) return;
+          await ref.read(eventActionsProvider).delete(todo.id);
+        },
+        child: child,
+      );
+    }
+
+    final l10n = AppLocalizations.of(context);
+
+    return NotificationListener<ScrollNotification>(
+      onNotification: (_) {
+        ref.read(swipeOpenProvider.notifier).state = null;
+        return false;
+      },
+      child: ListView(
       padding: const EdgeInsets.fromLTRB(0, 8, 0, 100),
       children: [
-        ...dates.map((dateKey) {
-          final items = grouped[dateKey]!
-            ..sort((a, b) => a.startTime.compareTo(b.startTime));
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
-                child: Text(
-                  formatTodoSectionDate(dateKey),
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                ),
+        if (pendingNoTime.isNotEmpty) ...[
+          InkWell(
+            onTap: () {
+              ref
+                  .read(longTermTasksExpandedProvider.notifier)
+                  .setExpanded(!longTermExpanded);
+            },
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+              child: Row(
+                children: [
+                  Icon(
+                    longTermExpanded ? Icons.expand_more : Icons.chevron_right,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    l10n.longTermTasks(pendingNoTime.length),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                ],
               ),
-              ...items.map(
-                (todo) => Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 6),
-                  child: CompactTodoCard(
+            ),
+          ),
+          if (longTermExpanded)
+            ...pendingNoTime.map(
+              (todo) => Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 6),
+                child: wrapSwipe(
+                  todo,
+                  CompactTodoCard(
                     event: todo,
                     completed: false,
                     batchActive: batch.active,
@@ -148,34 +192,43 @@ class _TodoListBody extends ConsumerWidget {
                   ),
                 ),
               ),
+            ),
+        ],
+        ...dates.map((dateKey) {
+          final items = grouped[dateKey]!
+            ..sort((a, b) => a.startTime.compareTo(b.startTime));
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+                child: Text(
+                  formatTodoSectionDate(dateKey, l10n),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+              ),
+              ...items.map(
+                (todo) => Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 6),
+                  child: wrapSwipe(
+                    todo,
+                    CompactTodoCard(
+                      event: todo,
+                      completed: false,
+                      batchActive: batch.active,
+                      selected: batch.selectedIds.contains(todo.id),
+                      onTap: () => onTap(todo),
+                      onLongPress: () => onEnterBatch(todo.id),
+                      onToggle: (v) => onToggleComplete(todo.id, v),
+                    ),
+                  ),
+                ),
+              ),
             ],
           );
         }),
-        if (pendingNoTime.isNotEmpty) ...[
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-            child: Text(
-              'No-time tasks',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-            ),
-          ),
-          ...pendingNoTime.map(
-            (todo) => Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 6),
-              child: CompactTodoCard(
-                event: todo,
-                completed: false,
-                batchActive: batch.active,
-                selected: batch.selectedIds.contains(todo.id),
-                onTap: () => onTap(todo),
-                onLongPress: () => onEnterBatch(todo.id),
-                onToggle: (v) => onToggleComplete(todo.id, v),
-              ),
-            ),
-          ),
-        ],
         if (completed.isNotEmpty) ...[
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
@@ -194,7 +247,7 @@ class _TodoListBody extends ConsumerWidget {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    'Completed (${completed.length})',
+                    l10n.completed(completed.length),
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
@@ -207,19 +260,23 @@ class _TodoListBody extends ConsumerWidget {
             ...completed.map(
               (todo) => Padding(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 6),
-                child: CompactTodoCard(
-                  event: todo,
-                  completed: true,
-                  batchActive: batch.active,
-                  selected: batch.selectedIds.contains(todo.id),
-                  onTap: () => onTap(todo),
-                  onLongPress: () => onEnterBatch(todo.id),
-                  onToggle: (v) => onToggleComplete(todo.id, v),
+                child: wrapSwipe(
+                  todo,
+                  CompactTodoCard(
+                    event: todo,
+                    completed: true,
+                    batchActive: batch.active,
+                    selected: batch.selectedIds.contains(todo.id),
+                    onTap: () => onTap(todo),
+                    onLongPress: () => onEnterBatch(todo.id),
+                    onToggle: (v) => onToggleComplete(todo.id, v),
+                  ),
                 ),
               ),
             ),
         ],
       ],
+    ),
     );
   }
 }

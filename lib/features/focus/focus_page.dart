@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/l10n/enum_labels.dart';
 import '../../core/providers/app_providers.dart';
 import '../../core/providers/focus_providers.dart';
 import '../../core/utils/date_time_formats.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/enums.dart';
 import '../../models/event.dart';
 
@@ -47,6 +49,7 @@ class _FocusPageState extends ConsumerState<FocusPage> {
     final session = ref.watch(focusTimerProvider);
     final elapsed = session.elapsedSeconds;
     final target = session.targetSeconds;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       body: SafeArea(
@@ -55,21 +58,21 @@ class _FocusPageState extends ConsumerState<FocusPage> {
           child: Column(
             children: [
               Text(
-                'Focus',
+                l10n.focusTitle,
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
               ),
               const SizedBox(height: 24),
               SegmentedButton<FocusMode>(
-                segments: const [
+                segments: [
                   ButtonSegment(
                     value: FocusMode.pomodoro,
-                    label: Text('Pomodoro'),
+                    label: Text(focusModeLabel(l10n, FocusMode.pomodoro)),
                   ),
                   ButtonSegment(
                     value: FocusMode.stopwatch,
-                    label: Text('Stopwatch'),
+                    label: Text(focusModeLabel(l10n, FocusMode.stopwatch)),
                   ),
                 ],
                 selected: {_mode},
@@ -95,14 +98,14 @@ class _FocusPageState extends ConsumerState<FocusPage> {
                   spacing: 8,
                   children: [25, 45, 60, 90].map((m) {
                     return ChoiceChip(
-                      label: Text('$m min'),
+                      label: Text(l10n.focusMinutes(m)),
                       selected: _pomodoroMinutes == m,
                       onSelected: (_) => setState(() => _pomodoroMinutes = m),
                     );
                   }).toList()
                     ..add(
                       ChoiceChip(
-                        label: Text('Custom $_customMinutes'),
+                        label: Text(l10n.focusCustom(_customMinutes)),
                         selected: _pomodoroMinutes == _customMinutes,
                         onSelected: (_) =>
                             setState(() => _pomodoroMinutes = _customMinutes),
@@ -125,30 +128,30 @@ class _FocusPageState extends ConsumerState<FocusPage> {
                             );
                       },
                       icon: const Icon(Icons.play_arrow_rounded),
-                      label: const Text('Start'),
+                      label: Text(l10n.focusStart),
                     ),
                   if (session.state == FocusTimerState.running) ...[
                     OutlinedButton(
                       onPressed: () =>
                           ref.read(focusTimerProvider.notifier).pause(),
-                      child: const Text('Pause'),
+                      child: Text(l10n.focusPause),
                     ),
                     const SizedBox(width: 12),
                     FilledButton(
                       onPressed: _finish,
-                      child: const Text('End'),
+                      child: Text(l10n.focusEnd),
                     ),
                   ],
                   if (session.state == FocusTimerState.paused) ...[
                     OutlinedButton(
                       onPressed: () =>
                           ref.read(focusTimerProvider.notifier).resume(),
-                      child: const Text('Resume'),
+                      child: Text(l10n.focusResume),
                     ),
                     const SizedBox(width: 12),
                     FilledButton(
                       onPressed: _finish,
-                      child: const Text('End'),
+                      child: Text(l10n.focusEnd),
                     ),
                   ],
                 ],
@@ -168,7 +171,9 @@ class _FocusPageState extends ConsumerState<FocusPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Saved ${DateTimeFormats.formatDuration(ended.elapsedSeconds)}',
+            AppLocalizations.of(context).focusSaved(
+              DateTimeFormats.formatDuration(ended.elapsedSeconds),
+            ),
           ),
         ),
       );

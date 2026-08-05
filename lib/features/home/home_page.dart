@@ -10,6 +10,8 @@ import '../../../core/widgets/compact_todo_card.dart';
 import '../../../core/widgets/date_header.dart';
 import '../../../core/widgets/day_info_bar.dart';
 import '../../../core/widgets/event_detail_sheet.dart';
+import '../../../core/widgets/swipe_event_actions.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../models/event.dart';
 import '../schedule/event_form_page.dart';
 import 'widgets/timeline_view.dart';
@@ -71,6 +73,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                     final done =
                         todos.where((e) => e.isCompleted).toList();
 
+                    final l10n = AppLocalizations.of(context);
+
                     return CustomScrollView(
                       slivers: [
                         SliverToBoxAdapter(
@@ -95,13 +99,19 @@ class _HomePageState extends ConsumerState<HomePage> {
                         SliverToBoxAdapter(
                           child: TimelineView(
                             events: events,
+                            emptyMessage: l10n.noTimelineItems,
                             batchActive: batch.active,
                             selectedIds: batch.selectedIds,
                             onEventTap: (e) => _onTimelineTap(e),
                             onEventLongPress: (e) => _enterBatch(e.id),
                             onToggleComplete: batch.active
                                 ? null
-                                : (e) => _toggleTimeline(e),
+                                : (e) => _toggleTimelineComplete(e),
+                            onSwipeEdit: (e) => _openForm(eventId: e.id),
+                            onSwipeDuplicate: (e) => ref
+                                .read(eventActionsProvider)
+                                .duplicate(e.id),
+                            onSwipeDelete: (e) => _deleteEvent(e),
                           ),
                         ),
                         const SliverToBoxAdapter(child: SizedBox(height: 20)),
@@ -110,7 +120,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                             padding:
                                 const EdgeInsets.symmetric(horizontal: 20),
                             child: Text(
-                              "Today's Todo",
+                              l10n.todaysTodo,
                               style: Theme.of(context)
                                   .textTheme
                                   .titleMedium
@@ -125,20 +135,27 @@ class _HomePageState extends ConsumerState<HomePage> {
                               return Padding(
                                 padding:
                                     const EdgeInsets.fromLTRB(20, 6, 20, 0),
-                                child: CompactTodoCard(
-                                  key: ValueKey('pending-${todo.id}'),
+                                child: SwipeEventActions(
                                   event: todo,
-                                  completed: false,
-                                  batchActive: batch.active,
-                                  selected:
-                                      batch.selectedIds.contains(todo.id),
-                                  onTap: () => _onTodoTap(todo),
-                                  onLongPress: () => _enterBatch(todo.id),
-                                  onToggle: (v) =>
-                                      ref.read(eventActionsProvider).toggleTodo(
-                                            todo.id,
-                                            v,
-                                          ),
+                                  enabled: !batch.active,
+                                  onEdit: () => _openForm(eventId: todo.id),
+                                  onDuplicate: () => ref
+                                      .read(eventActionsProvider)
+                                      .duplicate(todo.id),
+                                  onDelete: () => _deleteEvent(todo),
+                                  child: CompactTodoCard(
+                                    key: ValueKey('pending-${todo.id}'),
+                                    event: todo,
+                                    completed: false,
+                                    batchActive: batch.active,
+                                    selected:
+                                        batch.selectedIds.contains(todo.id),
+                                    onTap: () => _onTodoTap(todo),
+                                    onLongPress: () => _enterBatch(todo.id),
+                                    onToggle: (v) => ref
+                                        .read(eventActionsProvider)
+                                        .toggleTodo(todo.id, v),
+                                  ),
                                 ),
                               );
                             },
@@ -173,7 +190,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                                       ),
                                       const SizedBox(width: 6),
                                       Text(
-                                        'Completed (${done.length})',
+                                        l10n.completed(done.length),
                                         style: Theme.of(context)
                                             .textTheme
                                             .labelLarge
@@ -195,19 +212,28 @@ class _HomePageState extends ConsumerState<HomePage> {
                                   return Padding(
                                     padding: const EdgeInsets.fromLTRB(
                                         20, 6, 20, 0),
-                                    child: CompactTodoCard(
-                                      key: ValueKey('done-${todo.id}'),
+                                    child: SwipeEventActions(
                                       event: todo,
-                                      completed: true,
-                                      batchActive: batch.active,
-                                      selected: batch.selectedIds
-                                          .contains(todo.id),
-                                      onTap: () => _onTodoTap(todo),
-                                      onLongPress: () =>
-                                          _enterBatch(todo.id),
-                                      onToggle: (v) => ref
+                                      enabled: !batch.active,
+                                      onEdit: () => _openForm(eventId: todo.id),
+                                      onDuplicate: () => ref
                                           .read(eventActionsProvider)
-                                          .toggleTodo(todo.id, v),
+                                          .duplicate(todo.id),
+                                      onDelete: () => _deleteEvent(todo),
+                                      child: CompactTodoCard(
+                                        key: ValueKey('done-${todo.id}'),
+                                        event: todo,
+                                        completed: true,
+                                        batchActive: batch.active,
+                                        selected: batch.selectedIds
+                                            .contains(todo.id),
+                                        onTap: () => _onTodoTap(todo),
+                                        onLongPress: () =>
+                                            _enterBatch(todo.id),
+                                        onToggle: (v) => ref
+                                            .read(eventActionsProvider)
+                                            .toggleTodo(todo.id, v),
+                                      ),
                                     ),
                                   );
                                 },
@@ -222,7 +248,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                   loading: () => const Center(
                     child: CircularProgressIndicator.adaptive(),
                   ),
-                  error: (e, _) => Center(child: Text('Load failed: $e')),
+                  error: (e, _) => Center(
+                    child: Text(
+                      AppLocalizations.of(context).loadFailed('$e'),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -260,11 +290,15 @@ class _HomePageState extends ConsumerState<HomePage> {
     showEventDetailSheet(context: context, ref: ref, event: todo);
   }
 
-  Future<void> _toggleTimeline(Event event) async {
-    final done = event.isTimelineDone(DateTime.now());
+  Future<void> _toggleTimelineComplete(Event event) async {
     await ref
         .read(eventActionsProvider)
-        .toggleTimeline(event.id, !done);
+        .toggleTimeline(event.id, !event.isCompleted);
+  }
+
+  Future<void> _deleteEvent(Event event) async {
+    if (!await confirmDeleteEvent(context)) return;
+    await ref.read(eventActionsProvider).delete(event.id);
   }
 
   Future<void> _openForm({int? eventId, DateTime? initialDate}) {

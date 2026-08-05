@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/app_providers.dart';
 import '../providers/batch_providers.dart';
 import '../utils/date_time_formats.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/event.dart';
 
 class BatchToolbar extends ConsumerWidget {
@@ -24,43 +25,68 @@ class BatchToolbar extends ConsumerWidget {
     final batch = ref.watch(batchProvider);
     if (!batch.active) return const SizedBox.shrink();
 
+    final l10n = AppLocalizations.of(context);
     final count = batch.selectedIds.length;
+    final theme = Theme.of(context);
 
     return Material(
       elevation: 1,
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                'Selected $count',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+      color: theme.colorScheme.surfaceContainerHighest,
+      child: SizedBox(
+        height: 44,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Row(
+            children: [
+              Expanded(
+                flex: 4,
+                child: Text(
+                  l10n.batchSelected(count),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
-            ),
-            TextButton(
-              onPressed: () =>
-                  ref.read(batchProvider.notifier).cancel(),
-              child: const Text('Cancel'),
-            ),
-            if (count == 1 && onEditSingle != null)
-              TextButton(onPressed: onEditSingle, child: const Text('Edit')),
-            TextButton(
-              onPressed: count == 0
-                  ? null
-                  : () => _changeDate(context, ref, batch.selectedIds),
-              child: const Text('Change date'),
-            ),
-            FilledButton(
-              onPressed: count == 0
-                  ? null
-                  : () => _deleteSelected(ref, batch.selectedIds),
-              child: const Text('Delete'),
-            ),
-          ],
+              Flexible(
+                flex: 10,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  reverse: true,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _ToolbarButton(
+                        label: l10n.delete,
+                        filled: true,
+                        onPressed: count == 0
+                            ? null
+                            : () => _deleteSelected(ref, batch.selectedIds),
+                      ),
+                      _ToolbarButton(
+                        label: l10n.changeDate,
+                        onPressed: count == 0
+                            ? null
+                            : () =>
+                                _changeDate(context, ref, batch.selectedIds),
+                      ),
+                      if (count == 1 && onEditSingle != null)
+                        _ToolbarButton(
+                          label: l10n.edit,
+                          onPressed: onEditSingle,
+                        ),
+                      _ToolbarButton(
+                        label: l10n.cancel,
+                        onPressed: () =>
+                            ref.read(batchProvider.notifier).cancel(),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -76,11 +102,12 @@ class BatchToolbar extends ConsumerWidget {
     WidgetRef ref,
     Set<int> ids,
   ) async {
+    final l10n = AppLocalizations.of(context);
     final selected = events.where((e) => ids.contains(e.id)).toList();
     final dated = selected.where((e) => e.hasDate).toList();
     if (dated.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No-time tasks cannot change date.')),
+        SnackBar(content: Text(l10n.noTimeTasksCannotChangeDate)),
       );
       return;
     }
@@ -99,5 +126,52 @@ class BatchToolbar extends ConsumerWidget {
           key,
         );
     ref.read(batchProvider.notifier).cancel();
+  }
+}
+
+class _ToolbarButton extends StatelessWidget {
+  const _ToolbarButton({
+    required this.label,
+    required this.onPressed,
+    this.filled = false,
+  });
+
+  final String label;
+  final VoidCallback? onPressed;
+  final bool filled;
+
+  @override
+  Widget build(BuildContext context) {
+    const style = TextStyle(fontSize: 13, fontWeight: FontWeight.w600);
+
+    if (filled) {
+      return Padding(
+        padding: const EdgeInsets.only(left: 4),
+        child: FilledButton(
+          onPressed: onPressed,
+          style: FilledButton.styleFrom(
+            minimumSize: const Size(0, 32),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            visualDensity: VisualDensity.compact,
+          ),
+          child: Text(label, maxLines: 1, style: style),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(left: 4),
+      child: TextButton(
+        onPressed: onPressed,
+        style: TextButton.styleFrom(
+          minimumSize: const Size(0, 32),
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          visualDensity: VisualDensity.compact,
+        ),
+        child: Text(label, maxLines: 1, style: style),
+      ),
+    );
   }
 }

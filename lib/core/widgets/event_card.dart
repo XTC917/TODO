@@ -28,7 +28,9 @@ class EventCard extends StatelessWidget {
     final hasNote = event.note != null && event.note!.isNotEmpty;
 
     return Material(
-      color: Colors.transparent,
+      color: theme.cardTheme.color ?? theme.colorScheme.surface,
+      borderRadius: BorderRadius.circular(22),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
         onLongPress: onLongPress,

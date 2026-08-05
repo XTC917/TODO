@@ -45,10 +45,27 @@ class Event {
   bool get hasDate => date.isNotEmpty;
   bool get isNoTimeTodo => isTodo && todoTimeMode == TodoTimeMode.noTime;
 
-  /// Appears on the home Timeline (schedules + time-block todos with date).
+  /// Appears on the home Timeline (schedules + timed todos with date).
   bool get showsInTimeline =>
       hasDate &&
-      (isSchedule || (isTodo && todoTimeMode == TodoTimeMode.timeBlock));
+      (isSchedule ||
+          (isTodo &&
+              (todoTimeMode == TodoTimeMode.timeBlock ||
+                  todoTimeMode == TodoTimeMode.deadline)));
+
+  /// Sort key for timeline ordering.
+  String get timelineSortKey {
+    if (isTodo && todoTimeMode == TodoTimeMode.deadline) {
+      return endTime.isEmpty ? '99:99' : endTime;
+    }
+    return startTime.isEmpty ? '99:99' : startTime;
+  }
+
+  bool get isDeadlineTodo =>
+      isTodo && todoTimeMode == TodoTimeMode.deadline;
+
+  bool get isTimeRangeTimeline =>
+      isSchedule || (isTodo && todoTimeMode == TodoTimeMode.timeBlock);
 
   /// Appears in Todo list (all todo modes).
   bool get showsInTodoList => isTodo;
@@ -57,21 +74,11 @@ class Event {
   bool showsOnHomeDate(String dateKey) =>
       showsInTodoList && hasDate && date == dateKey;
 
-  /// Visual completion state for timeline rows.
-  bool isTimelineDone(DateTime now) {
-    if (isSchedule) return isCompleted || _isPastEnd(now);
-    if (isTodo && todoTimeMode == TodoTimeMode.timeBlock) return isCompleted;
-    return false;
-  }
+  /// Visual completion state for timeline rows (user-controlled only).
+  bool isTimelineDone(DateTime now) => isCompleted;
 
   /// Todo completion for stats and todo list (manual only).
   bool isTodoDone() => isTodo && isCompleted;
-
-  bool _isPastEnd(DateTime now) {
-    if (!hasDate || startTime.isEmpty || endTime.isEmpty) return false;
-    final end = _dateTimeAt(endTime);
-    return !now.isBefore(end);
-  }
 
   DateTime _dateTimeAt(String time) {
     if (!hasDate || time.isEmpty) return DateTime.now();
@@ -83,16 +90,13 @@ class Event {
   DateTime get startDateTime => _dateTimeAt(startTime);
   DateTime get endDateTime => _dateTimeAt(endTime);
 
-  String get timeLabel {
-    if (isNoTimeTodo) return '';
-    if (isSchedule || todoTimeMode == TodoTimeMode.timeBlock) {
-      if (startTime.isEmpty || endTime.isEmpty) return '';
-      return '$startTime – $endTime';
+  /// When reminders should fire (start for schedules/blocks, deadline for due todos).
+  DateTime? get reminderAnchorDateTime {
+    if (!hasDate || isNoTimeTodo) return null;
+    if (isTodo && todoTimeMode == TodoTimeMode.deadline) {
+      return endTime.isEmpty ? null : endDateTime;
     }
-    if (todoTimeMode == TodoTimeMode.deadline) {
-      return endTime.isEmpty ? '' : 'Deadline $endTime';
-    }
-    return '';
+    return startTime.isEmpty ? null : startDateTime;
   }
 
   String get dateLabel {

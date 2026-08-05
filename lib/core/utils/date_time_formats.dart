@@ -1,5 +1,7 @@
 import 'package:intl/intl.dart';
 
+import '../../l10n/app_localizations.dart';
+
 class DateTimeFormats {
   DateTimeFormats._();
 
@@ -9,6 +11,7 @@ class DateTimeFormats {
   static final displayDate = DateFormat('yyyy-MM-dd');
   static final monthDay = DateFormat('MM/dd');
   static final headerDate = DateFormat('MMM d · EEEE');
+  static final sectionDate = DateFormat('yyyy.MM.dd');
   static final hm = DateFormat('HH:mm');
   static final hms = DateFormat('HH:mm:ss');
 
@@ -53,5 +56,31 @@ class DateTimeFormats {
   static DateTime startOfWeek(DateTime date) {
     final d = dateOnly(date);
     return d.subtract(Duration(days: d.weekday - 1));
+  }
+
+  static String formatSectionDate(DateTime date, AppLocalizations l10n) {
+    final d = dateOnly(date);
+    final today = dateOnly(DateTime.now());
+    final diff = d.difference(today).inDays;
+    final relative = switch (diff) {
+      -1 => l10n.relativeYesterday,
+      0 => l10n.relativeToday,
+      1 => l10n.relativeTomorrow,
+      _ => weekdayLabel(l10n, d.weekday),
+    };
+    return '${sectionDate.format(d)} · $relative';
+  }
+
+  static String weekdayLabel(AppLocalizations l10n, int weekday) {
+    return switch (weekday) {
+      DateTime.monday => l10n.weekdayMon,
+      DateTime.tuesday => l10n.weekdayTue,
+      DateTime.wednesday => l10n.weekdayWed,
+      DateTime.thursday => l10n.weekdayThu,
+      DateTime.friday => l10n.weekdayFri,
+      DateTime.saturday => l10n.weekdaySat,
+      DateTime.sunday => l10n.weekdaySun,
+      _ => l10n.weekdayMon,
+    };
   }
 }

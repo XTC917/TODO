@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/event.dart';
+import '../../l10n/app_localizations.dart';
 import '../providers/app_providers.dart';
 import '../utils/date_time_formats.dart';
+import '../utils/event_display.dart';
 
 Future<void> showEventDetailSheet({
   required BuildContext context,
@@ -37,15 +39,14 @@ class _EventDetailSheetState extends ConsumerState<_EventDetailSheet> {
   @override
   void initState() {
     super.initState();
-    _completed = widget.event.isTodo
-        ? widget.event.isCompleted
-        : widget.event.isTimelineDone(DateTime.now());
+    _completed = widget.event.isCompleted;
   }
 
   @override
   Widget build(BuildContext context) {
     final event = widget.event;
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return SafeArea(
       child: Padding(
@@ -72,19 +73,33 @@ class _EventDetailSheetState extends ConsumerState<_EventDetailSheet> {
               ),
             ),
             const SizedBox(height: 16),
+            _Row(
+              label: l10n.detailType,
+              value: event.isTodo ? l10n.detailTodo : l10n.detailSchedule,
+            ),
+            const SizedBox(height: 8),
             if (event.hasDate) ...[
-              _Row(label: 'Date', value: _formatDateLabel(event.date)),
+              _Row(
+                label: l10n.detailDate,
+                value: DateTimeFormats.formatSectionDate(
+                  DateTimeFormats.parseDate(event.date),
+                  l10n,
+                ),
+              ),
               const SizedBox(height: 8),
             ],
-            if (event.timeLabel.isNotEmpty) ...[
-              _Row(label: 'Time', value: event.timeLabel),
+            if (eventTimeLabel(event, l10n).isNotEmpty) ...[
+              _Row(
+                label: l10n.detailTime,
+                value: eventTimeLabel(event, l10n),
+              ),
               const SizedBox(height: 8),
             ],
             if (event.isNoTimeTodo)
-              _Row(label: 'Type', value: 'No time'),
+              _Row(label: l10n.detailType, value: l10n.longTermTask),
             if (event.note != null && event.note!.isNotEmpty) ...[
               const SizedBox(height: 12),
-              Text('Note', style: theme.textTheme.labelLarge),
+              Text(l10n.detailNote, style: theme.textTheme.labelLarge),
               const SizedBox(height: 4),
               Text(
                 event.note!,
@@ -110,23 +125,13 @@ class _EventDetailSheetState extends ConsumerState<_EventDetailSheet> {
                       .toggleTimeline(event.id, v);
                 }
               },
-              title: Text(_completed ? 'Completed' : 'Mark complete'),
+              title: Text(_completed ? l10n.completedLabel : l10n.markComplete),
               controlAffinity: ListTileControlAffinity.leading,
             ),
           ],
         ),
       ),
     );
-  }
-
-  String _formatDateLabel(String date) {
-    final d = DateTime.parse(date);
-    final today = DateTimeFormats.dateOnly(DateTime.now());
-    if (DateTimeFormats.isSameDay(d, today)) return 'Today';
-    if (DateTimeFormats.isSameDay(d, today.add(const Duration(days: 1)))) {
-      return 'Tomorrow';
-    }
-    return DateTimeFormats.formatDate(d);
   }
 }
 
@@ -166,12 +171,9 @@ class _Row extends StatelessWidget {
   }
 }
 
-String formatTodoSectionDate(String dateKey) {
-  final d = DateTime.parse(dateKey);
-  final today = DateTimeFormats.dateOnly(DateTime.now());
-  if (DateTimeFormats.isSameDay(d, today)) return 'Today';
-  if (DateTimeFormats.isSameDay(d, today.add(const Duration(days: 1)))) {
-    return 'Tomorrow';
-  }
-  return DateTimeFormats.formatHeader(d);
+String formatTodoSectionDate(String dateKey, AppLocalizations l10n) {
+  return DateTimeFormats.formatSectionDate(
+    DateTimeFormats.parseDate(dateKey),
+    l10n,
+  );
 }

@@ -1,7 +1,9 @@
+import 'package:app_settings/app_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/providers/app_providers.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/enums.dart';
 
 class SettingsPage extends ConsumerWidget {
@@ -9,9 +11,13 @@ class SettingsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final themeMode = ref.watch(themeModeProvider);
     final accent = ref.watch(accentColorProvider);
     final isDark = themeMode == ThemeMode.dark;
+    final remindersEnabled = ref.watch(remindersEnabledProvider);
+    final language = ref.watch(appLanguageProvider);
+    final permissionAsync = ref.watch(notificationPermissionProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -19,7 +25,7 @@ class SettingsPage extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
           children: [
             Text(
-              'Settings',
+              l10n.settingsTitle,
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -33,7 +39,7 @@ class SettingsPage extends ConsumerWidget {
                     children: [
                       Expanded(
                         child: _ThemeButton(
-                          label: '☀ Light',
+                          label: l10n.themeLight,
                           selected: !isDark,
                           onTap: () => ref
                               .read(themeModeProvider.notifier)
@@ -43,7 +49,7 @@ class SettingsPage extends ConsumerWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: _ThemeButton(
-                          label: '🌙 Dark',
+                          label: l10n.themeDark,
                           selected: isDark,
                           onTap: () => ref
                               .read(themeModeProvider.notifier)
@@ -64,7 +70,7 @@ class SettingsPage extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Accent Color',
+                        l10n.accentColor,
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.w600,
                             ),
@@ -105,14 +111,94 @@ class SettingsPage extends ConsumerWidget {
             _SectionCard(
               children: [
                 ListTile(
+                  title: Text(l10n.language),
+                  subtitle: Text(_languageLabel(l10n, language)),
+                ),
+                ...AppLanguage.values.map(
+                  (lang) => RadioListTile<AppLanguage>(
+                    title: Text(_languageLabel(l10n, lang)),
+                    value: lang,
+                    groupValue: language,
+                    onChanged: (v) {
+                      if (v != null) {
+                        ref.read(appLanguageProvider.notifier).setLanguage(v);
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _SectionCard(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                  child: Text(
+                    l10n.notifications,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                ),
+                SwitchListTile(
+                  title: Text(l10n.enableReminders),
+                  value: remindersEnabled,
+                  onChanged: (v) =>
+                      ref.read(remindersEnabledProvider.notifier).setEnabled(v),
+                ),
+                const Divider(height: 1),
+                permissionAsync.when(
+                  data: (granted) => ListTile(
+                    title: Text(
+                      granted
+                          ? l10n.notificationPermissionGranted
+                          : l10n.notificationPermissionDenied,
+                    ),
+                    trailing: granted
+                        ? Icon(
+                            Icons.check_circle_outline,
+                            color: Theme.of(context).colorScheme.primary,
+                          )
+                        : TextButton(
+                            onPressed: () async {
+                              await AppSettings.openAppSettings(
+                                type: AppSettingsType.notification,
+                              );
+                              ref.invalidate(notificationPermissionProvider);
+                            },
+                            child: Text(l10n.openNotificationSettings),
+                          ),
+                  ),
+                  loading: () => const ListTile(
+                    title: Text('…'),
+                  ),
+                  error: (_, __) => ListTile(
+                    title: Text(l10n.notificationPermissionDenied),
+                    trailing: TextButton(
+                      onPressed: () async {
+                        await AppSettings.openAppSettings(
+                          type: AppSettingsType.notification,
+                        );
+                        ref.invalidate(notificationPermissionProvider);
+                      },
+                      child: Text(l10n.openNotificationSettings),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _SectionCard(
+              children: [
+                ListTile(
                   leading: const Icon(Icons.upload_file_rounded),
-                  title: const Text('Export Database'),
+                  title: Text(l10n.exportDatabase),
                   onTap: () => _export(context, ref),
                 ),
                 const Divider(height: 1),
                 ListTile(
                   leading: const Icon(Icons.download_rounded),
-                  title: const Text('Import Database'),
+                  title: Text(l10n.importDatabase),
                   onTap: () => _import(context, ref),
                 ),
               ],
@@ -122,14 +208,13 @@ class SettingsPage extends ConsumerWidget {
               children: [
                 ListTile(
                   leading: const Icon(Icons.info_outline_rounded),
-                  title: const Text('About'),
-                  subtitle: const Text('Soft Schedule 2.0.2'),
+                  title: Text(l10n.about),
+                  subtitle: Text(l10n.aboutSubtitle('2.0.5')),
                   onTap: () => showAboutDialog(
                     context: context,
                     applicationName: 'Soft Schedule',
-                    applicationVersion: '2.0.2',
-                    applicationLegalese:
-                        'Personal schedule book\nData stored locally only',
+                    applicationVersion: '2.0.5',
+                    applicationLegalese: l10n.aboutLegalese,
                   ),
                 ),
               ],
@@ -140,33 +225,45 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
+  String _languageLabel(AppLocalizations l10n, AppLanguage language) {
+    return switch (language) {
+      AppLanguage.system => l10n.languageSystem,
+      AppLanguage.zh => l10n.languageZh,
+      AppLanguage.en => l10n.languageEn,
+    };
+  }
+
   Future<void> _export(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context);
     try {
       final path = await ref.read(databaseBackupProvider).exportDatabase();
       if (!context.mounted || path == null) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Exported: $path')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.exportSuccess(path))),
+      );
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Export failed: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.exportFailed('$e'))),
+      );
     }
   }
 
   Future<void> _import(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Import Database'),
-        content: const Text('This will replace all current data. Continue?'),
+        title: Text(l10n.importTitle),
+        content: Text(l10n.importMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Import'),
+            child: Text(l10n.import),
           ),
         ],
       ),
@@ -177,12 +274,13 @@ class SettingsPage extends ConsumerWidget {
       ref.invalidate(appDatabaseProvider);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Import successful')),
+        SnackBar(content: Text(l10n.importSuccess)),
       );
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Import failed: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.importFailed('$e'))),
+      );
     }
   }
 }

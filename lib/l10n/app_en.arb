@@ -1,0 +1,242 @@
+{
+  "@@locale": "en",
+  "appTitle": "Soft Schedule",
+  "navHome": "Home",
+  "navTodo": "Todo",
+  "navFocus": "Focus",
+  "navCalendar": "Calendar",
+  "navStats": "Stats",
+  "navSettings": "Settings",
+  "settingsTitle": "Settings",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+  "accentColor": "Accent Color",
+  "language": "Language",
+  "languageSystem": "Follow System",
+  "languageZh": "简体中文",
+  "languageEn": "English",
+  "notifications": "Notifications",
+  "enableReminders": "Enable Reminders",
+  "notificationPermissionGranted": "Notifications allowed",
+  "notificationPermissionDenied": "Notifications not allowed",
+  "openNotificationSettings": "Open notification settings",
+  "remindersDisabledHint": "Reminders are turned off in settings",
+  "exportDatabase": "Export Database",
+  "importDatabase": "Import Database",
+  "about": "About",
+  "aboutSubtitle": "Soft Schedule {version}",
+  "@aboutSubtitle": {
+    "placeholders": {
+      "version": { "type": "String" }
+    }
+  },
+  "aboutLegalese": "Personal schedule book\nData stored locally only",
+  "exportSuccess": "Exported: {path}",
+  "@exportSuccess": {
+    "placeholders": {
+      "path": { "type": "String" }
+    }
+  },
+  "exportFailed": "Export failed: {error}",
+  "@exportFailed": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "importTitle": "Import Database",
+  "importMessage": "This will replace all current data. Continue?",
+  "importSuccess": "Import successful",
+  "importFailed": "Import failed: {error}",
+  "@importFailed": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "cancel": "Cancel",
+  "import": "Import",
+  "save": "Save",
+  "create": "Create",
+  "delete": "Delete",
+  "edit": "Edit",
+  "copy": "Copy",
+  "changeDate": "Change date",
+  "batchSelected": "Selected {count}",
+  "@batchSelected": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "noTimeTasksCannotChangeDate": "No-time tasks cannot change date.",
+  "backToToday": "Back to Today",
+  "today": "Today",
+  "swipeHint": "← swipe anywhere to change day →",
+  "timeline": "Timeline",
+  "todaysTodo": "Today's Todo",
+  "todoSection": "Todo",
+  "completed": "Completed ({count})",
+  "@completed": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "longTermTasks": "Long-term ({count})",
+  "@longTermTasks": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "longTermTask": "Long-term task",
+  "noTodosYet": "No todos yet",
+  "noTodosForDay": "No todos for this day",
+  "noTimelineItems": "No timeline items for this day",
+  "noTodos": "No todos",
+  "loadFailed": "Load failed: {error}",
+  "@loadFailed": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "errorGeneric": "Error: {error}",
+  "@errorGeneric": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "titleRequired": "Please enter a task title.",
+  "saveFailedRetry": "Save failed. Please try again.",
+  "confirmDeleteTitle": "Delete",
+  "confirmDeleteMessage": "Delete this item?",
+  "addTitle": "Add",
+  "editTitle": "Edit",
+  "titleLabel": "Title",
+  "typeLabel": "Type",
+  "taskTypeTodo": "Todo",
+  "taskTypeSchedule": "Schedule",
+  "timeModeLabel": "Time mode",
+  "timeBlock": "Block",
+  "deadline": "Deadline",
+  "noTime": "No time",
+  "dateLabel": "Date",
+  "startLabel": "Start",
+  "endLabel": "End",
+  "deadlineLabel": "Deadline",
+  "noteLabel": "Note",
+  "moreOptions": "More options",
+  "endTimeAfterStart": "End time must be after start time",
+  "detailType": "Type",
+  "detailDate": "Date",
+  "detailTime": "Time",
+  "detailNote": "Note",
+  "detailTodo": "Todo",
+  "detailSchedule": "Schedule",
+  "markComplete": "Mark complete",
+  "completedLabel": "Completed",
+  "deadlineBadge": "Deadline",
+  "relativeYesterday": "Yesterday",
+  "relativeToday": "Today",
+  "relativeTomorrow": "Tomorrow",
+  "weekdayMon": "Mon",
+  "weekdayTue": "Tue",
+  "weekdayWed": "Wed",
+  "weekdayThu": "Thu",
+  "weekdayFri": "Fri",
+  "weekdaySat": "Sat",
+  "weekdaySun": "Sun",
+  "notificationUpcomingTodo": "Upcoming todo",
+  "notificationUpcomingSchedule": "Upcoming schedule",
+  "schedulesCount": "{count} schedules",
+  "@schedulesCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "todosCount": "{count} todos",
+  "@todosCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "doneCount": "done {count}",
+  "@doneCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "focusDuration": " · Focus {duration}",
+  "@focusDuration": {
+    "placeholders": {
+      "duration": { "type": "String" }
+    }
+  },
+  "exportDialogTitle": "Export Database",
+  "importDialogTitle": "Import Database",
+  "repeatOneTime": "One Time",
+  "repeatDaily": "Every Day",
+  "repeatWeekly": "Every Week",
+  "repeatMonthly": "Every Month",
+  "reminderLabel": "Reminder",
+  "reminderNone": "No Reminder",
+  "reminderAtTime": "At Time",
+  "reminderMin5": "5 min before",
+  "reminderMin10": "10 min before",
+  "reminderMin15": "15 min before",
+  "reminderMin30": "30 min before",
+  "reminderHour1": "1 hour before",
+  "focusTitle": "Focus",
+  "focusPomodoro": "Pomodoro",
+  "focusStopwatch": "Stopwatch",
+  "focusStart": "Start",
+  "focusPause": "Pause",
+  "focusResume": "Resume",
+  "focusEnd": "End",
+  "focusMinutes": "{minutes} min",
+  "@focusMinutes": {
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "focusCustom": "Custom {minutes}",
+  "@focusCustom": {
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "focusSaved": "Saved {duration}",
+  "@focusSaved": {
+    "placeholders": {
+      "duration": { "type": "String" }
+    }
+  },
+  "statsTitle": "Statistics",
+  "statsDay": "Day",
+  "statsWeek": "Week",
+  "statsDailyFocus": "Daily Focus",
+  "statsWeeklyFocus": "Weekly Focus",
+  "statsDailyTodo": "Daily Todo Completion",
+  "statsWeeklyTodo": "Weekly Completion",
+  "statsFocusLabel": "Focus: {duration}",
+  "@statsFocusLabel": {
+    "placeholders": {
+      "duration": { "type": "String" }
+    }
+  },
+  "statsTasksLabel": "Tasks: {done}/{total}",
+  "@statsTasksLabel": {
+    "placeholders": {
+      "done": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "statsProgressLabel": "Progress: {percent}%",
+  "@statsProgressLabel": {
+    "placeholders": {
+      "percent": { "type": "int" }
+    }
+  },
+  "deadlineTime": "Deadline {time}",
+  "@deadlineTime": {
+    "placeholders": {
+      "time": { "type": "String" }
+    }
+  }
+}

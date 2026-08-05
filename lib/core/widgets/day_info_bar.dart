@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../models/event.dart';
 import '../utils/date_time_formats.dart';
 
@@ -12,8 +13,11 @@ class DayInfoBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final focus = summary.focusSeconds > 0
-        ? ' · Focus ${DateTimeFormats.formatDuration(summary.focusSeconds)}'
+        ? l10n.focusDuration(
+            DateTimeFormats.formatDuration(summary.focusSeconds),
+          )
         : '';
 
     return Padding(
@@ -33,9 +37,9 @@ class DayInfoBar extends StatelessWidget {
           ],
         ),
         child: Text(
-          '${summary.scheduleTotal} schedules · '
-          '${summary.todoTotal} todos · '
-          'done ${summary.todoCompleted}$focus',
+          '${l10n.schedulesCount(summary.scheduleTotal)} · '
+          '${l10n.todosCount(summary.todoTotal)} · '
+          '${l10n.doneCount(summary.todoCompleted)}$focus',
           style: theme.textTheme.bodyMedium?.copyWith(
             color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
             fontWeight: FontWeight.w500,
