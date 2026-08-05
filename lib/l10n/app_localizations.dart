@@ -218,6 +218,12 @@ abstract class AppLocalizations {
   /// **'Open notification settings'**
   String get openNotificationSettings;
 
+  /// No description provided for @requestNotificationPermission.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow notifications'**
+  String get requestNotificationPermission;
+
   /// No description provided for @remindersDisabledHint.
   ///
   /// In en, this message translates to:

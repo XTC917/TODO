@@ -9,6 +9,7 @@ import 'core/providers/focus_providers.dart';
 import 'core/theme/app_theme.dart';
 import 'core/utils/date_time_formats.dart';
 import 'core/widgets/event_detail_sheet.dart';
+import 'core/widgets/notification_bootstrap.dart';
 import 'features/shell/main_shell.dart';
 import 'l10n/app_localizations.dart';
 
@@ -52,7 +53,9 @@ class SoftScheduleApp extends ConsumerWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: MainShell(key: ValueKey('shell-$language')),
+      home: NotificationBootstrap(
+        child: MainShell(key: ValueKey('shell-$language')),
+      ),
     );
   }
 

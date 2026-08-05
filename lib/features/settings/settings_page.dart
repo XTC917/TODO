@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/providers/app_providers.dart';
+import '../../core/services/notification_service.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/enums.dart';
 
@@ -148,26 +149,116 @@ class SettingsPage extends ConsumerWidget {
                 ),
                 const Divider(height: 1),
                 permissionAsync.when(
-                  data: (granted) => ListTile(
-                    title: Text(
-                      granted
-                          ? l10n.notificationPermissionGranted
-                          : l10n.notificationPermissionDenied,
-                    ),
-                    trailing: granted
-                        ? Icon(
-                            Icons.check_circle_outline,
-                            color: Theme.of(context).colorScheme.primary,
-                          )
-                        : TextButton(
-                            onPressed: () async {
-                              await AppSettings.openAppSettings(
-                                type: AppSettingsType.notification,
-                              );
-                              ref.invalidate(notificationPermissionProvider);
-                            },
-                            child: Text(l10n.openNotificationSettings),
+                  data: (granted) => Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      ListTile(
+                        title: Text(
+                          granted
+                              ? l10n.notificationPermissionGranted
+                              : l10n.notificationPermissionDenied,
+                        ),
+                        trailing: granted
+                            ? Icon(
+                                Icons.check_circle_outline,
+                                color: Theme.of(context).colorScheme.primary,
+                              )
+                            : null,
+                      ),
+                      if (!granted)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: () => _requestPermission(ref),
+                                  child: Text(l10n.requestNotificationPermission),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: TextButton(
+                                  onPressed: () async {
+                                    await AppSettings.openAppSettings(
+                                      type: AppSettingsType.notification,
+                                    );
+                                    ref.invalidate(
+                                      notificationPermissionProvider,
+                                    );
+                                  },
+                                  child: Text(l10n.openNotificationSettings),
+                                ),
+                              ),
+                            ],
                           ),
+                        ),
+                      if (granted) ...[
+                        FutureBuilder<int>(
+                          future: NotificationService.instance.pendingCount(),
+                          builder: (context, snapshot) {
+                            final count = snapshot.data;
+                            if (count == null) return const SizedBox.shrink();
+                            return Padding(
+                              padding:
+                                  const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                              child: Text(
+                                l10n.pendingNotifications(count),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface
+                                          .withValues(alpha: 0.6),
+                                    ),
+                              ),
+                            );
+                          },
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                          child: Text(
+                            l10n.reminderSetupHint,
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface
+                                          .withValues(alpha: 0.6),
+                                    ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              OutlinedButton.icon(
+                                onPressed: () => _sendTestNotification(
+                                  context,
+                                  ref,
+                                  immediate: true,
+                                ),
+                                icon: const Icon(Icons.notifications_active),
+                                label: Text(l10n.testNotificationNow),
+                              ),
+                              const SizedBox(height: 8),
+                              OutlinedButton.icon(
+                                onPressed: () => _sendTestNotification(
+                                  context,
+                                  ref,
+                                  immediate: false,
+                                ),
+                                icon: const Icon(Icons.timer_outlined),
+                                label: Text(l10n.testNotificationScheduled),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   loading: () => const ListTile(
                     title: Text('…'),
@@ -175,13 +266,8 @@ class SettingsPage extends ConsumerWidget {
                   error: (_, __) => ListTile(
                     title: Text(l10n.notificationPermissionDenied),
                     trailing: TextButton(
-                      onPressed: () async {
-                        await AppSettings.openAppSettings(
-                          type: AppSettingsType.notification,
-                        );
-                        ref.invalidate(notificationPermissionProvider);
-                      },
-                      child: Text(l10n.openNotificationSettings),
+                      onPressed: () => _requestPermission(ref),
+                      child: Text(l10n.requestNotificationPermission),
                     ),
                   ),
                 ),
@@ -233,6 +319,40 @@ class SettingsPage extends ConsumerWidget {
     };
   }
 
+  Future<void> _requestPermission(WidgetRef ref) async {
+    await NotificationService.instance.requestPermissions();
+    ref.invalidate(notificationPermissionProvider);
+    if (ref.read(remindersEnabledProvider) &&
+        await NotificationService.instance.hasPermission()) {
+      await NotificationService.instance.rescheduleAll(
+        ref.read(eventRepositoryProvider),
+      );
+    }
+  }
+
+  Future<void> _sendTestNotification(
+    BuildContext context,
+    WidgetRef ref, {
+    required bool immediate,
+  }) async {
+    final l10n = AppLocalizations.of(context);
+    final ok = immediate
+        ? await NotificationService.instance.showTestNotification()
+        : await NotificationService.instance.scheduleTestNotification();
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          ok
+              ? (immediate
+                  ? l10n.testNotificationSuccess
+                  : l10n.testNotificationScheduledSuccess)
+              : l10n.testNotificationFailed,
+        ),
+      ),
+    );
+  }
+
   Future<void> _export(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context);
     try {
@@ -272,6 +392,12 @@ class SettingsPage extends ConsumerWidget {
     try {
       await ref.read(databaseBackupProvider).importDatabase();
       ref.invalidate(appDatabaseProvider);
+      if (ref.read(remindersEnabledProvider) &&
+          await NotificationService.instance.hasPermission()) {
+        await NotificationService.instance.rescheduleAll(
+          ref.read(eventRepositoryProvider),
+        );
+      }
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.importSuccess)),

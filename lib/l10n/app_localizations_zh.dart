@@ -69,6 +69,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get openNotificationSettings => '前往系统通知设置';
 
   @override
+  String get requestNotificationPermission => '允许通知';
+
+  @override
   String get remindersDisabledHint => '已在设置中关闭提醒';
 
   @override

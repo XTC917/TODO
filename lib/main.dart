@@ -5,8 +5,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'app.dart';
 import 'core/providers/app_providers.dart';
 import 'core/services/notification_service.dart';
-import 'database/app_database.dart';
-import 'database/event_repository.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,13 +26,6 @@ Future<void> main() async {
   );
 
   await NotificationService.instance.initialize();
-
-  final db = AppDatabase();
-  final repo = EventRepository(db);
-  if (remindersEnabled) {
-    await NotificationService.instance.rescheduleAll(repo);
-  }
-  await db.close();
 
   runApp(
     UncontrolledProviderScope(

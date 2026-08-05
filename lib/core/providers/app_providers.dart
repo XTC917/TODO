@@ -8,6 +8,7 @@ import '../../database/focus_repository.dart';
 import '../../models/enums.dart';
 import '../../models/event.dart';
 import 'focus_providers.dart';
+import '../services/database_backup_service.dart';
 import '../services/notification_service.dart';
 import '../utils/date_time_formats.dart';
 
@@ -97,7 +98,10 @@ class RemindersEnabledController extends StateNotifier<bool> {
     NotificationService.instance.remindersEnabled = enabled;
     if (!enabled) {
       await NotificationService.instance.cancelAll();
-    } else {
+      return;
+    }
+    await NotificationService.instance.requestPermissions();
+    if (await NotificationService.instance.hasPermission()) {
       await NotificationService.instance.rescheduleAll(
         _ref.read(eventRepositoryProvider),
       );
@@ -212,22 +216,31 @@ class EventActions {
 
   final Ref _ref;
 
+  Future<void> _syncNotification(Event event) async {
+    if (!_ref.read(remindersEnabledProvider)) {
+      await NotificationService.instance.cancelForEvent(event.id);
+      return;
+    }
+    if (event.reminderType == ReminderType.none) {
+      await NotificationService.instance.cancelForEvent(event.id);
+      return;
+    }
+    if (!await NotificationService.instance.hasPermission()) {
+      await NotificationService.instance.requestPermissions();
+    }
+    await NotificationService.instance.scheduleForEvent(event);
+  }
+
   Future<int> create(EventDraft draft) async {
     final id = await _ref.read(eventRepositoryProvider).create(draft);
     final event = await _ref.read(eventRepositoryProvider).getById(id);
-    if (event != null && _ref.read(remindersEnabledProvider)) {
-      await NotificationService.instance.scheduleForEvent(event);
-    }
+    if (event != null) await _syncNotification(event);
     return id;
   }
 
   Future<void> update(Event event) async {
     await _ref.read(eventRepositoryProvider).update(event);
-    if (_ref.read(remindersEnabledProvider)) {
-      await NotificationService.instance.scheduleForEvent(event);
-    } else {
-      await NotificationService.instance.cancelForEvent(event.id);
-    }
+    await _syncNotification(event);
   }
 
   Future<void> toggleTodo(int id, bool completed) async {
@@ -237,11 +250,9 @@ class EventActions {
         );
     if (completed) {
       await NotificationService.instance.cancelForEvent(id);
-    } else if (_ref.read(remindersEnabledProvider)) {
+    } else {
       final event = await _ref.read(eventRepositoryProvider).getById(id);
-      if (event != null) {
-        await NotificationService.instance.scheduleForEvent(event);
-      }
+      if (event != null) await _syncNotification(event);
     }
   }
 
@@ -252,19 +263,15 @@ class EventActions {
         );
     if (completed) {
       await NotificationService.instance.cancelForEvent(id);
-    } else if (_ref.read(remindersEnabledProvider)) {
+    } else {
       final event = await _ref.read(eventRepositoryProvider).getById(id);
-      if (event != null) {
-        await NotificationService.instance.scheduleForEvent(event);
-      }
+      if (event != null) await _syncNotification(event);
     }
   }
 
   Future<Event> duplicate(int id) async {
     final event = await _ref.read(eventRepositoryProvider).duplicate(id);
-    if (_ref.read(remindersEnabledProvider)) {
-      await NotificationService.instance.scheduleForEvent(event);
-    }
+    await _syncNotification(event);
     return event;
   }
 
@@ -290,9 +297,7 @@ class EventActions {
     if (!_ref.read(remindersEnabledProvider)) return;
     for (final id in ids) {
       final event = await _ref.read(eventRepositoryProvider).getById(id);
-      if (event != null) {
-        await NotificationService.instance.scheduleForEvent(event);
-      }
+      if (event != null) await _syncNotification(event);
     }
   }
 }

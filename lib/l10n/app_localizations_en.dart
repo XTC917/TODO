@@ -69,6 +69,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get openNotificationSettings => 'Open notification settings';
 
   @override
+  String get requestNotificationPermission => 'Allow notifications';
+
+  @override
   String get remindersDisabledHint => 'Reminders are turned off in settings';
 
   @override

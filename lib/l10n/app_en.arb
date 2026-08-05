@@ -20,6 +20,19 @@
   "notificationPermissionGranted": "Notifications allowed",
   "notificationPermissionDenied": "Notifications not allowed",
   "openNotificationSettings": "Open notification settings",
+  "requestNotificationPermission": "Allow notifications",
+  "testNotificationNow": "Send test notification now",
+  "testNotificationScheduled": "Schedule test in 5 seconds",
+  "testNotificationSuccess": "Test notification sent — check your status bar",
+  "testNotificationScheduledSuccess": "Test notification scheduled in 5 seconds",
+  "testNotificationFailed": "Could not send notification. Check permission and system settings.",
+  "pendingNotifications": "{count} scheduled reminder(s)",
+  "@pendingNotifications": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "reminderSetupHint": "Set Reminder in More options when creating a todo. Use \"At Time\" or \"5 min before\".",
   "remindersDisabledHint": "Reminders are turned off in settings",
   "exportDatabase": "Export Database",
   "importDatabase": "Import Database",
