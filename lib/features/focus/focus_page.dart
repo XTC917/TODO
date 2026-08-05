@@ -1,0 +1,177 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../core/providers/app_providers.dart';
+import '../../core/providers/focus_providers.dart';
+import '../../core/utils/date_time_formats.dart';
+import '../../models/enums.dart';
+import '../../models/event.dart';
+
+class FocusPage extends ConsumerStatefulWidget {
+  const FocusPage({super.key});
+
+  @override
+  ConsumerState<FocusPage> createState() => _FocusPageState();
+}
+
+class _FocusPageState extends ConsumerState<FocusPage> {
+  FocusMode _mode = FocusMode.pomodoro;
+  int _pomodoroMinutes = 25;
+  int _customMinutes = 30;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _handleLaunch());
+  }
+
+  void _handleLaunch() {
+    final launch = ref.read(focusLaunchProvider);
+    if (launch == null) return;
+    ref.read(focusLaunchProvider.notifier).state = null;
+    if (launch.autoStart) {
+      ref.read(focusTimerProvider.notifier).start(
+            mode: launch.mode,
+            targetMinutes: launch.durationMinutes,
+            linkedEventId: launch.eventId,
+          );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen<FocusLaunchConfig?>(focusLaunchProvider, (_, next) {
+      if (next != null) _handleLaunch();
+    });
+
+    final session = ref.watch(focusTimerProvider);
+    final elapsed = session.elapsedSeconds;
+    final target = session.targetSeconds;
+
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              Text(
+                'Focus',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+              const SizedBox(height: 24),
+              SegmentedButton<FocusMode>(
+                segments: const [
+                  ButtonSegment(
+                    value: FocusMode.pomodoro,
+                    label: Text('Pomodoro'),
+                  ),
+                  ButtonSegment(
+                    value: FocusMode.stopwatch,
+                    label: Text('Stopwatch'),
+                  ),
+                ],
+                selected: {_mode},
+                onSelectionChanged: session.isActive
+                    ? null
+                    : (s) => setState(() => _mode = s.first),
+              ),
+              const Spacer(),
+              Text(
+                _mode == FocusMode.pomodoro && target != null
+                    ? DateTimeFormats.formatStopwatch(
+                        (target - elapsed).clamp(0, target),
+                      )
+                    : DateTimeFormats.formatStopwatch(elapsed),
+                style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 2,
+                    ),
+              ),
+              if (!session.isActive && _mode == FocusMode.pomodoro) ...[
+                const SizedBox(height: 24),
+                Wrap(
+                  spacing: 8,
+                  children: [25, 45, 60, 90].map((m) {
+                    return ChoiceChip(
+                      label: Text('$m min'),
+                      selected: _pomodoroMinutes == m,
+                      onSelected: (_) => setState(() => _pomodoroMinutes = m),
+                    );
+                  }).toList()
+                    ..add(
+                      ChoiceChip(
+                        label: Text('Custom $_customMinutes'),
+                        selected: _pomodoroMinutes == _customMinutes,
+                        onSelected: (_) =>
+                            setState(() => _pomodoroMinutes = _customMinutes),
+                      ),
+                    ),
+                ),
+              ],
+              const Spacer(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (!session.isActive)
+                    FilledButton.icon(
+                      onPressed: () {
+                        ref.read(focusTimerProvider.notifier).start(
+                              mode: _mode,
+                              targetMinutes: _mode == FocusMode.pomodoro
+                                  ? _pomodoroMinutes
+                                  : null,
+                            );
+                      },
+                      icon: const Icon(Icons.play_arrow_rounded),
+                      label: const Text('Start'),
+                    ),
+                  if (session.state == FocusTimerState.running) ...[
+                    OutlinedButton(
+                      onPressed: () =>
+                          ref.read(focusTimerProvider.notifier).pause(),
+                      child: const Text('Pause'),
+                    ),
+                    const SizedBox(width: 12),
+                    FilledButton(
+                      onPressed: _finish,
+                      child: const Text('End'),
+                    ),
+                  ],
+                  if (session.state == FocusTimerState.paused) ...[
+                    OutlinedButton(
+                      onPressed: () =>
+                          ref.read(focusTimerProvider.notifier).resume(),
+                      child: const Text('Resume'),
+                    ),
+                    const SizedBox(width: 12),
+                    FilledButton(
+                      onPressed: _finish,
+                      child: const Text('End'),
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _finish() async {
+    final ended = ref.read(focusTimerProvider.notifier).stop();
+    if (ended != null && ended.elapsedSeconds > 0) {
+      await ref.read(focusActionsProvider).saveSession(ended);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Saved ${DateTimeFormats.formatDuration(ended.elapsedSeconds)}',
+          ),
+        ),
+      );
+    }
+  }
+}

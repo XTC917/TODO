@@ -1,0 +1,45 @@
+name: soft_schedule
+description: A personal electronic schedule book with focus tracking.
+publish_to: "none"
+version: 2.0.0+2
+
+environment:
+  sdk: ">=3.5.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  flutter_riverpod: ^2.6.1
+  drift: ^2.23.1
+  sqlite3_flutter_libs: ^0.5.28
+  path_provider: ^2.1.5
+  path: ^1.9.1
+  intl: ^0.20.2
+  table_calendar: ^3.2.0
+  shared_preferences: ^2.5.3
+  file_picker: ^8.3.7
+  google_fonts: ^6.2.1
+  flutter_local_notifications: ^18.0.1
+  timezone: ^0.10.0
+  flutter_timezone: ^4.1.0
+  uuid: ^4.5.1
+  fl_chart: ^0.70.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  drift_dev: ^2.23.1
+  build_runner: ^2.4.15
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "TODOitem.png"
+  adaptive_icon_background: "#FFF8F4"
+  adaptive_icon_foreground: "TODOitem.png"
+
+flutter:
+  uses-material-design: true
