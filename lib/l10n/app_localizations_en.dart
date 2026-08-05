@@ -54,6 +54,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageEn => 'English';
 
   @override
+  String get languageKo => '한국어';
+
+  @override
   String get notifications => 'Notifications';
 
   @override

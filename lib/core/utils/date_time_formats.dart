@@ -20,8 +20,16 @@ class DateTimeFormats {
   static String formatWeekday(DateTime date) => weekday.format(date);
 
   static String formatHeader(DateTime date, Locale locale) {
-    final code = locale.languageCode.startsWith('zh') ? 'zh_CN' : 'en_US';
-    final pattern = code.startsWith('zh') ? 'M月d日 · EEEE' : 'MMM d · EEEE';
+    final code = switch (locale.languageCode) {
+      'zh' => 'zh_CN',
+      'ko' => 'ko_KR',
+      _ => 'en_US',
+    };
+    final pattern = switch (locale.languageCode) {
+      'zh' => 'M月d日 · EEEE',
+      'ko' => 'M월 d일 · EEEE',
+      _ => 'MMM d · EEEE',
+    };
     return DateFormat(pattern, code).format(date);
   }
 

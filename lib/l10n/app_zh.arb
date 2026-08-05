@@ -15,6 +15,7 @@
   "languageSystem": "跟随系统",
   "languageZh": "简体中文",
   "languageEn": "English",
+  "languageKo": "한국어",
   "notifications": "通知",
   "enableReminders": "开启提醒",
   "notificationPermissionGranted": "通知权限已开启",

@@ -42,6 +42,7 @@ class SoftScheduleApp extends ConsumerWidget {
       locale: switch (language) {
         AppLanguage.zh => const Locale('zh'),
         AppLanguage.en => const Locale('en'),
+        AppLanguage.ko => const Locale('ko'),
         AppLanguage.system => null,
       },
       supportedLocales: AppLocalizations.supportedLocales,

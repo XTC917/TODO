@@ -19,7 +19,7 @@ const _accentColorKey = 'accent_color';
 const _remindersEnabledKey = 'reminders_enabled';
 const _appLanguageKey = 'app_language';
 
-enum AppLanguage { system, zh, en }
+enum AppLanguage { system, zh, en, ko }
 
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
   throw UnimplementedError('SharedPreferences must be overridden in main()');
@@ -132,6 +132,7 @@ class AppLanguageController extends StateNotifier<AppLanguage> {
         AppLanguage.system => null,
         AppLanguage.zh => const Locale('zh'),
         AppLanguage.en => const Locale('en'),
+        AppLanguage.ko => const Locale('ko'),
       };
 
   Future<void> setLanguage(AppLanguage language) async {

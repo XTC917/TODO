@@ -8,13 +8,18 @@ Locale resolveAppLocale(AppLanguage language) {
   return switch (language) {
     AppLanguage.zh => const Locale('zh'),
     AppLanguage.en => const Locale('en'),
+    AppLanguage.ko => const Locale('ko'),
     AppLanguage.system => _deviceLocale(),
   };
 }
 
 Locale _deviceLocale() {
   final code = WidgetsBinding.instance.platformDispatcher.locale.languageCode;
-  return code.startsWith('zh') ? const Locale('zh') : const Locale('en');
+  return switch (code) {
+    'zh' => const Locale('zh'),
+    'ko' => const Locale('ko'),
+    _ => const Locale('en'),
+  };
 }
 
 /// Localizations tied to [appLanguageProvider], not only InheritedWidget.

@@ -299,6 +299,7 @@ class SettingsPage extends ConsumerWidget {
       AppLanguage.system => l10n.languageSystem,
       AppLanguage.zh => l10n.languageZh,
       AppLanguage.en => l10n.languageEn,
+      AppLanguage.ko => l10n.languageKo,
     };
   }
 
