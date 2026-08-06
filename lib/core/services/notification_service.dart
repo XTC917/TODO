@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -29,6 +30,8 @@ class NotificationService {
   bool _initialized = false;
   bool _remindersEnabled = true;
   NotificationTapHandler? _onTap;
+  bool _permissionRequestInFlight = false;
+  bool _notificationsPermissionRequestedThisSession = false;
 
   /// Optional hook to build localized notification body suffix.
   String Function(int offsetSeconds)? notificationTimeUntilStartBuilder;
@@ -90,16 +93,39 @@ class NotificationService {
       _plugin.resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>();
 
-  Future<bool> requestPermissions() async {
-    await initialize();
+  /// True when the Android Activity is available for platform-channel calls.
+  bool get _canRequestPlatformPermission {
+    if (!WidgetsBinding.instance.isRootWidgetAttached) return false;
+    final state = WidgetsBinding.instance.lifecycleState;
+    return state == AppLifecycleState.resumed ||
+        state == AppLifecycleState.inactive;
+  }
+
+  /// Requests post-notification permission once per session unless [force].
+  Future<bool> requestPermissions({bool force = false}) async {
+    if (_permissionRequestInFlight) {
+      return hasPermission();
+    }
+    if (!force && _notificationsPermissionRequestedThisSession) {
+      return hasPermission();
+    }
+    if (!_canRequestPlatformPermission) {
+      debugPrint('Skipping notification permission: no active Activity');
+      return hasPermission();
+    }
+
+    _permissionRequestInFlight = true;
     try {
+      await initialize();
+      if (!_canRequestPlatformPermission) return false;
+
       if (Platform.isAndroid) {
         final androidPlugin = _androidPlugin;
         if (androidPlugin == null) return false;
 
+        _notificationsPermissionRequestedThisSession = true;
         final granted =
             await androidPlugin.requestNotificationsPermission() ?? false;
-        await androidPlugin.requestExactAlarmsPermission();
         final enabled = await androidPlugin.areNotificationsEnabled();
         return granted || (enabled ?? false);
       }
@@ -108,6 +134,7 @@ class NotificationService {
         final iosPlugin = _plugin.resolvePlatformSpecificImplementation<
             IOSFlutterLocalNotificationsPlugin>();
         if (iosPlugin == null) return false;
+        _notificationsPermissionRequestedThisSession = true;
         final granted = await iosPlugin.requestPermissions(
           alert: true,
           badge: true,
@@ -120,6 +147,8 @@ class NotificationService {
     } catch (e, st) {
       debugPrint('Notification permission request failed: $e\n$st');
       return false;
+    } finally {
+      _permissionRequestInFlight = false;
     }
   }
 
@@ -156,7 +185,7 @@ class NotificationService {
   Future<bool> showTestNotification() async {
     await initialize();
     if (!await hasPermission()) {
-      await requestPermissions();
+      await requestPermissions(force: true);
       if (!await hasPermission()) return false;
     }
 
@@ -181,10 +210,6 @@ class NotificationService {
       return;
     }
     if (!await hasPermission()) return;
-
-    if (Platform.isAndroid) {
-      await _androidPlugin?.requestExactAlarmsPermission();
-    }
 
     await cancelAll();
     final rows = await repository.getAllEvents();
@@ -216,10 +241,6 @@ class NotificationService {
         'Skipping notification for event ${event.id}: permission not granted',
       );
       return 0;
-    }
-
-    if (Platform.isAndroid && !skipPermissionCheck) {
-      await _androidPlugin?.requestExactAlarmsPermission();
     }
 
     final anchor = event.reminderAnchorDateTime;

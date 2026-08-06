@@ -197,8 +197,46 @@ final focusDisplayModeProvider =
   return FocusDisplayModeController(ref.watch(focusPresetServiceProvider));
 });
 
+class DefaultCountdownController extends StateNotifier<int> {
+  DefaultCountdownController(this._service, List<int> presets)
+      : super(_service.loadDefaultCountdown(presets));
+
+  final FocusPresetService _service;
+
+  Future<void> setDefault(int seconds) async {
+    state = seconds;
+    await _service.saveDefaultCountdown(seconds);
+  }
+}
+
+final defaultCountdownSecondsProvider =
+    StateNotifierProvider<DefaultCountdownController, int>((ref) {
+  final service = ref.watch(focusPresetServiceProvider);
+  final presets = ref.watch(focusPresetsProvider);
+  return DefaultCountdownController(service, presets);
+});
+
+class FocusKeepAwakeController extends StateNotifier<bool> {
+  FocusKeepAwakeController(this._service)
+      : super(_service.loadKeepScreenAwake());
+
+  final FocusPresetService _service;
+
+  Future<void> setEnabled(bool enabled) async {
+    state = enabled;
+    await _service.saveKeepScreenAwake(enabled);
+  }
+}
+
+final focusKeepAwakeProvider =
+    StateNotifierProvider<FocusKeepAwakeController, bool>((ref) {
+  return FocusKeepAwakeController(ref.watch(focusPresetServiceProvider));
+});
+
 final selectedCountdownSecondsProvider = StateProvider<int>((ref) {
   final presets = ref.watch(focusPresetsProvider);
+  final defaultSeconds = ref.watch(defaultCountdownSecondsProvider);
+  if (presets.contains(defaultSeconds)) return defaultSeconds;
   return presets.contains(25 * 60) ? 25 * 60 : presets.first;
 });
 

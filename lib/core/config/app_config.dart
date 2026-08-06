@@ -4,4 +4,5 @@ class AppConfig {
 
   static const appName = 'JUJU Schedule';
   static const testNotificationBody = 'This is a test notification.';
+  static const githubUrl = '';
 }

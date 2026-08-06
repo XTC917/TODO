@@ -5,6 +5,7 @@ import '../../features/schedule/event_form_page.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/event.dart';
 import '../../models/reminder_config.dart';
+import '../data/demo_data.dart';
 import '../providers/app_providers.dart';
 import '../utils/date_time_formats.dart';
 import '../utils/event_display.dart';
@@ -65,6 +66,7 @@ class _EventDetailSheetState extends ConsumerState<_EventDetailSheet> {
   @override
   Widget build(BuildContext context) {
     final event = widget.event;
+    final isDemo = isDemoEvent(event);
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final scheme = theme.colorScheme;
@@ -190,47 +192,56 @@ class _EventDetailSheetState extends ConsumerState<_EventDetailSheet> {
               ),
             ],
             const SizedBox(height: 20),
-            CheckboxListTile(
-              contentPadding: EdgeInsets.zero,
-              value: _completed,
-              onChanged: (v) async {
-                if (v == null) return;
-                setState(() => _completed = v);
-                if (event.isTodo) {
-                  await ref
-                      .read(eventActionsProvider)
-                      .toggleTodo(event.id, v);
-                } else {
-                  await ref
-                      .read(eventActionsProvider)
-                      .toggleTimeline(event.id, v);
-                }
-              },
-              title: Text(_completed ? l10n.completedLabel : l10n.markComplete),
-              controlAffinity: ListTileControlAffinity.leading,
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _edit,
-                    child: Text(l10n.edit),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: FilledButton(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: scheme.error,
-                      foregroundColor: scheme.onError,
+            if (!isDemo) ...[
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                value: _completed,
+                onChanged: (v) async {
+                  if (v == null) return;
+                  setState(() => _completed = v);
+                  if (event.isTodo) {
+                    await ref
+                        .read(eventActionsProvider)
+                        .toggleTodo(event.id, v);
+                  } else {
+                    await ref
+                        .read(eventActionsProvider)
+                        .toggleTimeline(event.id, v);
+                  }
+                },
+                title: Text(_completed ? l10n.completedLabel : l10n.markComplete),
+                controlAffinity: ListTileControlAffinity.leading,
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: _edit,
+                      child: Text(l10n.edit),
                     ),
-                    onPressed: _delete,
-                    child: Text(l10n.delete),
                   ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: scheme.error,
+                        foregroundColor: scheme.onError,
+                      ),
+                      onPressed: _delete,
+                      child: Text(l10n.delete),
+                    ),
+                  ),
+                ],
+              ),
+            ] else ...[
+              Text(
+                l10n.demoSampleReadOnlyHint,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurface.withValues(alpha: 0.55),
                 ),
-              ],
-            ),
+              ),
+            ],
           ],
         ),
       ),

@@ -148,6 +148,306 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get settingsTitle;
 
+  /// No description provided for @settingsAppearance.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get settingsAppearance;
+
+  /// No description provided for @settingsNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get settingsNotifications;
+
+  /// No description provided for @settingsFocus.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus'**
+  String get settingsFocus;
+
+  /// No description provided for @settingsLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get settingsLanguage;
+
+  /// No description provided for @settingsGeneral.
+  ///
+  /// In en, this message translates to:
+  /// **'General'**
+  String get settingsGeneral;
+
+  /// No description provided for @settingsAbout.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get settingsAbout;
+
+  /// No description provided for @settingsTheme.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get settingsTheme;
+
+  /// No description provided for @settingsStatusEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Enabled'**
+  String get settingsStatusEnabled;
+
+  /// No description provided for @settingsStatusDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Disabled'**
+  String get settingsStatusDisabled;
+
+  /// No description provided for @settingsVersionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version}'**
+  String settingsVersionLabel(String version);
+
+  /// No description provided for @settingsDefaultCountdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Default Countdown'**
+  String get settingsDefaultCountdown;
+
+  /// No description provided for @settingsDefaultDisplayMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Default Display Mode'**
+  String get settingsDefaultDisplayMode;
+
+  /// No description provided for @settingsDisplayModeHour.
+  ///
+  /// In en, this message translates to:
+  /// **'Hour'**
+  String get settingsDisplayModeHour;
+
+  /// No description provided for @settingsDisplayModeMinute.
+  ///
+  /// In en, this message translates to:
+  /// **'Minute'**
+  String get settingsDisplayModeMinute;
+
+  /// No description provided for @settingsKeepScreenAwake.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep Screen Awake'**
+  String get settingsKeepScreenAwake;
+
+  /// No description provided for @settingsKeepScreenAwakeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Prevent screen sleep during an active focus session'**
+  String get settingsKeepScreenAwakeHint;
+
+  /// No description provided for @settingsImmersiveModeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Long press the running timer to enter immersive mode.'**
+  String get settingsImmersiveModeHint;
+
+  /// No description provided for @settingsNotificationPermission.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification Permission'**
+  String get settingsNotificationPermission;
+
+  /// No description provided for @settingsAppName.
+  ///
+  /// In en, this message translates to:
+  /// **'App Name'**
+  String get settingsAppName;
+
+  /// No description provided for @settingsVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Version'**
+  String get settingsVersion;
+
+  /// No description provided for @settingsGitHub.
+  ///
+  /// In en, this message translates to:
+  /// **'GitHub'**
+  String get settingsGitHub;
+
+  /// No description provided for @settingsGitHubCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'GitHub link copied'**
+  String get settingsGitHubCopied;
+
+  /// No description provided for @settingsLicenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Licenses'**
+  String get settingsLicenses;
+
+  /// No description provided for @settingsPrivacyPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy Policy'**
+  String get settingsPrivacyPolicy;
+
+  /// No description provided for @settingsShowSampleData.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Sample Data'**
+  String get settingsShowSampleData;
+
+  /// No description provided for @settingsShowSampleDataHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Display built-in sample schedules and todos to explore the app'**
+  String get settingsShowSampleDataHint;
+
+  /// No description provided for @settingsHideSampleDataTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide Sample Data?'**
+  String get settingsHideSampleDataTitle;
+
+  /// No description provided for @settingsHideSampleDataMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Sample data will be hidden, but your own schedules and todos will remain unchanged.'**
+  String get settingsHideSampleDataMessage;
+
+  /// No description provided for @settingsHideSampleDataConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide'**
+  String get settingsHideSampleDataConfirm;
+
+  /// No description provided for @demoSampleReadOnlyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Sample items are read-only. Turn off sample data in Settings when you no longer need them.'**
+  String get demoSampleReadOnlyHint;
+
+  /// No description provided for @demoScheduleWelcomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to JUJU Schedule 👋'**
+  String get demoScheduleWelcomeTitle;
+
+  /// No description provided for @demoScheduleWelcomeNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Hope it helps you organize every day.'**
+  String get demoScheduleWelcomeNote;
+
+  /// No description provided for @demoScheduleAddTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap + at bottom right to add a schedule'**
+  String get demoScheduleAddTitle;
+
+  /// No description provided for @demoScheduleAddNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Create your own schedule.'**
+  String get demoScheduleAddNote;
+
+  /// No description provided for @demoScheduleDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a card to view details'**
+  String get demoScheduleDetailTitle;
+
+  /// No description provided for @demoScheduleDetailNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit title, time, note, and reminder.'**
+  String get demoScheduleDetailNote;
+
+  /// No description provided for @demoScheduleSwipeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe left to quick edit'**
+  String get demoScheduleSwipeTitle;
+
+  /// No description provided for @demoScheduleSwipeNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Or edit or delete from the detail page.'**
+  String get demoScheduleSwipeNote;
+
+  /// No description provided for @demoScheduleReminderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a Reminder'**
+  String get demoScheduleReminderTitle;
+
+  /// No description provided for @demoScheduleReminderNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Try \"At Time\" or \"5 min before\".'**
+  String get demoScheduleReminderNote;
+
+  /// No description provided for @demoScheduleHideTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off sample data in Settings'**
+  String get demoScheduleHideTitle;
+
+  /// No description provided for @demoScheduleHideNote.
+  ///
+  /// In en, this message translates to:
+  /// **'You can hide or show sample data anytime.'**
+  String get demoScheduleHideNote;
+
+  /// No description provided for @demoTodoWelcomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to JUJU Schedule 👋'**
+  String get demoTodoWelcomeTitle;
+
+  /// No description provided for @demoTodoAddTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap + at bottom right to add a todo'**
+  String get demoTodoAddTitle;
+
+  /// No description provided for @demoTodoSwipeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe left to quick edit a todo'**
+  String get demoTodoSwipeTitle;
+
+  /// No description provided for @demoTodoThemeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Change theme color'**
+  String get demoTodoThemeTitle;
+
+  /// No description provided for @demoTodoLanguageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Change app language'**
+  String get demoTodoLanguageTitle;
+
+  /// No description provided for @demoTodoFocusTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Start a focus session'**
+  String get demoTodoFocusTitle;
+
+  /// No description provided for @demoTodoStatsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'View the Statistics page'**
+  String get demoTodoStatsTitle;
+
+  /// No description provided for @demoTodoHideTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off sample data in Settings'**
+  String get demoTodoHideTitle;
+
   /// No description provided for @themeLight.
   ///
   /// In en, this message translates to:

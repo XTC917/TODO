@@ -114,6 +114,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
           linkedEventId: eventId,
           linkedTaskTitle: taskTitle,
         );
+    _syncWakelock();
   }
 
   Future<void> _pickTask() async {
@@ -171,19 +172,30 @@ class _FocusPageState extends ConsumerState<FocusPage>
     setState(() => _deleteMode = false);
   }
 
+  void _syncWakelock() {
+    final sessionActive = ref.read(focusTimerProvider).session.isActive;
+    final immersive = ref.read(focusImmersiveModeProvider);
+    final keepAwake = ref.read(focusKeepAwakeProvider);
+    if (immersive || (sessionActive && keepAwake)) {
+      WakelockPlus.enable();
+    } else {
+      WakelockPlus.disable();
+    }
+  }
+
   void _enterImmersive() {
     if (!ref.read(focusTimerProvider).session.isActive) return;
     ref.read(focusImmersiveDarkModeProvider.notifier).state =
         Theme.of(context).brightness == Brightness.dark;
     ref.read(focusImmersiveModeProvider.notifier).state = true;
-    WakelockPlus.enable();
+    _syncWakelock();
   }
 
   void _exitImmersive() {
     if (!ref.read(focusImmersiveModeProvider)) return;
     ref.read(focusImmersiveModeProvider.notifier).state = false;
     ref.read(focusImmersiveDarkModeProvider.notifier).state = false;
-    WakelockPlus.disable();
+    _syncWakelock();
   }
 
   int _displaySeconds(FocusTimerService service, FocusRuntimeSession session) {
@@ -468,7 +480,13 @@ class _FocusPageState extends ConsumerState<FocusPage>
           if (mounted) _handleCompletion(completion);
         });
       }
+      final wasActive = prev?.session.isActive ?? false;
+      if (wasActive != next.session.isActive) {
+        _syncWakelock();
+      }
     });
+
+    ref.listen<bool>(focusKeepAwakeProvider, (_, __) => _syncWakelock());
 
     ref.listen<FocusLaunchConfig?>(focusLaunchProvider, (_, next) {
       if (next != null) _handleLaunch();

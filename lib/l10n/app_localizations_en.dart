@@ -33,6 +33,164 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsTitle => 'Settings';
 
   @override
+  String get settingsAppearance => 'Appearance';
+
+  @override
+  String get settingsNotifications => 'Notifications';
+
+  @override
+  String get settingsFocus => 'Focus';
+
+  @override
+  String get settingsLanguage => 'Language';
+
+  @override
+  String get settingsGeneral => 'General';
+
+  @override
+  String get settingsAbout => 'About';
+
+  @override
+  String get settingsTheme => 'Theme';
+
+  @override
+  String get settingsStatusEnabled => 'Enabled';
+
+  @override
+  String get settingsStatusDisabled => 'Disabled';
+
+  @override
+  String settingsVersionLabel(String version) {
+    return 'Version $version';
+  }
+
+  @override
+  String get settingsDefaultCountdown => 'Default Countdown';
+
+  @override
+  String get settingsDefaultDisplayMode => 'Default Display Mode';
+
+  @override
+  String get settingsDisplayModeHour => 'Hour';
+
+  @override
+  String get settingsDisplayModeMinute => 'Minute';
+
+  @override
+  String get settingsKeepScreenAwake => 'Keep Screen Awake';
+
+  @override
+  String get settingsKeepScreenAwakeHint =>
+      'Prevent screen sleep during an active focus session';
+
+  @override
+  String get settingsImmersiveModeHint =>
+      'Long press the running timer to enter immersive mode.';
+
+  @override
+  String get settingsNotificationPermission => 'Notification Permission';
+
+  @override
+  String get settingsAppName => 'App Name';
+
+  @override
+  String get settingsVersion => 'Version';
+
+  @override
+  String get settingsGitHub => 'GitHub';
+
+  @override
+  String get settingsGitHubCopied => 'GitHub link copied';
+
+  @override
+  String get settingsLicenses => 'Licenses';
+
+  @override
+  String get settingsPrivacyPolicy => 'Privacy Policy';
+
+  @override
+  String get settingsShowSampleData => 'Show Sample Data';
+
+  @override
+  String get settingsShowSampleDataHint =>
+      'Display built-in sample schedules and todos to explore the app';
+
+  @override
+  String get settingsHideSampleDataTitle => 'Hide Sample Data?';
+
+  @override
+  String get settingsHideSampleDataMessage =>
+      'Sample data will be hidden, but your own schedules and todos will remain unchanged.';
+
+  @override
+  String get settingsHideSampleDataConfirm => 'Hide';
+
+  @override
+  String get demoSampleReadOnlyHint =>
+      'Sample items are read-only. Turn off sample data in Settings when you no longer need them.';
+
+  @override
+  String get demoScheduleWelcomeTitle => 'Welcome to JUJU Schedule 👋';
+
+  @override
+  String get demoScheduleWelcomeNote => 'Hope it helps you organize every day.';
+
+  @override
+  String get demoScheduleAddTitle => 'Tap + at bottom right to add a schedule';
+
+  @override
+  String get demoScheduleAddNote => 'Create your own schedule.';
+
+  @override
+  String get demoScheduleDetailTitle => 'Tap a card to view details';
+
+  @override
+  String get demoScheduleDetailNote => 'Edit title, time, note, and reminder.';
+
+  @override
+  String get demoScheduleSwipeTitle => 'Swipe left to quick edit';
+
+  @override
+  String get demoScheduleSwipeNote => 'Or edit or delete from the detail page.';
+
+  @override
+  String get demoScheduleReminderTitle => 'Set a Reminder';
+
+  @override
+  String get demoScheduleReminderNote => 'Try \"At Time\" or \"5 min before\".';
+
+  @override
+  String get demoScheduleHideTitle => 'Turn off sample data in Settings';
+
+  @override
+  String get demoScheduleHideNote =>
+      'You can hide or show sample data anytime.';
+
+  @override
+  String get demoTodoWelcomeTitle => 'Welcome to JUJU Schedule 👋';
+
+  @override
+  String get demoTodoAddTitle => 'Tap + at bottom right to add a todo';
+
+  @override
+  String get demoTodoSwipeTitle => 'Swipe left to quick edit a todo';
+
+  @override
+  String get demoTodoThemeTitle => 'Change theme color';
+
+  @override
+  String get demoTodoLanguageTitle => 'Change app language';
+
+  @override
+  String get demoTodoFocusTitle => 'Start a focus session';
+
+  @override
+  String get demoTodoStatsTitle => 'View the Statistics page';
+
+  @override
+  String get demoTodoHideTitle => 'Turn off sample data in Settings';
+
+  @override
   String get themeLight => 'Light';
 
   @override

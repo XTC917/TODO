@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../models/event.dart';
+import '../../../core/data/demo_data.dart';
 import '../../../core/widgets/swipe_event_actions.dart';
 import '../../../l10n/app_localizations.dart';
 
@@ -44,7 +45,11 @@ class TimelineView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final timelineEvents = events.where((e) => e.showsInTimeline).toList()
-      ..sort((a, b) => a.timelineSortKey.compareTo(b.timelineSortKey));
+      ..sort((a, b) {
+        final demoOrder = compareDemoFirst(a, b);
+        if (demoOrder != 0) return demoOrder;
+        return a.timelineSortKey.compareTo(b.timelineSortKey);
+      });
 
     if (timelineEvents.isEmpty) {
       final l10n = AppLocalizations.of(context);
@@ -109,7 +114,7 @@ class TimelineView extends StatelessWidget {
                   : () => onToggleComplete!(event),
             );
 
-            if (!_swipeEnabled) return row;
+            if (!_swipeEnabled || isDemoEventId(event.id)) return row;
 
             return SwipeEventActions(
               event: event,

@@ -33,6 +33,160 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settingsTitle => '설정';
 
   @override
+  String get settingsAppearance => '모양';
+
+  @override
+  String get settingsNotifications => '알림';
+
+  @override
+  String get settingsFocus => '집중';
+
+  @override
+  String get settingsLanguage => '언어';
+
+  @override
+  String get settingsGeneral => '일반';
+
+  @override
+  String get settingsAbout => '정보';
+
+  @override
+  String get settingsTheme => '테마';
+
+  @override
+  String get settingsStatusEnabled => '켜짐';
+
+  @override
+  String get settingsStatusDisabled => '꺼짐';
+
+  @override
+  String settingsVersionLabel(String version) {
+    return '버전 $version';
+  }
+
+  @override
+  String get settingsDefaultCountdown => '기본 카운트다운';
+
+  @override
+  String get settingsDefaultDisplayMode => '기본 표시 방식';
+
+  @override
+  String get settingsDisplayModeHour => '시간';
+
+  @override
+  String get settingsDisplayModeMinute => '분';
+
+  @override
+  String get settingsKeepScreenAwake => '화면 켜짐 유지';
+
+  @override
+  String get settingsKeepScreenAwakeHint => '집중 세션 중 화면이 꺼지지 않도록 합니다';
+
+  @override
+  String get settingsImmersiveModeHint => '실행 중인 타이머를 길게 눌러 몰입 모드로 들어갑니다.';
+
+  @override
+  String get settingsNotificationPermission => '알림 권한';
+
+  @override
+  String get settingsAppName => '앱 이름';
+
+  @override
+  String get settingsVersion => '버전';
+
+  @override
+  String get settingsGitHub => 'GitHub';
+
+  @override
+  String get settingsGitHubCopied => 'GitHub 링크가 복사되었습니다';
+
+  @override
+  String get settingsLicenses => '라이선스';
+
+  @override
+  String get settingsPrivacyPolicy => '개인정보 처리방침';
+
+  @override
+  String get settingsShowSampleData => '샘플 데이터 표시';
+
+  @override
+  String get settingsShowSampleDataHint => '앱을 빠르게 익히도록 내장 샘플 일정과 할 일을 표시합니다';
+
+  @override
+  String get settingsHideSampleDataTitle => '샘플 데이터를 숨길까요?';
+
+  @override
+  String get settingsHideSampleDataMessage =>
+      '샘플 데이터만 숨겨지며, 본인의 일정과 할 일은 그대로 유지됩니다.';
+
+  @override
+  String get settingsHideSampleDataConfirm => '숨기기';
+
+  @override
+  String get demoSampleReadOnlyHint =>
+      '샘플 항목은 읽기 전용입니다. 더 이상 필요 없으면 설정에서 샘플 데이터를 끌 수 있습니다.';
+
+  @override
+  String get demoScheduleWelcomeTitle => 'Welcome to JUJU Schedule 👋';
+
+  @override
+  String get demoScheduleWelcomeNote => 'Hope it helps you organize every day.';
+
+  @override
+  String get demoScheduleAddTitle => '오른쪽 하단 + 를 눌러 일정 추가';
+
+  @override
+  String get demoScheduleAddNote => '나만의 일정을 만들어 보세요.';
+
+  @override
+  String get demoScheduleDetailTitle => '카드를 눌러 상세 보기';
+
+  @override
+  String get demoScheduleDetailNote => '제목, 시간, 메모, 알림을 편집할 수 있습니다.';
+
+  @override
+  String get demoScheduleSwipeTitle => '왼쪽으로 밀어 빠른 편집';
+
+  @override
+  String get demoScheduleSwipeNote => '상세 페이지에서도 편집하거나 삭제할 수 있습니다.';
+
+  @override
+  String get demoScheduleReminderTitle => '알림 설정';
+
+  @override
+  String get demoScheduleReminderNote => '\"정시\" 또는 \"5분 전\"을 설정해 보세요.';
+
+  @override
+  String get demoScheduleHideTitle => '설정에서 샘플 데이터 끄기';
+
+  @override
+  String get demoScheduleHideNote => '언제든지 샘플 데이터를 숨기거나 다시 표시할 수 있습니다.';
+
+  @override
+  String get demoTodoWelcomeTitle => 'Welcome to JUJU Schedule 👋';
+
+  @override
+  String get demoTodoAddTitle => '오른쪽 하단 + 를 눌러 할 일 추가';
+
+  @override
+  String get demoTodoSwipeTitle => '왼쪽으로 밀어 할 일 빠른 편집';
+
+  @override
+  String get demoTodoThemeTitle => '테마 색상 변경';
+
+  @override
+  String get demoTodoLanguageTitle => '앱 언어 변경';
+
+  @override
+  String get demoTodoFocusTitle => '집중 세션 시작';
+
+  @override
+  String get demoTodoStatsTitle => '통계 페이지 보기';
+
+  @override
+  String get demoTodoHideTitle => '설정에서 샘플 데이터 끄기';
+
+  @override
   String get themeLight => '라이트';
 
   @override

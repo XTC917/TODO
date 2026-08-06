@@ -33,6 +33,158 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsTitle => '设置';
 
   @override
+  String get settingsAppearance => '外观';
+
+  @override
+  String get settingsNotifications => '通知';
+
+  @override
+  String get settingsFocus => '专注';
+
+  @override
+  String get settingsLanguage => '语言';
+
+  @override
+  String get settingsGeneral => '通用';
+
+  @override
+  String get settingsAbout => '关于';
+
+  @override
+  String get settingsTheme => '主题';
+
+  @override
+  String get settingsStatusEnabled => '已开启';
+
+  @override
+  String get settingsStatusDisabled => '已关闭';
+
+  @override
+  String settingsVersionLabel(String version) {
+    return '版本 $version';
+  }
+
+  @override
+  String get settingsDefaultCountdown => '默认倒计时';
+
+  @override
+  String get settingsDefaultDisplayMode => '默认显示方式';
+
+  @override
+  String get settingsDisplayModeHour => '小时';
+
+  @override
+  String get settingsDisplayModeMinute => '分钟';
+
+  @override
+  String get settingsKeepScreenAwake => '保持屏幕常亮';
+
+  @override
+  String get settingsKeepScreenAwakeHint => '专注进行中时防止屏幕休眠';
+
+  @override
+  String get settingsImmersiveModeHint => '计时运行时长按计时器可进入沉浸模式。';
+
+  @override
+  String get settingsNotificationPermission => '通知权限';
+
+  @override
+  String get settingsAppName => '应用名称';
+
+  @override
+  String get settingsVersion => '版本';
+
+  @override
+  String get settingsGitHub => 'GitHub';
+
+  @override
+  String get settingsGitHubCopied => '已复制 GitHub 链接';
+
+  @override
+  String get settingsLicenses => '开源许可';
+
+  @override
+  String get settingsPrivacyPolicy => '隐私政策';
+
+  @override
+  String get settingsShowSampleData => '显示样例数据';
+
+  @override
+  String get settingsShowSampleDataHint => '展示内置样例日程与待办，帮助快速了解应用';
+
+  @override
+  String get settingsHideSampleDataTitle => '隐藏样例数据？';
+
+  @override
+  String get settingsHideSampleDataMessage => '样例数据将被隐藏，您自己的日程与待办不会受到影响。';
+
+  @override
+  String get settingsHideSampleDataConfirm => '隐藏';
+
+  @override
+  String get demoSampleReadOnlyHint => '样例内容为只读。不需要时可在设置中关闭样例数据。';
+
+  @override
+  String get demoScheduleWelcomeTitle => 'Welcome to JUJU Schedule 👋';
+
+  @override
+  String get demoScheduleWelcomeNote => 'Hope it helps you organize every day.';
+
+  @override
+  String get demoScheduleAddTitle => '点击右下角 + 添加日程';
+
+  @override
+  String get demoScheduleAddNote => '创建属于自己的 Schedule。';
+
+  @override
+  String get demoScheduleDetailTitle => '点击卡片查看详情';
+
+  @override
+  String get demoScheduleDetailNote => '可以编辑标题、时间、备注和 Reminder。';
+
+  @override
+  String get demoScheduleSwipeTitle => '左滑快速编辑';
+
+  @override
+  String get demoScheduleSwipeNote => '也可以通过详情页面编辑或删除。';
+
+  @override
+  String get demoScheduleReminderTitle => '设置 Reminder';
+
+  @override
+  String get demoScheduleReminderNote => '尝试设置 \"At Time\" 或 \"5 min before\"。';
+
+  @override
+  String get demoScheduleHideTitle => '在设置中关闭样例数据';
+
+  @override
+  String get demoScheduleHideNote => '可以随时一键隐藏或重新显示所有样例数据。';
+
+  @override
+  String get demoTodoWelcomeTitle => 'Welcome to JUJU Schedule 👋';
+
+  @override
+  String get demoTodoAddTitle => '点击右下角 + 添加待办';
+
+  @override
+  String get demoTodoSwipeTitle => '左滑快速编辑待办';
+
+  @override
+  String get demoTodoThemeTitle => '修改主题颜色';
+
+  @override
+  String get demoTodoLanguageTitle => '修改应用语言';
+
+  @override
+  String get demoTodoFocusTitle => '开始一次专注';
+
+  @override
+  String get demoTodoStatsTitle => '查看 Statistics 页面';
+
+  @override
+  String get demoTodoHideTitle => '在设置中关闭样例数据';
+
+  @override
   String get themeLight => '浅色';
 
   @override

@@ -55,4 +55,24 @@ class FocusPresetService {
   Future<void> saveDisplayMode(String mode) async {
     await _prefs.setString(_displayModeKey, mode);
   }
+
+  static const _defaultCountdownKey = 'focus_default_countdown_seconds';
+  static const _keepAwakeKey = 'focus_keep_screen_awake';
+
+  int loadDefaultCountdown(List<int> presets) {
+    final stored = _prefs.getInt(_defaultCountdownKey);
+    if (stored != null && stored > 0) return stored;
+    if (presets.contains(25 * 60)) return 25 * 60;
+    return presets.isNotEmpty ? presets.first : 25 * 60;
+  }
+
+  Future<void> saveDefaultCountdown(int seconds) async {
+    await _prefs.setInt(_defaultCountdownKey, seconds);
+  }
+
+  bool loadKeepScreenAwake() => _prefs.getBool(_keepAwakeKey) ?? false;
+
+  Future<void> saveKeepScreenAwake(bool enabled) async {
+    await _prefs.setBool(_keepAwakeKey, enabled);
+  }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/data/demo_data.dart';
 import '../../../core/providers/app_providers.dart';
 import '../../../core/providers/batch_providers.dart';
 import '../../../core/providers/focus_providers.dart';
@@ -67,7 +68,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                     final todos = events
                         .where((e) => e.showsOnHomeDate(dateKey))
                         .toList()
-                      ..sort((a, b) => a.startTime.compareTo(b.startTime));
+                      ..sort((a, b) {
+                        final demoOrder = compareDemoFirst(a, b);
+                        if (demoOrder != 0) return demoOrder;
+                        return a.startTime.compareTo(b.startTime);
+                      });
                     final pending =
                         todos.where((e) => !e.isCompleted).toList();
                     final done =
@@ -106,12 +111,22 @@ class _HomePageState extends ConsumerState<HomePage> {
                             onEventLongPress: (e) => _enterBatch(e.id),
                             onToggleComplete: batch.active
                                 ? null
-                                : (e) => _toggleTimelineComplete(e),
-                            onSwipeEdit: (e) => _openForm(eventId: e.id),
-                            onSwipeDuplicate: (e) => ref
-                                .read(eventActionsProvider)
-                                .duplicate(e.id),
-                            onSwipeDelete: (e) => _deleteEvent(e),
+                                : (e) {
+                                    if (isDemoEventId(e.id)) return;
+                                    _toggleTimelineComplete(e);
+                                  },
+                            onSwipeEdit: (e) {
+                              if (isDemoEventId(e.id)) return;
+                              _openForm(eventId: e.id);
+                            },
+                            onSwipeDuplicate: (e) {
+                              if (isDemoEventId(e.id)) return;
+                              ref.read(eventActionsProvider).duplicate(e.id);
+                            },
+                            onSwipeDelete: (e) {
+                              if (isDemoEventId(e.id)) return;
+                              _deleteEvent(e);
+                            },
                           ),
                         ),
                         const SliverToBoxAdapter(child: SizedBox(height: 20)),
@@ -137,7 +152,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                                     const EdgeInsets.fromLTRB(20, 6, 20, 0),
                                 child: SwipeEventActions(
                                   event: todo,
-                                  enabled: !batch.active,
+                                  enabled:
+                                      !batch.active && !isDemoEventId(todo.id),
                                   onEdit: () => _openForm(eventId: todo.id),
                                   onDuplicate: () => ref
                                       .read(eventActionsProvider)
@@ -151,10 +167,14 @@ class _HomePageState extends ConsumerState<HomePage> {
                                     selected:
                                         batch.selectedIds.contains(todo.id),
                                     onTap: () => _onTodoTap(todo),
-                                    onLongPress: () => _enterBatch(todo.id),
-                                    onToggle: (v) => ref
-                                        .read(eventActionsProvider)
-                                        .toggleTodo(todo.id, v),
+                                    onLongPress: isDemoEventId(todo.id)
+                                        ? null
+                                        : () => _enterBatch(todo.id),
+                                    onToggle: isDemoEventId(todo.id)
+                                        ? null
+                                        : (v) => ref
+                                            .read(eventActionsProvider)
+                                            .toggleTodo(todo.id, v),
                                   ),
                                 ),
                               );
@@ -214,7 +234,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                                         20, 6, 20, 0),
                                     child: SwipeEventActions(
                                       event: todo,
-                                      enabled: !batch.active,
+                                      enabled:
+                                          !batch.active && !isDemoEventId(todo.id),
                                       onEdit: () => _openForm(eventId: todo.id),
                                       onDuplicate: () => ref
                                           .read(eventActionsProvider)
@@ -228,11 +249,14 @@ class _HomePageState extends ConsumerState<HomePage> {
                                         selected: batch.selectedIds
                                             .contains(todo.id),
                                         onTap: () => _onTodoTap(todo),
-                                        onLongPress: () =>
-                                            _enterBatch(todo.id),
-                                        onToggle: (v) => ref
-                                            .read(eventActionsProvider)
-                                            .toggleTodo(todo.id, v),
+                                        onLongPress: isDemoEventId(todo.id)
+                                            ? null
+                                            : () => _enterBatch(todo.id),
+                                        onToggle: isDemoEventId(todo.id)
+                                            ? null
+                                            : (v) => ref
+                                                .read(eventActionsProvider)
+                                                .toggleTodo(todo.id, v),
                                       ),
                                     ),
                                   );
@@ -269,12 +293,14 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   void _enterBatch(int id) {
+    if (isDemoEventId(id)) return;
     ref.read(homeBatchProvider.notifier).enterWith(id);
   }
 
   void _onTimelineTap(Event event) {
     final batch = ref.read(homeBatchProvider);
     if (batch.active) {
+      if (isDemoEventId(event.id)) return;
       ref.read(homeBatchProvider.notifier).toggle(event.id);
       return;
     }
@@ -284,6 +310,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   void _onTodoTap(Event todo) {
     final batch = ref.read(homeBatchProvider);
     if (batch.active) {
+      if (isDemoEventId(todo.id)) return;
       ref.read(homeBatchProvider.notifier).toggle(todo.id);
       return;
     }

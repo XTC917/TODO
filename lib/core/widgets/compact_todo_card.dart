@@ -12,7 +12,7 @@ class CompactTodoCard extends ConsumerWidget {
     required this.event,
     required this.completed,
     required this.onTap,
-    required this.onToggle,
+    this.onToggle,
     this.onLongPress,
     this.selected = false,
     this.batchActive = false,
@@ -21,7 +21,7 @@ class CompactTodoCard extends ConsumerWidget {
   final Event event;
   final bool completed;
   final VoidCallback onTap;
-  final ValueChanged<bool> onToggle;
+  final ValueChanged<bool>? onToggle;
   final VoidCallback? onLongPress;
   final bool selected;
   final bool batchActive;
@@ -90,7 +90,9 @@ class CompactTodoCard extends ConsumerWidget {
                     height: 32,
                     child: Checkbox(
                       value: completed,
-                      onChanged: (v) => onToggle(v ?? false),
+                      onChanged: onToggle == null
+                          ? null
+                          : (v) => onToggle!(v ?? false),
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       visualDensity: VisualDensity.compact,
                       shape: RoundedRectangleBorder(

@@ -6,8 +6,8 @@ import '../providers/l10n_providers.dart';
 import '../services/notification_service.dart';
 import '../../models/reminder_config.dart';
 
-/// Requests notification permission after the first frame, then reschedules.
-/// Also re-registers alarms when the app returns to foreground.
+/// Initializes notification scheduling after the first frame.
+/// Re-registers alarms when the app returns to foreground (without re-requesting permission).
 class NotificationBootstrap extends ConsumerStatefulWidget {
   const NotificationBootstrap({super.key, required this.child});
 
@@ -20,6 +20,9 @@ class NotificationBootstrap extends ConsumerStatefulWidget {
 
 class _NotificationBootstrapState extends ConsumerState<NotificationBootstrap>
     with WidgetsBindingObserver {
+  bool _initialPermissionRequested = false;
+  Future<void>? _rescheduleInFlight;
+
   @override
   void initState() {
     super.initState();
@@ -36,32 +39,56 @@ class _NotificationBootstrapState extends ConsumerState<NotificationBootstrap>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _reschedule();
+      _reschedule(requestPermissionIfNeeded: false);
     }
   }
 
   Future<void> _bootstrap() async {
+    if (!mounted) return;
+
     NotificationService.instance.notificationTimeUntilStartBuilder =
         (offsetSeconds) {
       final l10n = ref.read(appLocalizationsProvider);
       return formatNotificationTimeUntilStart(l10n, offsetSeconds);
     };
-    await _reschedule();
+
+    await _reschedule(requestPermissionIfNeeded: true);
   }
 
-  Future<void> _reschedule() async {
-    if (!ref.read(remindersEnabledProvider)) return;
+  Future<void> _reschedule({required bool requestPermissionIfNeeded}) async {
+    if (!mounted || !ref.read(remindersEnabledProvider)) return;
 
-    await NotificationService.instance.requestPermissions();
+    _rescheduleInFlight ??=
+        _doReschedule(requestPermissionIfNeeded: requestPermissionIfNeeded);
+    try {
+      await _rescheduleInFlight;
+    } finally {
+      _rescheduleInFlight = null;
+    }
+  }
+
+  Future<void> _doReschedule({required bool requestPermissionIfNeeded}) async {
+    if (!mounted || !ref.read(remindersEnabledProvider)) return;
+
+    if (requestPermissionIfNeeded && !_initialPermissionRequested) {
+      _initialPermissionRequested = true;
+      if (!await NotificationService.instance.hasPermission()) {
+        if (!mounted) return;
+        await NotificationService.instance.requestPermissions();
+      }
+    } else if (!await NotificationService.instance.hasPermission()) {
+      return;
+    }
+
     if (!mounted) return;
-
     ref.invalidate(notificationPermissionProvider);
 
-    if (await NotificationService.instance.hasPermission()) {
-      await NotificationService.instance.rescheduleAll(
-        ref.read(eventRepositoryProvider),
-      );
-    }
+    if (!await NotificationService.instance.hasPermission()) return;
+    if (!mounted) return;
+
+    await NotificationService.instance.rescheduleAll(
+      ref.read(eventRepositoryProvider),
+    );
   }
 
   @override
