@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/providers/app_providers.dart';
+import '../../core/services/database_backup_service.dart';
 import '../../core/services/notification_service.dart';
 import '../../l10n/app_localizations.dart';
 import 'widgets/settings_widgets.dart';
@@ -126,24 +127,49 @@ class GeneralSettingsPage extends ConsumerWidget {
       ),
     );
     if (confirmed != true) return;
+
+    final backup = ref.read(databaseBackupProvider);
+    List<int> bytes;
     try {
-      await ref.read(databaseBackupProvider).importDatabase();
+      final picked = await backup.pickDatabaseBytes();
+      if (picked == null) return;
+      bytes = picked;
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.importFailed('$e'))),
+      );
+      return;
+    }
+
+    try {
+      final db = ref.read(appDatabaseProvider);
+      await db.close();
       ref.invalidate(appDatabaseProvider);
+      await DatabaseBackupService.replaceDatabaseFile(bytes);
+      await reopenDatabase(ref);
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.importFailed('$e'))),
+      );
+      return;
+    }
+
+    try {
       if (ref.read(remindersEnabledProvider) &&
           await NotificationService.instance.hasPermission()) {
         await NotificationService.instance.rescheduleAll(
           ref.read(eventRepositoryProvider),
         );
       }
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.importSuccess)),
-      );
     } catch (e) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.importFailed('$e'))),
-      );
+      debugPrint('Reschedule after import failed (data imported): $e');
     }
+
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l10n.importSuccess)),
+    );
   }
 }

@@ -7,11 +7,43 @@ import '../../core/services/notification_service.dart';
 import '../../l10n/app_localizations.dart';
 import 'widgets/settings_widgets.dart';
 
-class NotificationSettingsPage extends ConsumerWidget {
+class NotificationSettingsPage extends ConsumerStatefulWidget {
   const NotificationSettingsPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<NotificationSettingsPage> createState() =>
+      _NotificationSettingsPageState();
+}
+
+class _NotificationSettingsPageState
+    extends ConsumerState<NotificationSettingsPage>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.invalidate(notificationPermissionProvider);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) {
+      ref.invalidate(notificationPermissionProvider);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final remindersEnabled = ref.watch(remindersEnabledProvider);
     final permissionAsync = ref.watch(notificationPermissionProvider);
@@ -45,7 +77,17 @@ class NotificationSettingsPage extends ConsumerWidget {
                         )
                       : null,
                 ),
-                if (!granted)
+                if (!granted) ...[
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: () => _requestPermission(context),
+                        child: Text(l10n.requestNotificationPermission),
+                      ),
+                    ),
+                  ),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                     child: SizedBox(
@@ -55,13 +97,32 @@ class NotificationSettingsPage extends ConsumerWidget {
                           await AppSettings.openAppSettings(
                             type: AppSettingsType.notification,
                           );
-                          ref.invalidate(notificationPermissionProvider);
+                          if (!mounted) return;
+                          await refreshNotificationPermission(ref);
+                          await _rescheduleIfEnabled(ref);
                         },
                         child: Text(l10n.openNotificationSettings),
                       ),
                     ),
                   ),
+                ],
                 if (granted) ...[
+                  FutureBuilder<bool>(
+                    future: NotificationService.instance.canScheduleExactAlarms(),
+                    builder: (context, snapshot) {
+                      if (snapshot.data != false) return const SizedBox.shrink();
+                      return Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                        child: Text(
+                          l10n.exactAlarmPermissionHint,
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context).colorScheme.error,
+                                  ),
+                        ),
+                      );
+                    },
+                  ),
                   FutureBuilder<int>(
                     future: NotificationService.instance.pendingCount(),
                     builder: (context, snapshot) {
@@ -97,7 +158,7 @@ class NotificationSettingsPage extends ConsumerWidget {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                     child: OutlinedButton.icon(
-                      onPressed: () => _sendTestNotification(context, ref),
+                      onPressed: () => _sendTestNotification(context),
                       icon: const Icon(Icons.notifications_active),
                       label: Text(l10n.testNotificationNow),
                     ),
@@ -113,7 +174,8 @@ class NotificationSettingsPage extends ConsumerWidget {
                   await AppSettings.openAppSettings(
                     type: AppSettingsType.notification,
                   );
-                  ref.invalidate(notificationPermissionProvider);
+                  if (!mounted) return;
+                  await refreshNotificationPermission(ref);
                 },
                 child: Text(l10n.openNotificationSettings),
               ),
@@ -124,13 +186,42 @@ class NotificationSettingsPage extends ConsumerWidget {
     );
   }
 
-  Future<void> _sendTestNotification(
-    BuildContext context,
-    WidgetRef ref,
-  ) async {
+  Future<void> _requestPermission(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
+    final granted = await NotificationService.instance.requestPermissionsWhenReady(
+      force: true,
+    );
+    if (!mounted) return;
+    await refreshNotificationPermission(ref);
+    if (granted) {
+      await _rescheduleIfEnabled(ref);
+    }
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          granted
+              ? l10n.notificationPermissionGranted
+              : l10n.testNotificationFailed,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _rescheduleIfEnabled(WidgetRef ref) async {
+    if (!ref.read(remindersEnabledProvider)) return;
+    await NotificationService.instance.rescheduleAll(
+      ref.read(eventRepositoryProvider),
+    );
+  }
+
+  Future<void> _sendTestNotification(BuildContext context) async {
     final l10n = AppLocalizations.of(context);
     final ok = await NotificationService.instance.showTestNotification();
     if (!context.mounted) return;
+    if (ok) {
+      await _rescheduleIfEnabled(ref);
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(

@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/event.dart';
+import '../data/demo_data.dart';
 import '../providers/l10n_providers.dart';
 import '../utils/event_display.dart';
+import 'demo_sample_badge.dart';
 
 /// Compact todo card — distinct from Timeline axis rows.
 class CompactTodoCard extends ConsumerWidget {
@@ -107,20 +109,31 @@ class CompactTodoCard extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        event.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          height: 1.2,
-                          decoration:
-                              completed ? TextDecoration.lineThrough : null,
-                          color: completed
-                              ? theme.colorScheme.onSurface
-                                  .withValues(alpha: 0.45)
-                              : null,
-                        ),
+                      Row(
+                        children: [
+                          if (isDemoEventId(event.id)) ...[
+                            const DemoSampleBadge(),
+                            const SizedBox(width: 6),
+                          ],
+                          Expanded(
+                            child: Text(
+                              event.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                height: 1.2,
+                                decoration: completed
+                                    ? TextDecoration.lineThrough
+                                    : null,
+                                color: completed
+                                    ? theme.colorScheme.onSurface
+                                        .withValues(alpha: 0.45)
+                                    : null,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       if (timeLabel.isNotEmpty)
                         Padding(

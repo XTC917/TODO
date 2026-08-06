@@ -11,6 +11,22 @@ class DatabaseBackupService {
 
   final AppDatabase _db;
 
+  static Future<File> databaseFilePath() async {
+    final dir = await getApplicationDocumentsDirectory();
+    return File(p.join(dir.path, 'soft_schedule.sqlite'));
+  }
+
+  /// Writes backup bytes to the app database file. Caller must close connections first.
+  static Future<void> replaceDatabaseFile(List<int> bytes) async {
+    final target = await databaseFilePath();
+    final temp = File('${target.path}.importing');
+    await temp.writeAsBytes(bytes, flush: true);
+    if (await target.exists()) {
+      await target.delete();
+    }
+    await temp.rename(target.path);
+  }
+
   Future<String?> exportDatabase() async {
     final source = await _db.databaseFile();
     if (!await source.exists()) throw StateError('Database file not found.');
@@ -39,31 +55,22 @@ class DatabaseBackupService {
     return savedPath;
   }
 
-  Future<void> importDatabase() async {
+  /// Returns backup bytes when a file was picked, otherwise `null`.
+  Future<List<int>?> pickDatabaseBytes() async {
     final result = await FilePicker.platform.pickFiles(
       dialogTitle: 'Import Database',
       type: FileType.any,
       withData: true,
     );
-    if (result == null || result.files.isEmpty) return;
+    if (result == null || result.files.isEmpty) return null;
 
     final picked = result.files.single;
     final bytes = picked.bytes;
-    if (bytes == null || bytes.isEmpty) {
-      if (picked.path == null) {
-        throw StateError('Unable to read selected file.');
-      }
-      await _replaceDatabase(await File(picked.path!).readAsBytes());
-      return;
-    }
-    await _replaceDatabase(bytes);
-  }
+    if (bytes != null && bytes.isNotEmpty) return bytes;
 
-  Future<void> _replaceDatabase(List<int> bytes) async {
-    await _db.close();
-    final dir = await getApplicationDocumentsDirectory();
-    final target = File(p.join(dir.path, 'soft_schedule.sqlite'));
-    if (await target.exists()) await target.delete();
-    await target.writeAsBytes(bytes, flush: true);
+    if (picked.path == null) {
+      throw StateError('Unable to read selected file.');
+    }
+    return File(picked.path!).readAsBytes();
   }
 }

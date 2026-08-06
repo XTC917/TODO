@@ -56,11 +56,21 @@ class _EventDetailSheetState extends ConsumerState<_EventDetailSheet> {
   }
 
   Future<void> _delete() async {
+    if (isDemoEvent(widget.event)) return;
     final ok = await confirmDeleteEvent(context);
     if (!ok || !mounted) return;
-    await ref.read(eventActionsProvider).delete(widget.event.id);
-    if (!mounted) return;
-    Navigator.of(context).pop();
+    try {
+      await ref.read(eventActionsProvider).delete(widget.event.id);
+      if (!mounted) return;
+      Navigator.of(context).pop();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context).saveFailedRetry),
+        ),
+      );
+    }
   }
 
   @override

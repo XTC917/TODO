@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -22,6 +24,7 @@ const _accentColorKey = 'accent_color';
 const _remindersEnabledKey = 'reminders_enabled';
 const _appLanguageKey = 'app_language';
 const _showSampleDataKey = 'show_sample_data';
+const notificationPermissionPromptedKey = 'notification_permission_prompted';
 
 AppLocalizations _localizationsFor(Ref ref) {
   final language = ref.watch(appLanguageProvider);
@@ -78,6 +81,19 @@ final databaseBackupProvider = Provider<DatabaseBackupService>((ref) {
   return DatabaseBackupService(ref.watch(appDatabaseProvider));
 });
 
+Future<void> reopenDatabase(WidgetRef ref) async {
+  ref.invalidate(appDatabaseProvider);
+  ref.invalidate(eventRepositoryProvider);
+  ref.invalidate(focusRepositoryProvider);
+  ref.invalidate(eventsForDateProvider);
+  ref.invalidate(allTodosProvider);
+  ref.invalidate(allFocusRecordsProvider);
+  ref.invalidate(daySummaryProvider);
+  ref.invalidate(eventDatesInMonthProvider);
+  ref.invalidate(databaseBackupProvider);
+  await ref.read(eventRepositoryProvider).getAllEvents();
+}
+
 final themeModeProvider =
     StateNotifierProvider<ThemeModeController, ThemeMode>((ref) {
   return ThemeModeController(ref.watch(sharedPreferencesProvider));
@@ -133,22 +149,26 @@ class RemindersEnabledController extends StateNotifier<bool> {
     state = enabled;
     await _prefs.setBool(_remindersEnabledKey, enabled);
     NotificationService.instance.remindersEnabled = enabled;
-    if (!enabled) {
-      await NotificationService.instance.cancelAll();
-      return;
-    }
-    await NotificationService.instance.requestPermissions(force: true);
-    if (await NotificationService.instance.hasPermission()) {
-      await NotificationService.instance.rescheduleAll(
-        _ref.read(eventRepositoryProvider),
-      );
+    try {
+      if (!enabled) {
+        await NotificationService.instance.cancelAll();
+        return;
+      }
+      await NotificationService.instance.requestPermissionsWhenReady(force: true);
+      if (await NotificationService.instance.hasPermission()) {
+        await NotificationService.instance.rescheduleAll(
+          _ref.read(eventRepositoryProvider),
+        );
+      }
+    } catch (e, st) {
+      debugPrint('Reminder toggle notification sync failed: $e\n$st');
     }
   }
 }
 
 class ShowSampleDataController extends StateNotifier<bool> {
   ShowSampleDataController(this._prefs)
-      : super(_prefs.getBool(_showSampleDataKey) ?? true);
+      : super(_prefs.getBool(_showSampleDataKey) ?? false);
 
   final SharedPreferences _prefs;
 
@@ -203,6 +223,12 @@ final notificationPermissionProvider = FutureProvider<bool>((ref) async {
   ref.watch(remindersEnabledProvider);
   return NotificationService.instance.hasPermission();
 });
+
+/// Forces a fresh permission read (e.g. after returning from system settings).
+Future<bool> refreshNotificationPermission(WidgetRef ref) async {
+  ref.invalidate(notificationPermissionProvider);
+  return ref.read(notificationPermissionProvider.future);
+}
 
 final pendingNotificationEventIdProvider = StateProvider<int?>((ref) => null);
 
@@ -285,107 +311,132 @@ class EventActions {
 
   final Ref _ref;
 
-  void _assertNotDemo(int id) {
-    if (isDemoEventId(id)) {
-      throw StateError('Demo events cannot be modified');
+  void _deferNotificationSync(Event event) {
+    unawaited(_syncNotification(event));
+  }
+
+  void _deferNotificationSyncById(int id) {
+    unawaited(_syncNotificationById(id));
+  }
+
+  void _deferNotificationCancel(int id) {
+    unawaited(_cancelNotificationSafe(id));
+  }
+
+  Future<void> _cancelNotificationSafe(int id) async {
+    try {
+      await NotificationService.instance.cancelForEvent(id);
+    } catch (e, st) {
+      debugPrint('Notification cancel failed for event $id: $e\n$st');
+    }
+  }
+
+  Future<void> _syncNotificationById(int id) async {
+    try {
+      final event = await _ref.read(eventRepositoryProvider).getById(id);
+      if (event != null) await _syncNotification(event);
+    } catch (e, st) {
+      debugPrint('Notification lookup failed for event $id: $e\n$st');
     }
   }
 
   Future<void> _syncNotification(Event event) async {
-    if (!_ref.read(remindersEnabledProvider)) {
-      await NotificationService.instance.cancelForEvent(event.id);
-      return;
-    }
-    if (!ReminderPresets.hasReminder(event.reminderOffsetsSeconds)) {
-      await NotificationService.instance.cancelForEvent(event.id);
-      return;
-    }
-    if (!await NotificationService.instance.hasPermission()) {
-      debugPrint(
-        'Skipping notification for event ${event.id}: permission not granted',
+    try {
+      if (!_ref.read(remindersEnabledProvider)) {
+        await NotificationService.instance.cancelForEvent(event.id);
+        return;
+      }
+      if (!ReminderPresets.hasReminder(event.reminderOffsetsSeconds)) {
+        await NotificationService.instance.cancelForEvent(event.id);
+        return;
+      }
+      // Always attempt scheduling; hasPermission() can be wrong on some OEM ROMs.
+      await NotificationService.instance.scheduleForEvent(
+        event,
+        skipPermissionCheck: true,
       );
-      return;
+    } catch (e, st) {
+      debugPrint(
+        'Notification sync failed for event ${event.id}: $e\n$st',
+      );
     }
-    await NotificationService.instance.scheduleForEvent(event);
   }
 
   Future<int> create(EventDraft draft) async {
     final id = await _ref.read(eventRepositoryProvider).create(draft);
-    final event = await _ref.read(eventRepositoryProvider).getById(id);
-    if (event != null) await _syncNotification(event);
+    _deferNotificationSyncById(id);
     return id;
   }
 
   Future<void> update(Event event) async {
-    _assertNotDemo(event.id);
+    if (isDemoEventId(event.id)) return;
     await _ref.read(eventRepositoryProvider).update(event);
-    await _syncNotification(event);
+    _deferNotificationSync(event);
   }
 
   Future<void> toggleTodo(int id, bool completed) async {
-    _assertNotDemo(id);
+    if (isDemoEventId(id)) return;
     await _ref.read(eventRepositoryProvider).toggleTodoComplete(
           id,
           completed: completed,
         );
     if (completed) {
-      await NotificationService.instance.cancelForEvent(id);
+      _deferNotificationCancel(id);
     } else {
-      final event = await _ref.read(eventRepositoryProvider).getById(id);
-      if (event != null) await _syncNotification(event);
+      _deferNotificationSyncById(id);
     }
   }
 
   Future<void> toggleTimeline(int id, bool completed) async {
-    _assertNotDemo(id);
+    if (isDemoEventId(id)) return;
     await _ref.read(eventRepositoryProvider).toggleTimelineComplete(
           id,
           completed: completed,
         );
     if (completed) {
-      await NotificationService.instance.cancelForEvent(id);
+      _deferNotificationCancel(id);
     } else {
-      final event = await _ref.read(eventRepositoryProvider).getById(id);
-      if (event != null) await _syncNotification(event);
+      _deferNotificationSyncById(id);
     }
   }
 
   Future<Event> duplicate(int id) async {
-    _assertNotDemo(id);
+    if (isDemoEventId(id)) {
+      throw StateError('Demo events cannot be duplicated');
+    }
     final event = await _ref.read(eventRepositoryProvider).duplicate(id);
-    await _syncNotification(event);
+    _deferNotificationSync(event);
     return event;
   }
 
   Future<void> delete(int id) async {
-    _assertNotDemo(id);
-    await NotificationService.instance.cancelForEvent(id);
+    if (isDemoEventId(id)) return;
     await _ref.read(eventRepositoryProvider).delete(id);
+    _deferNotificationCancel(id);
   }
 
   Future<void> deleteWithScope(Event event, DeleteRepeatScope scope) async {
-    _assertNotDemo(event.id);
-    await NotificationService.instance.cancelForEvent(event.id);
+    if (isDemoEventId(event.id)) return;
     await _ref.read(eventRepositoryProvider).deleteWithScope(event, scope);
+    _deferNotificationCancel(event.id);
   }
 
   Future<void> batchDelete(Set<int> ids) async {
-    for (final id in ids) {
-      _assertNotDemo(id);
-      await NotificationService.instance.cancelForEvent(id);
+    final realIds = ids.where((id) => !isDemoEventId(id)).toSet();
+    if (realIds.isEmpty) return;
+    await _ref.read(eventRepositoryProvider).batchDelete(realIds);
+    for (final id in realIds) {
+      _deferNotificationCancel(id);
     }
-    await _ref.read(eventRepositoryProvider).batchDelete(ids);
   }
 
   Future<void> batchUpdateDate(Set<int> ids, String newDate) async {
-    for (final id in ids) {
-      _assertNotDemo(id);
-    }
-    await _ref.read(eventRepositoryProvider).batchUpdateDate(ids, newDate);
+    final realIds = ids.where((id) => !isDemoEventId(id)).toSet();
+    if (realIds.isEmpty) return;
+    await _ref.read(eventRepositoryProvider).batchUpdateDate(realIds, newDate);
     if (!_ref.read(remindersEnabledProvider)) return;
-    for (final id in ids) {
-      final event = await _ref.read(eventRepositoryProvider).getById(id);
-      if (event != null) await _syncNotification(event);
+    for (final id in realIds) {
+      _deferNotificationSyncById(id);
     }
   }
 }

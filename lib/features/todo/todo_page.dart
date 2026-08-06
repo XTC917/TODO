@@ -145,8 +145,18 @@ class _TodoListBody extends ConsumerWidget {
         onDuplicate: () =>
             ref.read(eventActionsProvider).duplicate(todo.id),
         onDelete: () async {
+          if (isDemoEventId(todo.id)) return;
           if (!await confirmDeleteEvent(context)) return;
-          await ref.read(eventActionsProvider).delete(todo.id);
+          try {
+            await ref.read(eventActionsProvider).delete(todo.id);
+          } catch (_) {
+            if (!context.mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(AppLocalizations.of(context).saveFailedRetry),
+              ),
+            );
+          }
         },
         child: child,
       );

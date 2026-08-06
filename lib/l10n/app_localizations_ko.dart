@@ -127,6 +127,9 @@ class AppLocalizationsKo extends AppLocalizations {
       '샘플 항목은 읽기 전용입니다. 더 이상 필요 없으면 설정에서 샘플 데이터를 끌 수 있습니다.';
 
   @override
+  String get demoSampleBadge => '샘플';
+
+  @override
   String get demoScheduleWelcomeTitle => 'Welcome to JUJU Schedule 👋';
 
   @override
@@ -236,6 +239,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get testNotificationFailed => '알림을 보낼 수 없습니다. 권한과 시스템 설정을 확인하세요.';
+
+  @override
+  String get exactAlarmPermissionHint => '알림이 늦으면 시스템 설정에서 정확한 알람 권한을 허용하세요.';
 
   @override
   String pendingNotifications(Object count) {

@@ -360,8 +360,18 @@ class CalendarPage extends ConsumerWidget {
     WidgetRef ref,
     Event event,
   ) async {
+    if (isDemoEventId(event.id)) return;
     if (!await confirmDeleteEvent(context)) return;
-    await ref.read(eventActionsProvider).delete(event.id);
+    try {
+      await ref.read(eventActionsProvider).delete(event.id);
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context).saveFailedRetry),
+        ),
+      );
+    }
   }
 
   Future<void> _openForm(BuildContext context, DateTime date) {

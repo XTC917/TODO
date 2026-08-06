@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../data/demo_data.dart';
 import '../providers/app_providers.dart';
 import '../providers/batch_providers.dart';
 import '../utils/date_time_formats.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/event.dart';
+import 'swipe_event_actions.dart';
 
 class BatchToolbar extends ConsumerWidget {
   const BatchToolbar({
@@ -62,7 +64,11 @@ class BatchToolbar extends ConsumerWidget {
                         filled: true,
                         onPressed: count == 0
                             ? null
-                            : () => _deleteSelected(ref, batch.selectedIds),
+                            : () => _deleteSelected(
+                                  context,
+                                  ref,
+                                  batch.selectedIds,
+                                ),
                       ),
                       _ToolbarButton(
                         label: l10n.changeDate,
@@ -92,9 +98,27 @@ class BatchToolbar extends ConsumerWidget {
     );
   }
 
-  Future<void> _deleteSelected(WidgetRef ref, Set<int> ids) async {
-    await ref.read(eventActionsProvider).batchDelete(ids);
-    ref.read(batchProvider.notifier).cancel();
+  Future<void> _deleteSelected(
+    BuildContext context,
+    WidgetRef ref,
+    Set<int> ids,
+  ) async {
+    final realIds = ids.where((id) => !isDemoEventId(id)).toSet();
+    if (realIds.isEmpty) return;
+
+    if (!await confirmDeleteEvent(context)) return;
+
+    try {
+      await ref.read(eventActionsProvider).batchDelete(realIds);
+      ref.read(batchProvider.notifier).cancel();
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context).saveFailedRetry),
+        ),
+      );
+    }
   }
 
   Future<void> _changeDate(
@@ -104,7 +128,9 @@ class BatchToolbar extends ConsumerWidget {
   ) async {
     final l10n = AppLocalizations.of(context);
     final selected = events.where((e) => ids.contains(e.id)).toList();
-    final dated = selected.where((e) => e.hasDate).toList();
+    final dated = selected
+        .where((e) => e.hasDate && !isDemoEventId(e.id))
+        .toList();
     if (dated.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.noTimeTasksCannotChangeDate)),

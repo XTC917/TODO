@@ -328,6 +328,12 @@ abstract class AppLocalizations {
   /// **'Sample items are read-only. Turn off sample data in Settings when you no longer need them.'**
   String get demoSampleReadOnlyHint;
 
+  /// No description provided for @demoSampleBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Sample'**
+  String get demoSampleBadge;
+
   /// No description provided for @demoScheduleWelcomeTitle.
   ///
   /// In en, this message translates to:
@@ -549,6 +555,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not send notification. Check permission and system settings.'**
   String get testNotificationFailed;
+
+  /// No description provided for @exactAlarmPermissionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'If reminders are late, allow exact alarm permission in system settings.'**
+  String get exactAlarmPermissionHint;
 
   /// No description provided for @pendingNotifications.
   ///

@@ -489,21 +489,26 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
             reminderOffsetsSeconds: _reminderOffsetsSeconds,
           ),
         );
-        if (fields.$1.isNotEmpty) {
-          ref.read(homeSelectedDateProvider.notifier).state =
-              DateTimeFormats.parseDate(fields.$1);
-        }
       }
-      if (!mounted) return;
-      Navigator.of(context).pop();
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppLocalizations.of(context).saveFailedRetry)),
       );
-    } finally {
       if (mounted) setState(() => _loading = false);
+      return;
     }
+
+    if (!widget.isEditing && fields.$1.isNotEmpty) {
+      try {
+        ref.read(homeSelectedDateProvider.notifier).state =
+            DateTimeFormats.parseDate(fields.$1);
+      } catch (_) {}
+    }
+
+    if (!mounted) return;
+    setState(() => _loading = false);
+    Navigator.of(context).pop();
   }
 
   Future<void> _confirmDelete() async {
@@ -526,9 +531,16 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
       ),
     );
     if (ok != true) return;
-    await ref.read(eventActionsProvider).delete(widget.eventId!);
-    if (!mounted) return;
-    Navigator.of(context).pop();
+    try {
+      await ref.read(eventActionsProvider).delete(widget.eventId!);
+      if (!mounted) return;
+      Navigator.of(context).pop();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.saveFailedRetry)),
+      );
+    }
   }
 }
 

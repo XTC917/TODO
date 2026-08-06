@@ -324,8 +324,18 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   Future<void> _deleteEvent(Event event) async {
+    if (isDemoEventId(event.id)) return;
     if (!await confirmDeleteEvent(context)) return;
-    await ref.read(eventActionsProvider).delete(event.id);
+    try {
+      await ref.read(eventActionsProvider).delete(event.id);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context).saveFailedRetry),
+        ),
+      );
+    }
   }
 
   Future<void> _openForm({int? eventId, DateTime? initialDate}) {

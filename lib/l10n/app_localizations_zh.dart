@@ -125,6 +125,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get demoSampleReadOnlyHint => '样例内容为只读。不需要时可在设置中关闭样例数据。';
 
   @override
+  String get demoSampleBadge => '样例';
+
+  @override
   String get demoScheduleWelcomeTitle => 'Welcome to JUJU Schedule 👋';
 
   @override
@@ -234,6 +237,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get testNotificationFailed => '无法发送通知，请检查权限和系统设置';
+
+  @override
+  String get exactAlarmPermissionHint => '若提醒不准时，请在系统设置中允许「闹钟与提醒」精确权限。';
 
   @override
   String pendingNotifications(Object count) {

@@ -130,6 +130,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Sample items are read-only. Turn off sample data in Settings when you no longer need them.';
 
   @override
+  String get demoSampleBadge => 'Sample';
+
+  @override
   String get demoScheduleWelcomeTitle => 'Welcome to JUJU Schedule 👋';
 
   @override
@@ -241,6 +244,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get testNotificationFailed =>
       'Could not send notification. Check permission and system settings.';
+
+  @override
+  String get exactAlarmPermissionHint =>
+      'If reminders are late, allow exact alarm permission in system settings.';
 
   @override
   String pendingNotifications(Object count) {

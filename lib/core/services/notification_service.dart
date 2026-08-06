@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -19,6 +20,10 @@ const eventPayloadPrefix = 'event:';
 const testNotificationId = 999999;
 
 typedef NotificationTapHandler = void Function(int eventId);
+
+/// Required top-level entry for release builds when tapping background notifications.
+@pragma('vm:entry-point')
+void notificationTapBackgroundHandler(NotificationResponse response) {}
 
 /// Schedules and cancels local notifications for todos/schedules.
 class NotificationService {
@@ -51,8 +56,12 @@ class NotificationService {
   Future<void> initialize() async {
     if (_initialized) return;
 
-    tz.initializeTimeZones();
-    await _configureLocalTimezone();
+    try {
+      tz.initializeTimeZones();
+      await _configureLocalTimezone();
+    } catch (e, st) {
+      debugPrint('Notification timezone setup failed: $e\n$st');
+    }
 
     const android = AndroidInitializationSettings(_androidIcon);
     const ios = DarwinInitializationSettings(
@@ -62,30 +71,44 @@ class NotificationService {
     );
     const settings = InitializationSettings(android: android, iOS: ios);
 
-    await _plugin.initialize(
-      settings,
-      onDidReceiveNotificationResponse: _handleNotificationResponse,
-      onDidReceiveBackgroundNotificationResponse: _notificationTapBackground,
-    );
+    try {
+      await _plugin.initialize(
+        settings,
+        onDidReceiveNotificationResponse: _handleNotificationResponse,
+        onDidReceiveBackgroundNotificationResponse:
+            notificationTapBackgroundHandler,
+      );
+    } catch (e, st) {
+      debugPrint('Notification plugin initialize failed: $e\n$st');
+      return;
+    }
 
     if (Platform.isAndroid) {
-      await _androidPlugin?.createNotificationChannel(
-        const AndroidNotificationChannel(
-          _channelId,
-          _channelName,
-          description: 'Task reminders',
-          importance: Importance.max,
-          playSound: true,
-          enableVibration: true,
-        ),
-      );
+      try {
+        await _androidPlugin?.createNotificationChannel(
+          const AndroidNotificationChannel(
+            _channelId,
+            _channelName,
+            description: 'Task reminders',
+            importance: Importance.max,
+            playSound: true,
+            enableVibration: true,
+          ),
+        );
+      } catch (e, st) {
+        debugPrint('Notification channel setup failed: $e\n$st');
+      }
     }
 
     _initialized = true;
 
-    final launchDetails = await _plugin.getNotificationAppLaunchDetails();
-    if (launchDetails?.didNotificationLaunchApp == true) {
-      _dispatchPayload(launchDetails!.notificationResponse?.payload);
+    try {
+      final launchDetails = await _plugin.getNotificationAppLaunchDetails();
+      if (launchDetails?.didNotificationLaunchApp == true) {
+        _dispatchPayload(launchDetails!.notificationResponse?.payload);
+      }
+    } catch (e) {
+      debugPrint('Notification launch details failed: $e');
     }
   }
 
@@ -93,12 +116,25 @@ class NotificationService {
       _plugin.resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>();
 
-  /// True when the Android Activity is available for platform-channel calls.
+  /// True when the Android Activity is ready for permission dialogs.
   bool get _canRequestPlatformPermission {
     if (!WidgetsBinding.instance.isRootWidgetAttached) return false;
-    final state = WidgetsBinding.instance.lifecycleState;
-    return state == AppLifecycleState.resumed ||
-        state == AppLifecycleState.inactive;
+    return WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
+  }
+
+  /// Waits until the Activity is in [AppLifecycleState.resumed], then requests once.
+  Future<bool> requestPermissionsWhenReady({bool force = false}) async {
+    for (var attempt = 0; attempt < 40; attempt++) {
+      if (_canRequestPlatformPermission) {
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+        if (_canRequestPlatformPermission) {
+          return requestPermissions(force: force);
+        }
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    }
+    debugPrint('Timed out waiting for Activity before permission request');
+    return hasPermission();
   }
 
   /// Requests post-notification permission once per session unless [force].
@@ -154,9 +190,32 @@ class NotificationService {
 
   Future<bool> hasPermission() async {
     await initialize();
+
     try {
       if (Platform.isAndroid) {
-        return await _androidPlugin?.areNotificationsEnabled() ?? false;
+        try {
+          final runtime = await Permission.notification.status;
+          if (runtime.isGranted) return true;
+        } catch (e) {
+          debugPrint('permission_handler notification check failed: $e');
+        }
+
+        final plugin = _androidPlugin;
+        if (plugin == null) {
+          debugPrint('Android notification plugin unavailable');
+          return false;
+        }
+
+        for (var attempt = 0; attempt < 3; attempt++) {
+          final enabled = await plugin.areNotificationsEnabled();
+          if (enabled == true) return true;
+          if (attempt < 2) {
+            await Future<void>.delayed(
+              Duration(milliseconds: 150 * (attempt + 1)),
+            );
+          }
+        }
+        return false;
       }
       if (Platform.isIOS) {
         final iosPlugin = _plugin.resolvePlatformSpecificImplementation<
@@ -165,8 +224,8 @@ class NotificationService {
         return settings?.isEnabled ?? false;
       }
       return true;
-    } catch (e) {
-      debugPrint('Notification permission check failed: $e');
+    } catch (e, st) {
+      debugPrint('Notification permission check failed: $e\n$st');
       return false;
     }
   }
@@ -186,7 +245,6 @@ class NotificationService {
     await initialize();
     if (!await hasPermission()) {
       await requestPermissions(force: true);
-      if (!await hasPermission()) return false;
     }
 
     try {
@@ -209,7 +267,6 @@ class NotificationService {
       await cancelAll();
       return;
     }
-    if (!await hasPermission()) return;
 
     await cancelAll();
     final rows = await repository.getAllEvents();
@@ -229,67 +286,78 @@ class NotificationService {
     Event event, {
     bool skipPermissionCheck = false,
   }) async {
-    await initialize();
-    await cancelForEvent(event.id);
+    try {
+      await initialize();
+      await cancelForEvent(event.id);
 
-    if (!_remindersEnabled) return 0;
-    if (!ReminderPresets.hasReminder(event.reminderOffsetsSeconds)) return 0;
-    if (event.isCompleted) return 0;
+      if (!_remindersEnabled) return 0;
+      if (!ReminderPresets.hasReminder(event.reminderOffsetsSeconds)) return 0;
+      if (event.isCompleted) return 0;
 
-    if (!skipPermissionCheck && !await hasPermission()) {
-      debugPrint(
-        'Skipping notification for event ${event.id}: permission not granted',
-      );
-      return 0;
-    }
-
-    final anchor = event.reminderAnchorDateTime;
-    if (anchor == null) {
-      debugPrint(
-        'Skipping notification for event ${event.id}: no reminder anchor',
-      );
-      return 0;
-    }
-
-    final now = tz.TZDateTime.now(tz.local);
-    var scheduled = 0;
-    final offsets = [...event.reminderOffsetsSeconds]
-      ..sort((a, b) => b.compareTo(a));
-
-    for (var i = 0; i < offsets.length && i < kMaxRemindersPerEvent; i++) {
-      final offsetSeconds = offsets[i];
-      final offset = ReminderPresets.toDuration(offsetSeconds);
-      if (offset == null) continue;
-
-      final scheduledLocal = anchor.subtract(offset);
-      final scheduledTime = tz.TZDateTime.from(scheduledLocal, tz.local);
-      if (!scheduledTime.isAfter(now)) {
+      if (!skipPermissionCheck && !await hasPermission()) {
         debugPrint(
-          'Skipping event ${event.id} offset $offsetSeconds: fire time in past',
+          'Skipping notification for event ${event.id}: permission not granted',
         );
-        continue;
+        return 0;
       }
 
-      final notificationId = notificationIdForEvent(event.id, i);
-      final untilStart = notificationTimeUntilStartBuilder?.call(offsetSeconds) ??
-          _fallbackTimeUntilStart(offsetSeconds);
-      final body = '${event.title}\n$untilStart';
-
-      final ok = await _zonedScheduleWithFallback(
-        notificationId,
-        AppConfig.appName,
-        body,
-        scheduledTime,
-        payload: '$eventPayloadPrefix${event.id}',
-      );
-      if (ok) {
-        scheduled++;
+      final anchor = event.reminderAnchorDateTime;
+      if (anchor == null) {
         debugPrint(
-          'Scheduled notification $notificationId at $scheduledTime for "${event.title}"',
+          'Skipping notification for event ${event.id}: no reminder anchor',
         );
+        return 0;
       }
+
+      final now = tz.TZDateTime.now(tz.local);
+      var scheduled = 0;
+      final offsets = [...event.reminderOffsetsSeconds]
+        ..sort((a, b) => b.compareTo(a));
+
+      for (var i = 0; i < offsets.length && i < kMaxRemindersPerEvent; i++) {
+        final offsetSeconds = offsets[i];
+        final offset = ReminderPresets.toDuration(offsetSeconds);
+        if (offset == null) continue;
+
+        final scheduledLocal = anchor.subtract(offset);
+        final scheduledTime = tz.TZDateTime.from(scheduledLocal, tz.local);
+        if (!scheduledTime.isAfter(now)) {
+          debugPrint(
+            'Skipping event ${event.id} offset $offsetSeconds: fire time in past',
+          );
+          continue;
+        }
+
+        final notificationId = notificationIdForEvent(event.id, i);
+        String untilStart;
+        try {
+          untilStart = notificationTimeUntilStartBuilder?.call(offsetSeconds) ??
+              _fallbackTimeUntilStart(offsetSeconds);
+        } catch (e) {
+          debugPrint('Notification body builder failed: $e');
+          untilStart = _fallbackTimeUntilStart(offsetSeconds);
+        }
+        final body = '${event.title}\n$untilStart';
+
+        final ok = await _zonedScheduleWithFallback(
+          notificationId,
+          AppConfig.appName,
+          body,
+          scheduledTime,
+          payload: '$eventPayloadPrefix${event.id}',
+        );
+        if (ok) {
+          scheduled++;
+          debugPrint(
+            'Scheduled notification $notificationId at $scheduledTime for "${event.title}"',
+          );
+        }
+      }
+      return scheduled;
+    } catch (e, st) {
+      debugPrint('scheduleForEvent failed for ${event.id}: $e\n$st');
+      return 0;
     }
-    return scheduled;
   }
 
   Future<bool> _zonedScheduleWithFallback(
@@ -359,13 +427,15 @@ class NotificationService {
   }
 
   Future<void> cancelForEvent(int eventId) async {
-    for (var i = 0; i < kMaxRemindersPerEvent; i++) {
-      await _plugin.cancel(notificationIdForEvent(eventId, i));
+    try {
+      await initialize();
+      for (var i = 0; i < kMaxRemindersPerEvent; i++) {
+        await _plugin.cancel(notificationIdForEvent(eventId, i));
+      }
+    } catch (e, st) {
+      debugPrint('cancelForEvent failed for $eventId: $e\n$st');
     }
   }
-
-  @pragma('vm:entry-point')
-  static void _notificationTapBackground(NotificationResponse response) {}
 
   void _handleNotificationResponse(NotificationResponse response) {
     _dispatchPayload(response.payload);
