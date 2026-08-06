@@ -17,26 +17,9 @@ object ReminderNativeBridge {
                 call,
                 result ->
             when (call.method) {
-                "startForegroundGuard" -> {
-                    val count = call.argument<Int>("pendingCount") ?: 0
-                    ReminderForegroundService.start(context, count)
-                    result.success(true)
-                }
-                "stopForegroundGuard" -> {
-                    ReminderForegroundService.stop(context)
-                    result.success(true)
-                }
+                "getManufacturer" -> result.success(Build.MANUFACTURER)
                 "openAutostartSettings" -> {
                     result.success(openAutostartSettings(context))
-                }
-                "openAppDetails" -> {
-                    val intent =
-                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                            data = Uri.fromParts("package", context.packageName, null)
-                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        }
-                    context.startActivity(intent)
-                    result.success(true)
                 }
                 else -> result.notImplemented()
             }

@@ -418,47 +418,35 @@ abstract class AppLocalizations {
   /// **'Open notification settings'**
   String get openNotificationSettings;
 
-  /// No description provided for @requestNotificationPermission.
+  /// No description provided for @settingsAutostartPermission.
   ///
   /// In en, this message translates to:
-  /// **'Allow notifications'**
-  String get requestNotificationPermission;
+  /// **'Autostart'**
+  String get settingsAutostartPermission;
 
-  /// No description provided for @testNotificationNow.
+  /// No description provided for @autostartPermissionGranted.
   ///
   /// In en, this message translates to:
-  /// **'Send test notification'**
-  String get testNotificationNow;
+  /// **'Autostart enabled'**
+  String get autostartPermissionGranted;
 
-  /// No description provided for @testNotificationSending.
+  /// No description provided for @autostartPermissionNotConfigured.
   ///
   /// In en, this message translates to:
-  /// **'Sending…'**
-  String get testNotificationSending;
+  /// **'Autostart not confirmed'**
+  String get autostartPermissionNotConfigured;
 
-  /// No description provided for @testNotificationSuccess.
+  /// No description provided for @autostartPermissionHint.
   ///
   /// In en, this message translates to:
-  /// **'Test notification sent'**
-  String get testNotificationSuccess;
+  /// **'On Xiaomi/Redmi devices, enable autostart or reminders may stop after swiping the app away.'**
+  String get autostartPermissionHint;
 
-  /// No description provided for @testNotificationFailed.
+  /// No description provided for @requestAutostartPermission.
   ///
   /// In en, this message translates to:
-  /// **'Could not send notification. Check permission and system settings.'**
-  String get testNotificationFailed;
-
-  /// No description provided for @testNotificationInitFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Notification service is not ready. Restart the app and try again.'**
-  String get testNotificationInitFailed;
-
-  /// No description provided for @testNotificationTimedOut.
-  ///
-  /// In en, this message translates to:
-  /// **'Timed out. Check that the Reminders notification channel is enabled in system settings.'**
-  String get testNotificationTimedOut;
+  /// **'Enable autostart'**
+  String get requestAutostartPermission;
 
   /// No description provided for @exactAlarmPermissionHint.
   ///
@@ -483,18 +471,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Disable battery optimization'**
   String get requestBatteryOptimization;
-
-  /// No description provided for @autostartPermissionHint.
-  ///
-  /// In en, this message translates to:
-  /// **'On Xiaomi/Redmi: swiping the app away cancels all scheduled reminders. Enable Autostart and use the Home button instead of swiping the app closed.'**
-  String get autostartPermissionHint;
-
-  /// No description provided for @requestAutostartPermission.
-  ///
-  /// In en, this message translates to:
-  /// **'Enable autostart (Xiaomi)'**
-  String get requestAutostartPermission;
 
   /// No description provided for @pendingNotifications.
   ///

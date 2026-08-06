@@ -170,27 +170,20 @@ class AppLocalizationsKo extends AppLocalizations {
   String get openNotificationSettings => '알림 설정 열기';
 
   @override
-  String get requestNotificationPermission => '알림 허용';
+  String get settingsAutostartPermission => '자동 시작';
 
   @override
-  String get testNotificationNow => '테스트 알림 보내기';
+  String get autostartPermissionGranted => '자동 시작 켜짐';
 
   @override
-  String get testNotificationSending => '전송 중…';
+  String get autostartPermissionNotConfigured => '자동 시작 미확인';
 
   @override
-  String get testNotificationSuccess => '테스트 알림을 보냈습니다';
+  String get autostartPermissionHint =>
+      '샤오미/레드미 기기에서는 자동 시작을 켜야 앱을 종료한 뒤에도 알림이 울립니다.';
 
   @override
-  String get testNotificationFailed => '알림을 보낼 수 없습니다. 권한과 시스템 설정을 확인하세요.';
-
-  @override
-  String get testNotificationInitFailed =>
-      '알림 서비스가 준비되지 않았습니다. 앱을 다시 시작한 후 시도하세요.';
-
-  @override
-  String get testNotificationTimedOut =>
-      '시간 초과. 시스템 설정에서 Reminders 알림 채널이 켜져 있는지 확인하세요.';
+  String get requestAutostartPermission => '자동 시작 설정 열기';
 
   @override
   String get exactAlarmPermissionHint =>
@@ -205,13 +198,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get requestBatteryOptimization => '배터리 최적화 해제';
-
-  @override
-  String get autostartPermissionHint =>
-      '샤오미/레드미: 앱을 위로 밀어 종료하면 예약된 알림이 모두 취소됩니다. 자동 시작을 켜고 Home 버튼으로 백그라운드에 두세요.';
-
-  @override
-  String get requestAutostartPermission => '자동 시작 허용 (샤오미)';
 
   @override
   String pendingNotifications(Object count) {

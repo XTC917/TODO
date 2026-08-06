@@ -170,25 +170,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get openNotificationSettings => '前往系统通知设置';
 
   @override
-  String get requestNotificationPermission => '允许通知';
+  String get settingsAutostartPermission => '自启动';
 
   @override
-  String get testNotificationNow => '发送测试通知';
+  String get autostartPermissionGranted => '自启动已开启';
 
   @override
-  String get testNotificationSending => '正在发送…';
+  String get autostartPermissionNotConfigured => '自启动未确认';
 
   @override
-  String get testNotificationSuccess => '测试通知已发送';
+  String get autostartPermissionHint => '小米/红米手机需开启自启动，否则划掉后台后提醒可能无法触发。';
 
   @override
-  String get testNotificationFailed => '无法发送通知，请检查权限和系统设置';
-
-  @override
-  String get testNotificationInitFailed => '通知服务未就绪，请重启应用后再试';
-
-  @override
-  String get testNotificationTimedOut => '发送超时，请在系统设置中检查通知渠道是否开启';
+  String get requestAutostartPermission => '前往开启自启动';
 
   @override
   String get exactAlarmPermissionHint =>
@@ -202,13 +196,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get requestBatteryOptimization => '允许后台运行';
-
-  @override
-  String get autostartPermissionHint =>
-      '小米/红米手机：上滑清除应用会取消所有已安排的提醒。请务必开启「自启动」，平时用 Home 键切后台，不要上滑清除。';
-
-  @override
-  String get requestAutostartPermission => '开启自启动（小米）';
 
   @override
   String pendingNotifications(Object count) {

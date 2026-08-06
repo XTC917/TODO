@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:app_settings/app_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/providers/app_providers.dart';
 import '../../core/reminder/reminder_log.dart';
+import '../../core/reminder/reminder_native.dart';
 import '../../core/services/notification_service.dart';
 import '../../l10n/app_localizations.dart';
 import 'widgets/settings_widgets.dart';
@@ -19,14 +22,18 @@ class NotificationSettingsPage extends ConsumerStatefulWidget {
 class _NotificationSettingsPageState
     extends ConsumerState<NotificationSettingsPage>
     with WidgetsBindingObserver {
-  bool _schedulingTest = false;
+  bool _awaitingAutostartReturn = false;
+  bool? _needsAutostartGuide;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) ref.invalidate(notificationPermissionProvider);
+      if (mounted) {
+        ref.invalidate(notificationPermissionProvider);
+        _loadAutostartGuide();
+      }
     });
   }
 
@@ -36,12 +43,28 @@ class _NotificationSettingsPageState
     super.dispose();
   }
 
+  Future<void> _loadAutostartGuide() async {
+    final needs = await ReminderNative.needsAutostartGuide();
+    if (mounted) setState(() => _needsAutostartGuide = needs);
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && mounted) {
       ref.invalidate(notificationPermissionProvider);
+      if (_awaitingAutostartReturn) {
+        _awaitingAutostartReturn = false;
+        unawaited(_markAutostartConfigured());
+      }
       setState(() {});
     }
+  }
+
+  Future<void> _markAutostartConfigured() async {
+    await ReminderNative.markAutostartConfigured(
+      ref.read(sharedPreferencesProvider),
+    );
+    if (mounted) setState(() {});
   }
 
   @override
@@ -49,6 +72,7 @@ class _NotificationSettingsPageState
     final l10n = AppLocalizations.of(context);
     final remindersEnabled = ref.watch(remindersEnabledProvider);
     final permissionAsync = ref.watch(notificationPermissionProvider);
+    final prefs = ref.watch(sharedPreferencesProvider);
 
     return SettingsSubpageScaffold(
       title: l10n.settingsNotifications,
@@ -63,13 +87,15 @@ class _NotificationSettingsPageState
           permissionAsync.when(
             data: (granted) => _PermissionSection(
               granted: granted,
-              schedulingTest: _schedulingTest,
-              onRequestPermission: () => _requestPermission(context),
-              onOpenSettings: () => _openSystemNotificationSettings(context),
+              needsAutostartGuide: _needsAutostartGuide ?? false,
+              autostartConfiguredFuture:
+                  ReminderNative.isAutostartConfigured(prefs),
+              onOpenNotificationSettings: () =>
+                  _openSystemNotificationSettings(context),
               onRequestExactAlarm: () => _requestExactAlarm(context),
               onRequestBatteryOptimization: () =>
                   _requestBatteryOptimization(context),
-              onScheduleTest: () => _scheduleTestReminder(context),
+              onOpenAutostartSettings: () => _openAutostartSettings(context),
             ),
             loading: () => const ListTile(title: Text('…')),
             error: (_, __) => ListTile(
@@ -81,26 +107,6 @@ class _NotificationSettingsPageState
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Future<void> _requestPermission(BuildContext context) async {
-    final l10n = AppLocalizations.of(context);
-    reminderLog('settings requestPermission()');
-    final granted = await NotificationService.instance
-        .requestPermissionsWhenReady(force: true);
-    if (!mounted) return;
-    await refreshNotificationPermission(ref);
-    if (granted) await _rescheduleIfEnabled();
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          granted
-              ? l10n.notificationPermissionGranted
-              : l10n.testNotificationFailed,
-        ),
       ),
     );
   }
@@ -129,55 +135,38 @@ class _NotificationSettingsPageState
     setState(() {});
   }
 
+  Future<void> _openAutostartSettings(BuildContext context) async {
+    reminderLog('settings autostart openSettings()');
+    _awaitingAutostartReturn = true;
+    await ReminderNative.openAutostartSettings();
+  }
+
   Future<void> _rescheduleIfEnabled() async {
     if (!ref.read(remindersEnabledProvider)) return;
     await NotificationService.instance.rescheduleAll(
       ref.read(eventRepositoryProvider),
     );
   }
-
-  Future<void> _scheduleTestReminder(BuildContext context) async {
-    final l10n = AppLocalizations.of(context);
-    final messenger = ScaffoldMessenger.of(context);
-    setState(() => _schedulingTest = true);
-    TestNotificationResult result;
-    try {
-      result = await NotificationService.instance.showTestNotification();
-    } finally {
-      if (mounted) setState(() => _schedulingTest = false);
-    }
-    if (!mounted) return;
-
-    final message = switch (result) {
-      TestNotificationResult.success => l10n.testNotificationSuccess,
-      TestNotificationResult.permissionDenied => l10n.testNotificationFailed,
-      TestNotificationResult.notInitialized => l10n.testNotificationInitFailed,
-      TestNotificationResult.timedOut => l10n.testNotificationTimedOut,
-      TestNotificationResult.showFailed => l10n.testNotificationFailed,
-    };
-    messenger.showSnackBar(SnackBar(content: Text(message)));
-    setState(() {});
-  }
 }
 
 class _PermissionSection extends StatelessWidget {
   const _PermissionSection({
     required this.granted,
-    required this.schedulingTest,
-    required this.onRequestPermission,
-    required this.onOpenSettings,
+    required this.needsAutostartGuide,
+    required this.autostartConfiguredFuture,
+    required this.onOpenNotificationSettings,
     required this.onRequestExactAlarm,
     required this.onRequestBatteryOptimization,
-    required this.onScheduleTest,
+    required this.onOpenAutostartSettings,
   });
 
   final bool granted;
-  final bool schedulingTest;
-  final VoidCallback onRequestPermission;
-  final VoidCallback onOpenSettings;
+  final bool needsAutostartGuide;
+  final Future<bool> autostartConfiguredFuture;
+  final VoidCallback onOpenNotificationSettings;
   final VoidCallback onRequestExactAlarm;
   final VoidCallback onRequestBatteryOptimization;
-  final VoidCallback onScheduleTest;
+  final VoidCallback onOpenAutostartSettings;
 
   @override
   Widget build(BuildContext context) {
@@ -199,20 +188,60 @@ class _PermissionSection extends StatelessWidget {
               ? Icon(Icons.check_circle_outline, color: theme.colorScheme.primary)
               : null,
         ),
-        if (!granted) ...[
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: FilledButton(
-              onPressed: onRequestPermission,
-              child: Text(l10n.requestNotificationPermission),
-            ),
-          ),
+        if (!granted)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: OutlinedButton(
-              onPressed: onOpenSettings,
+            child: FilledButton(
+              onPressed: onOpenNotificationSettings,
               child: Text(l10n.openNotificationSettings),
             ),
+          ),
+        if (needsAutostartGuide) ...[
+          FutureBuilder<bool>(
+            future: autostartConfiguredFuture,
+            builder: (context, snapshot) {
+              final configured = snapshot.data ?? false;
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.rocket_launch_outlined, size: 22),
+                    title: Text(l10n.settingsAutostartPermission),
+                    subtitle: Text(
+                      configured
+                          ? l10n.autostartPermissionGranted
+                          : l10n.autostartPermissionNotConfigured,
+                    ),
+                    trailing: configured
+                        ? Icon(
+                            Icons.check_circle_outline,
+                            color: theme.colorScheme.primary,
+                          )
+                        : null,
+                  ),
+                  if (!configured)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                            l10n.autostartPermissionHint,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.error,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          OutlinedButton(
+                            onPressed: onOpenAutostartSettings,
+                            child: Text(l10n.requestAutostartPermission),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              );
+            },
           ),
         ],
         Padding(
@@ -221,24 +250,6 @@ class _PermissionSection extends StatelessWidget {
             l10n.reminderSetupHint,
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-            ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-          child: OutlinedButton.icon(
-            onPressed: schedulingTest ? null : onScheduleTest,
-            icon: schedulingTest
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.notifications_active),
-            label: Text(
-              schedulingTest
-                  ? l10n.testNotificationSending
-                  : l10n.testNotificationNow,
             ),
           ),
         ),

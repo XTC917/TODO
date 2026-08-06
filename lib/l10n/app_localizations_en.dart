@@ -174,28 +174,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get openNotificationSettings => 'Open notification settings';
 
   @override
-  String get requestNotificationPermission => 'Allow notifications';
+  String get settingsAutostartPermission => 'Autostart';
 
   @override
-  String get testNotificationNow => 'Send test notification';
+  String get autostartPermissionGranted => 'Autostart enabled';
 
   @override
-  String get testNotificationSending => 'Sending…';
+  String get autostartPermissionNotConfigured => 'Autostart not confirmed';
 
   @override
-  String get testNotificationSuccess => 'Test notification sent';
+  String get autostartPermissionHint =>
+      'On Xiaomi/Redmi devices, enable autostart or reminders may stop after swiping the app away.';
 
   @override
-  String get testNotificationFailed =>
-      'Could not send notification. Check permission and system settings.';
-
-  @override
-  String get testNotificationInitFailed =>
-      'Notification service is not ready. Restart the app and try again.';
-
-  @override
-  String get testNotificationTimedOut =>
-      'Timed out. Check that the Reminders notification channel is enabled in system settings.';
+  String get requestAutostartPermission => 'Enable autostart';
 
   @override
   String get exactAlarmPermissionHint =>
@@ -210,13 +202,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get requestBatteryOptimization => 'Disable battery optimization';
-
-  @override
-  String get autostartPermissionHint =>
-      'On Xiaomi/Redmi: swiping the app away cancels all scheduled reminders. Enable Autostart and use the Home button instead of swiping the app closed.';
-
-  @override
-  String get requestAutostartPermission => 'Enable autostart (Xiaomi)';
 
   @override
   String pendingNotifications(Object count) {

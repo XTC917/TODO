@@ -1,5 +1,20 @@
 # Changelog
 
+## v2.4.0
+
+First friend-share release with reliable Android reminders.
+
+### Added
+- Reminder module rewritten (schedule/cancel/reschedule, `[JUJU Reminder]` logs, Release ProGuard Gson rules).
+- Settings → Notifications: autostart guide for Xiaomi/Redmi/POCO; battery optimization and exact-alarm prompts.
+
+### Changed
+- Test notification removed from settings; notification permission uses system settings only.
+- Reminder sync is awaited on save so alarms register before leaving the app; no full reschedule on every foreground resume.
+
+### Fixed
+- Release reminders failing due to R8 + Gson (`Missing type parameter`) and MIUI background kills (autostart / battery / exact alarm).
+
 ## v2.3.1
 
 ### Fixed
