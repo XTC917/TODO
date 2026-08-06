@@ -9,6 +9,7 @@ Future<void> showFocusRankingSheet({
   required BuildContext context,
   required List<FocusRankingEntry> entries,
   required StatsPeriod period,
+  int? initialExpandedIndex,
 }) async {
   await showModalBottomSheet<void>(
     context: context,
@@ -18,7 +19,11 @@ Future<void> showFocusRankingSheet({
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
-    builder: (ctx) => _FocusRankingSheet(entries: entries, period: period),
+    builder: (ctx) => _FocusRankingSheet(
+      entries: entries,
+      period: period,
+      initialExpandedIndex: initialExpandedIndex,
+    ),
   );
 }
 
@@ -26,10 +31,12 @@ class _FocusRankingSheet extends StatefulWidget {
   const _FocusRankingSheet({
     required this.entries,
     required this.period,
+    this.initialExpandedIndex,
   });
 
   final List<FocusRankingEntry> entries;
   final StatsPeriod period;
+  final int? initialExpandedIndex;
 
   @override
   State<_FocusRankingSheet> createState() => _FocusRankingSheetState();
@@ -37,6 +44,12 @@ class _FocusRankingSheet extends StatefulWidget {
 
 class _FocusRankingSheetState extends State<_FocusRankingSheet> {
   int? _expandedIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _expandedIndex = widget.initialExpandedIndex;
+  }
 
   @override
   Widget build(BuildContext context) {

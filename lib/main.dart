@@ -6,7 +6,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app.dart';
 import 'core/providers/app_providers.dart';
+import 'core/providers/l10n_providers.dart';
+import 'core/services/initial_data_seeder.dart';
 import 'core/services/notification_service.dart';
+import 'l10n/app_localizations.dart';
+
+AppLanguage _readAppLanguage(SharedPreferences prefs) {
+  return AppLanguage.values.firstWhere(
+    (language) => language.name == prefs.getString('app_language'),
+    orElse: () => AppLanguage.system,
+  );
+}
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,6 +45,18 @@ Future<void> main() async {
           eventId;
     },
   );
+
+  try {
+    await InitialDataSeeder.seedIfFirstLaunch(
+      prefs: prefs,
+      repo: container.read(eventRepositoryProvider),
+      l10n: lookupAppLocalizations(
+        resolveAppLocale(_readAppLanguage(prefs)),
+      ),
+    );
+  } catch (e, st) {
+    debugPrint('Initial data seed failed (app will continue): $e\n$st');
+  }
 
   try {
     await NotificationService.instance.initialize();

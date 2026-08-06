@@ -292,167 +292,53 @@ abstract class AppLocalizations {
   /// **'Privacy Policy'**
   String get settingsPrivacyPolicy;
 
-  /// No description provided for @settingsShowSampleData.
+  /// No description provided for @initialTimelineWelcomeTitle.
   ///
   /// In en, this message translates to:
-  /// **'Show Sample Data'**
-  String get settingsShowSampleData;
+  /// **'👋 Welcome to JUJU Schedule'**
+  String get initialTimelineWelcomeTitle;
 
-  /// No description provided for @settingsShowSampleDataHint.
+  /// No description provided for @initialTimelineAddTitle.
   ///
   /// In en, this message translates to:
-  /// **'Display built-in sample schedules and todos to explore the app'**
-  String get settingsShowSampleDataHint;
+  /// **'➕ Tap + at bottom right to add a task'**
+  String get initialTimelineAddTitle;
 
-  /// No description provided for @settingsHideSampleDataTitle.
+  /// No description provided for @initialTimelineEditTitle.
   ///
   /// In en, this message translates to:
-  /// **'Hide Sample Data?'**
-  String get settingsHideSampleDataTitle;
+  /// **'✏️ Swipe left or long-press to edit'**
+  String get initialTimelineEditTitle;
 
-  /// No description provided for @settingsHideSampleDataMessage.
+  /// No description provided for @initialTimelineReminderTitle.
   ///
   /// In en, this message translates to:
-  /// **'Sample data will be hidden, but your own schedules and todos will remain unchanged.'**
-  String get settingsHideSampleDataMessage;
+  /// **'🔔 Set reminders when creating tasks'**
+  String get initialTimelineReminderTitle;
 
-  /// No description provided for @settingsHideSampleDataConfirm.
+  /// No description provided for @initialTimelineFocusTitle.
   ///
   /// In en, this message translates to:
-  /// **'Hide'**
-  String get settingsHideSampleDataConfirm;
+  /// **'🍅 Start your first focus session'**
+  String get initialTimelineFocusTitle;
 
-  /// No description provided for @demoSampleReadOnlyHint.
+  /// No description provided for @initialTodoThemeTitle.
   ///
   /// In en, this message translates to:
-  /// **'Sample items are read-only. Turn off sample data in Settings when you no longer need them.'**
-  String get demoSampleReadOnlyHint;
+  /// **'🎨 Change theme color in Settings'**
+  String get initialTodoThemeTitle;
 
-  /// No description provided for @demoSampleBadge.
+  /// No description provided for @initialTodoLanguageTitle.
   ///
   /// In en, this message translates to:
-  /// **'Sample'**
-  String get demoSampleBadge;
+  /// **'🌐 Switch language in Settings'**
+  String get initialTodoLanguageTitle;
 
-  /// No description provided for @demoScheduleWelcomeTitle.
+  /// No description provided for @initialTodoStatsTitle.
   ///
   /// In en, this message translates to:
-  /// **'Welcome to JUJU Schedule 👋'**
-  String get demoScheduleWelcomeTitle;
-
-  /// No description provided for @demoScheduleWelcomeNote.
-  ///
-  /// In en, this message translates to:
-  /// **'Hope it helps you organize every day.'**
-  String get demoScheduleWelcomeNote;
-
-  /// No description provided for @demoScheduleAddTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Tap + at bottom right to add a schedule'**
-  String get demoScheduleAddTitle;
-
-  /// No description provided for @demoScheduleAddNote.
-  ///
-  /// In en, this message translates to:
-  /// **'Create your own schedule.'**
-  String get demoScheduleAddNote;
-
-  /// No description provided for @demoScheduleDetailTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Tap a card to view details'**
-  String get demoScheduleDetailTitle;
-
-  /// No description provided for @demoScheduleDetailNote.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit title, time, note, and reminder.'**
-  String get demoScheduleDetailNote;
-
-  /// No description provided for @demoScheduleSwipeTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Swipe left to quick edit'**
-  String get demoScheduleSwipeTitle;
-
-  /// No description provided for @demoScheduleSwipeNote.
-  ///
-  /// In en, this message translates to:
-  /// **'Or edit or delete from the detail page.'**
-  String get demoScheduleSwipeNote;
-
-  /// No description provided for @demoScheduleReminderTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Set a Reminder'**
-  String get demoScheduleReminderTitle;
-
-  /// No description provided for @demoScheduleReminderNote.
-  ///
-  /// In en, this message translates to:
-  /// **'Try \"At Time\" or \"5 min before\".'**
-  String get demoScheduleReminderNote;
-
-  /// No description provided for @demoScheduleHideTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Turn off sample data in Settings'**
-  String get demoScheduleHideTitle;
-
-  /// No description provided for @demoScheduleHideNote.
-  ///
-  /// In en, this message translates to:
-  /// **'You can hide or show sample data anytime.'**
-  String get demoScheduleHideNote;
-
-  /// No description provided for @demoTodoWelcomeTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Welcome to JUJU Schedule 👋'**
-  String get demoTodoWelcomeTitle;
-
-  /// No description provided for @demoTodoAddTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Tap + at bottom right to add a todo'**
-  String get demoTodoAddTitle;
-
-  /// No description provided for @demoTodoSwipeTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Swipe left to quick edit a todo'**
-  String get demoTodoSwipeTitle;
-
-  /// No description provided for @demoTodoThemeTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Change theme color'**
-  String get demoTodoThemeTitle;
-
-  /// No description provided for @demoTodoLanguageTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Change app language'**
-  String get demoTodoLanguageTitle;
-
-  /// No description provided for @demoTodoFocusTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Start a focus session'**
-  String get demoTodoFocusTitle;
-
-  /// No description provided for @demoTodoStatsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'View the Statistics page'**
-  String get demoTodoStatsTitle;
-
-  /// No description provided for @demoTodoHideTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Turn off sample data in Settings'**
-  String get demoTodoHideTitle;
+  /// **'📊 View focus stats on the Statistics page'**
+  String get initialTodoStatsTitle;
 
   /// No description provided for @themeLight.
   ///
@@ -544,6 +430,12 @@ abstract class AppLocalizations {
   /// **'Send test notification'**
   String get testNotificationNow;
 
+  /// No description provided for @testNotificationSending.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending…'**
+  String get testNotificationSending;
+
   /// No description provided for @testNotificationSuccess.
   ///
   /// In en, this message translates to:
@@ -555,6 +447,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not send notification. Check permission and system settings.'**
   String get testNotificationFailed;
+
+  /// No description provided for @testNotificationInitFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification service is not ready. Restart the app and try again.'**
+  String get testNotificationInitFailed;
+
+  /// No description provided for @testNotificationTimedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Timed out. Check that the Reminders notification channel is enabled in system settings.'**
+  String get testNotificationTimedOut;
 
   /// No description provided for @exactAlarmPermissionHint.
   ///
@@ -1581,6 +1485,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'View All >'**
   String get statsViewAll;
+
+  /// No description provided for @statsViewDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'View Details >'**
+  String get statsViewDetails;
 
   /// No description provided for @statsMonthlyFocus.
   ///

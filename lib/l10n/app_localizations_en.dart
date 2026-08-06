@@ -109,89 +109,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsPrivacyPolicy => 'Privacy Policy';
 
   @override
-  String get settingsShowSampleData => 'Show Sample Data';
+  String get initialTimelineWelcomeTitle => '👋 Welcome to JUJU Schedule';
 
   @override
-  String get settingsShowSampleDataHint =>
-      'Display built-in sample schedules and todos to explore the app';
+  String get initialTimelineAddTitle => '➕ Tap + at bottom right to add a task';
 
   @override
-  String get settingsHideSampleDataTitle => 'Hide Sample Data?';
+  String get initialTimelineEditTitle => '✏️ Swipe left or long-press to edit';
 
   @override
-  String get settingsHideSampleDataMessage =>
-      'Sample data will be hidden, but your own schedules and todos will remain unchanged.';
+  String get initialTimelineReminderTitle =>
+      '🔔 Set reminders when creating tasks';
 
   @override
-  String get settingsHideSampleDataConfirm => 'Hide';
+  String get initialTimelineFocusTitle => '🍅 Start your first focus session';
 
   @override
-  String get demoSampleReadOnlyHint =>
-      'Sample items are read-only. Turn off sample data in Settings when you no longer need them.';
+  String get initialTodoThemeTitle => '🎨 Change theme color in Settings';
 
   @override
-  String get demoSampleBadge => 'Sample';
+  String get initialTodoLanguageTitle => '🌐 Switch language in Settings';
 
   @override
-  String get demoScheduleWelcomeTitle => 'Welcome to JUJU Schedule 👋';
-
-  @override
-  String get demoScheduleWelcomeNote => 'Hope it helps you organize every day.';
-
-  @override
-  String get demoScheduleAddTitle => 'Tap + at bottom right to add a schedule';
-
-  @override
-  String get demoScheduleAddNote => 'Create your own schedule.';
-
-  @override
-  String get demoScheduleDetailTitle => 'Tap a card to view details';
-
-  @override
-  String get demoScheduleDetailNote => 'Edit title, time, note, and reminder.';
-
-  @override
-  String get demoScheduleSwipeTitle => 'Swipe left to quick edit';
-
-  @override
-  String get demoScheduleSwipeNote => 'Or edit or delete from the detail page.';
-
-  @override
-  String get demoScheduleReminderTitle => 'Set a Reminder';
-
-  @override
-  String get demoScheduleReminderNote => 'Try \"At Time\" or \"5 min before\".';
-
-  @override
-  String get demoScheduleHideTitle => 'Turn off sample data in Settings';
-
-  @override
-  String get demoScheduleHideNote =>
-      'You can hide or show sample data anytime.';
-
-  @override
-  String get demoTodoWelcomeTitle => 'Welcome to JUJU Schedule 👋';
-
-  @override
-  String get demoTodoAddTitle => 'Tap + at bottom right to add a todo';
-
-  @override
-  String get demoTodoSwipeTitle => 'Swipe left to quick edit a todo';
-
-  @override
-  String get demoTodoThemeTitle => 'Change theme color';
-
-  @override
-  String get demoTodoLanguageTitle => 'Change app language';
-
-  @override
-  String get demoTodoFocusTitle => 'Start a focus session';
-
-  @override
-  String get demoTodoStatsTitle => 'View the Statistics page';
-
-  @override
-  String get demoTodoHideTitle => 'Turn off sample data in Settings';
+  String get initialTodoStatsTitle =>
+      '📊 View focus stats on the Statistics page';
 
   @override
   String get themeLight => 'Light';
@@ -239,11 +180,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get testNotificationNow => 'Send test notification';
 
   @override
+  String get testNotificationSending => 'Sending…';
+
+  @override
   String get testNotificationSuccess => 'Test notification sent';
 
   @override
   String get testNotificationFailed =>
       'Could not send notification. Check permission and system settings.';
+
+  @override
+  String get testNotificationInitFailed =>
+      'Notification service is not ready. Restart the app and try again.';
+
+  @override
+  String get testNotificationTimedOut =>
+      'Timed out. Check that the Reminders notification channel is enabled in system settings.';
 
   @override
   String get exactAlarmPermissionHint =>
@@ -824,6 +776,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get statsViewAll => 'View All >';
+
+  @override
+  String get statsViewDetails => 'View Details >';
 
   @override
   String get statsMonthlyFocus => 'Monthly Focus';

@@ -13,82 +13,26 @@ class GeneralSettingsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final showSample = ref.watch(showSampleDataProvider);
-    final muted =
-        Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55);
 
     return SettingsSubpageScaffold(
       title: l10n.settingsGeneral,
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      body: SettingsGroup(
         children: [
-          SettingsGroup(
-            children: [
-              SwitchListTile(
-                secondary: const Icon(Icons.auto_stories_outlined, size: 22),
-                title: Text(l10n.settingsShowSampleData),
-                subtitle: Text(
-                  l10n.settingsShowSampleDataHint,
-                  style: TextStyle(color: muted),
-                ),
-                value: showSample,
-                onChanged: (enabled) =>
-                    _onSampleDataChanged(context, ref, enabled),
-              ),
-            ],
+          ListTile(
+            leading: const Icon(Icons.upload_file_rounded, size: 22),
+            title: Text(l10n.exportDatabase),
+            trailing: const Icon(Icons.chevron_right, size: 20),
+            onTap: () => _export(context, ref),
           ),
-          const SizedBox(height: 20),
-          SettingsGroup(
-            children: [
-              ListTile(
-                leading: const Icon(Icons.upload_file_rounded, size: 22),
-                title: Text(l10n.exportDatabase),
-                trailing: const Icon(Icons.chevron_right, size: 20),
-                onTap: () => _export(context, ref),
-              ),
-              ListTile(
-                leading: const Icon(Icons.download_rounded, size: 22),
-                title: Text(l10n.importDatabase),
-                trailing: const Icon(Icons.chevron_right, size: 20),
-                onTap: () => _import(context, ref),
-              ),
-            ],
+          ListTile(
+            leading: const Icon(Icons.download_rounded, size: 22),
+            title: Text(l10n.importDatabase),
+            trailing: const Icon(Icons.chevron_right, size: 20),
+            onTap: () => _import(context, ref),
           ),
         ],
       ),
     );
-  }
-
-  Future<void> _onSampleDataChanged(
-    BuildContext context,
-    WidgetRef ref,
-    bool enabled,
-  ) async {
-    if (enabled) {
-      await ref.read(showSampleDataProvider.notifier).setEnabled(true);
-      return;
-    }
-
-    final l10n = AppLocalizations.of(context);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.settingsHideSampleDataTitle),
-        content: Text(l10n.settingsHideSampleDataMessage),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l10n.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.settingsHideSampleDataConfirm),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true) return;
-    await ref.read(showSampleDataProvider.notifier).setEnabled(false);
   }
 
   Future<void> _export(BuildContext context, WidgetRef ref) async {

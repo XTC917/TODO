@@ -49,6 +49,12 @@ class _NotificationBootstrapState extends ConsumerState<NotificationBootstrap>
   Future<void> _bootstrap() async {
     if (!mounted) return;
 
+    try {
+      await NotificationService.instance.initialize();
+    } catch (e, st) {
+      debugPrint('Notification init in bootstrap failed: $e\n$st');
+    }
+
     NotificationService.instance.notificationTimeUntilStartBuilder =
         (offsetSeconds) {
       final language = ref.read(appLanguageProvider);

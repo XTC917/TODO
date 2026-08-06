@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
 
-import '../../core/data/demo_data.dart';
 import '../../core/providers/app_providers.dart';
 import '../../core/providers/batch_providers.dart';
 import '../../core/utils/date_time_formats.dart';
@@ -177,29 +176,17 @@ class CalendarPage extends ConsumerWidget {
         selectedIds: batch.selectedIds,
         onEventTap: (e) => _onItemTap(context, ref, e, batch),
         onEventLongPress: (e) {
-          if (isDemoEventId(e.id)) return;
           ref.read(calendarBatchProvider.notifier).enterWith(e.id);
         },
         onToggleComplete: batch.active
             ? null
-            : (e) {
-                if (isDemoEventId(e.id)) return;
-                ref
-                    .read(eventActionsProvider)
-                    .toggleTimeline(e.id, !e.isCompleted);
-              },
-        onSwipeEdit: (e) {
-          if (isDemoEventId(e.id)) return;
-          _editEvent(context, e);
-        },
-        onSwipeDuplicate: (e) {
-          if (isDemoEventId(e.id)) return;
-          ref.read(eventActionsProvider).duplicate(e.id);
-        },
-        onSwipeDelete: (e) async {
-          if (isDemoEventId(e.id)) return;
-          await _deleteEvent(context, ref, e);
-        },
+            : (e) => ref
+                .read(eventActionsProvider)
+                .toggleTimeline(e.id, !e.isCompleted),
+        onSwipeEdit: (e) => _editEvent(context, e),
+        onSwipeDuplicate: (e) =>
+            ref.read(eventActionsProvider).duplicate(e.id),
+        onSwipeDelete: (e) async => _deleteEvent(context, ref, e),
       );
       final todoPanel = _CalendarTodoPanel(
         events: events,
@@ -207,25 +194,15 @@ class CalendarPage extends ConsumerWidget {
         batch: batch,
         onItemTap: (e) => _onItemTap(context, ref, e, batch),
         onEnterBatch: (id) {
-          if (isDemoEventId(id)) return;
           ref.read(calendarBatchProvider.notifier).enterWith(id);
         },
         onToggleTodo: (id, v) {
-          if (isDemoEventId(id)) return;
           ref.read(eventActionsProvider).toggleTodo(id, v);
         },
-        onSwipeEdit: (e) {
-          if (isDemoEventId(e.id)) return;
-          _editEvent(context, e);
-        },
-        onSwipeDuplicate: (e) {
-          if (isDemoEventId(e.id)) return;
-          ref.read(eventActionsProvider).duplicate(e.id);
-        },
-        onSwipeDelete: (e) async {
-          if (isDemoEventId(e.id)) return;
-          await _deleteEvent(context, ref, e);
-        },
+        onSwipeEdit: (e) => _editEvent(context, e),
+        onSwipeDuplicate: (e) =>
+            ref.read(eventActionsProvider).duplicate(e.id),
+        onSwipeDelete: (e) async => _deleteEvent(context, ref, e),
       );
 
       return Row(
@@ -342,7 +319,6 @@ class CalendarPage extends ConsumerWidget {
     BatchSelection batch,
   ) {
     if (batch.active) {
-      if (isDemoEventId(event.id)) return;
       ref.read(calendarBatchProvider.notifier).toggle(event.id);
       return;
     }
@@ -360,7 +336,6 @@ class CalendarPage extends ConsumerWidget {
     WidgetRef ref,
     Event event,
   ) async {
-    if (isDemoEventId(event.id)) return;
     if (!await confirmDeleteEvent(context)) return;
     try {
       await ref.read(eventActionsProvider).delete(event.id);
@@ -474,7 +449,7 @@ class _CalendarTodoPanel extends StatelessWidget {
         ...pending.map(
           (todo) => SwipeEventActions(
             event: todo,
-            enabled: !batch.active && !isDemoEventId(todo.id),
+            enabled: !batch.active,
             onEdit: () => onSwipeEdit(todo),
             onDuplicate: () => onSwipeDuplicate(todo),
             onDelete: () => onSwipeDelete(todo),
@@ -484,11 +459,8 @@ class _CalendarTodoPanel extends StatelessWidget {
               batchActive: batch.active,
               selected: batch.selectedIds.contains(todo.id),
               onTap: () => onItemTap(todo),
-              onLongPress:
-                  isDemoEventId(todo.id) ? null : () => onEnterBatch(todo.id),
-              onToggle: isDemoEventId(todo.id)
-                  ? null
-                  : (v) => onToggleTodo(todo.id, v),
+              onLongPress: () => onEnterBatch(todo.id),
+              onToggle: (v) => onToggleTodo(todo.id, v),
             ),
           ),
         ),
@@ -505,7 +477,7 @@ class _CalendarTodoPanel extends StatelessWidget {
           ...done.map(
             (todo) => SwipeEventActions(
               event: todo,
-              enabled: !batch.active && !isDemoEventId(todo.id),
+              enabled: !batch.active,
               onEdit: () => onSwipeEdit(todo),
               onDuplicate: () => onSwipeDuplicate(todo),
               onDelete: () => onSwipeDelete(todo),
@@ -515,12 +487,8 @@ class _CalendarTodoPanel extends StatelessWidget {
                 batchActive: batch.active,
                 selected: batch.selectedIds.contains(todo.id),
                 onTap: () => onItemTap(todo),
-                onLongPress: isDemoEventId(todo.id)
-                    ? null
-                    : () => onEnterBatch(todo.id),
-                onToggle: isDemoEventId(todo.id)
-                    ? null
-                    : (v) => onToggleTodo(todo.id, v),
+                onLongPress: () => onEnterBatch(todo.id),
+                onToggle: (v) => onToggleTodo(todo.id, v),
               ),
             ),
           ),

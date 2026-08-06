@@ -38,7 +38,3 @@ String settingsDisplayModeSummary(
 String languageLabel(AppLocalizations l10n, AppLanguage language) {
   return settingsLanguageSummary(l10n, language);
 }
-
-String settingsGeneralSummary(AppLocalizations l10n, bool showSample) {
-  return showSample ? l10n.settingsStatusEnabled : l10n.settingsStatusDisabled;
-}

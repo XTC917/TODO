@@ -30,7 +30,19 @@ class FocusRankingCard extends StatelessWidget {
         ? 1
         : top.map((e) => e.totalSeconds).reduce((a, b) => a > b ? a : b);
     final rowGap = compact ? 7.0 : 14.0;
-    final showViewAll = entries.length > maxItems;
+    final hasEntries = entries.isNotEmpty;
+    final showOverflow = entries.length > maxItems;
+    final actionLabel =
+        showOverflow ? l10n.statsViewAll : l10n.statsViewDetails;
+
+    void openDetails({int? expandedIndex}) {
+      showFocusRankingSheet(
+        context: context,
+        entries: entries,
+        period: period,
+        initialExpandedIndex: expandedIndex,
+      );
+    }
 
     return Card(
       elevation: 0,
@@ -68,22 +80,34 @@ class FocusRankingCard extends StatelessWidget {
                         children: [
                           for (var i = 0; i < top.length; i++) ...[
                             if (i > 0) SizedBox(height: rowGap),
-                            _RankingRow(
-                              name: _displayName(l10n, top[i].nameKey),
-                              durationLabel: StatsFormat.durationCompact(
-                                top[i].totalSeconds,
+                            Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(8),
+                                onTap: () => openDetails(expandedIndex: i),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 2,
+                                  ),
+                                  child: _RankingRow(
+                                    name: _displayName(l10n, top[i].nameKey),
+                                    durationLabel: StatsFormat.durationCompact(
+                                      top[i].totalSeconds,
+                                    ),
+                                    ratio: top[i].totalSeconds / maxSeconds,
+                                    color: _colorForName(top[i].nameKey, i),
+                                    muted: muted,
+                                    compact: compact,
+                                  ),
+                                ),
                               ),
-                              ratio: top[i].totalSeconds / maxSeconds,
-                              color: _colorForName(top[i].nameKey, i),
-                              muted: muted,
-                              compact: compact,
                             ),
                           ],
                         ],
                       ),
                     ),
             ),
-            if (showViewAll)
+            if (hasEntries)
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
@@ -93,12 +117,8 @@ class FocusRankingCard extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 4),
                     minimumSize: Size.zero,
                   ),
-                  onPressed: () => showFocusRankingSheet(
-                    context: context,
-                    entries: entries,
-                    period: period,
-                  ),
-                  child: Text(l10n.statsViewAll),
+                  onPressed: openDetails,
+                  child: Text(actionLabel),
                 ),
               ),
           ],

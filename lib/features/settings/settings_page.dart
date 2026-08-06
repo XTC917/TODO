@@ -23,7 +23,6 @@ class SettingsPage extends ConsumerWidget {
     final remindersEnabled = ref.watch(remindersEnabledProvider);
     final language = ref.watch(appLanguageProvider);
     final defaultCountdown = ref.watch(defaultCountdownSecondsProvider);
-    final showSampleData = ref.watch(showSampleDataProvider);
     final appVersion = ref.watch(packageInfoProvider).version;
 
     return Scaffold(
@@ -86,8 +85,6 @@ class SettingsPage extends ConsumerWidget {
                 SettingsNavTile(
                   icon: Icons.tune_outlined,
                   title: l10n.settingsGeneral,
-                  trailingText:
-                      settingsGeneralSummary(l10n, showSampleData),
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => const GeneralSettingsPage(),

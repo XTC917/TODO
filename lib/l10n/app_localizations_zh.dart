@@ -107,85 +107,28 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsPrivacyPolicy => '隐私政策';
 
   @override
-  String get settingsShowSampleData => '显示样例数据';
+  String get initialTimelineWelcomeTitle => '👋 欢迎使用 JUJU Schedule';
 
   @override
-  String get settingsShowSampleDataHint => '展示内置样例日程与待办，帮助快速了解应用';
+  String get initialTimelineAddTitle => '➕ 点击右下角新增任务';
 
   @override
-  String get settingsHideSampleDataTitle => '隐藏样例数据？';
+  String get initialTimelineEditTitle => '✏️ 左滑/长按任务可编辑';
 
   @override
-  String get settingsHideSampleDataMessage => '样例数据将被隐藏，您自己的日程与待办不会受到影响。';
+  String get initialTimelineReminderTitle => '🔔 创建任务时可设置提醒';
 
   @override
-  String get settingsHideSampleDataConfirm => '隐藏';
+  String get initialTimelineFocusTitle => '🍅 开始你的第一次专注';
 
   @override
-  String get demoSampleReadOnlyHint => '样例内容为只读。不需要时可在设置中关闭样例数据。';
+  String get initialTodoThemeTitle => '🎨 在设置中更换主题颜色';
 
   @override
-  String get demoSampleBadge => '样例';
+  String get initialTodoLanguageTitle => '🌐 在设置中切换语言';
 
   @override
-  String get demoScheduleWelcomeTitle => 'Welcome to JUJU Schedule 👋';
-
-  @override
-  String get demoScheduleWelcomeNote => 'Hope it helps you organize every day.';
-
-  @override
-  String get demoScheduleAddTitle => '点击右下角 + 添加日程';
-
-  @override
-  String get demoScheduleAddNote => '创建属于自己的 Schedule。';
-
-  @override
-  String get demoScheduleDetailTitle => '点击卡片查看详情';
-
-  @override
-  String get demoScheduleDetailNote => '可以编辑标题、时间、备注和 Reminder。';
-
-  @override
-  String get demoScheduleSwipeTitle => '左滑快速编辑';
-
-  @override
-  String get demoScheduleSwipeNote => '也可以通过详情页面编辑或删除。';
-
-  @override
-  String get demoScheduleReminderTitle => '设置 Reminder';
-
-  @override
-  String get demoScheduleReminderNote => '尝试设置 \"At Time\" 或 \"5 min before\"。';
-
-  @override
-  String get demoScheduleHideTitle => '在设置中关闭样例数据';
-
-  @override
-  String get demoScheduleHideNote => '可以随时一键隐藏或重新显示所有样例数据。';
-
-  @override
-  String get demoTodoWelcomeTitle => 'Welcome to JUJU Schedule 👋';
-
-  @override
-  String get demoTodoAddTitle => '点击右下角 + 添加待办';
-
-  @override
-  String get demoTodoSwipeTitle => '左滑快速编辑待办';
-
-  @override
-  String get demoTodoThemeTitle => '修改主题颜色';
-
-  @override
-  String get demoTodoLanguageTitle => '修改应用语言';
-
-  @override
-  String get demoTodoFocusTitle => '开始一次专注';
-
-  @override
-  String get demoTodoStatsTitle => '查看 Statistics 页面';
-
-  @override
-  String get demoTodoHideTitle => '在设置中关闭样例数据';
+  String get initialTodoStatsTitle => '📊 在统计页面查看专注情况';
 
   @override
   String get themeLight => '浅色';
@@ -233,10 +176,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get testNotificationNow => '发送测试通知';
 
   @override
+  String get testNotificationSending => '正在发送…';
+
+  @override
   String get testNotificationSuccess => '测试通知已发送';
 
   @override
   String get testNotificationFailed => '无法发送通知，请检查权限和系统设置';
+
+  @override
+  String get testNotificationInitFailed => '通知服务未就绪，请重启应用后再试';
+
+  @override
+  String get testNotificationTimedOut => '发送超时，请在系统设置中检查通知渠道是否开启';
 
   @override
   String get exactAlarmPermissionHint => '若提醒不准时，请在系统设置中允许「闹钟与提醒」精确权限。';
@@ -814,6 +766,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get statsViewAll => '查看全部 >';
+
+  @override
+  String get statsViewDetails => '查看详情 >';
 
   @override
   String get statsMonthlyFocus => '每月专注';

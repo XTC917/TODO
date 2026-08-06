@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../data/demo_data.dart';
 import '../providers/app_providers.dart';
 import '../providers/batch_providers.dart';
 import '../utils/date_time_formats.dart';
@@ -103,7 +102,7 @@ class BatchToolbar extends ConsumerWidget {
     WidgetRef ref,
     Set<int> ids,
   ) async {
-    final realIds = ids.where((id) => !isDemoEventId(id)).toSet();
+    final realIds = ids;
     if (realIds.isEmpty) return;
 
     if (!await confirmDeleteEvent(context)) return;
@@ -128,9 +127,7 @@ class BatchToolbar extends ConsumerWidget {
   ) async {
     final l10n = AppLocalizations.of(context);
     final selected = events.where((e) => ids.contains(e.id)).toList();
-    final dated = selected
-        .where((e) => e.hasDate && !isDemoEventId(e.id))
-        .toList();
+    final dated = selected.where((e) => e.hasDate).toList();
     if (dated.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.noTimeTasksCannotChangeDate)),

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -15,15 +16,20 @@ import '../../models/reminder_config.dart';
 
 const _channelId = 'soft_schedule_reminders';
 const _channelName = 'Reminders';
-const _androidIcon = '@drawable/ic_notification';
+/// Drawable resource name only — not `@drawable/...` (plugin resolves via getIdentifier).
+const _androidIcon = 'ic_notification';
 const eventPayloadPrefix = 'event:';
 const testNotificationId = 999999;
 
 typedef NotificationTapHandler = void Function(int eventId);
 
-/// Required top-level entry for release builds when tapping background notifications.
-@pragma('vm:entry-point')
-void notificationTapBackgroundHandler(NotificationResponse response) {}
+enum TestNotificationResult {
+  success,
+  notInitialized,
+  permissionDenied,
+  showFailed,
+  timedOut,
+}
 
 /// Schedules and cancels local notifications for todos/schedules.
 class NotificationService {
@@ -72,12 +78,16 @@ class NotificationService {
     const settings = InitializationSettings(android: android, iOS: ios);
 
     try {
-      await _plugin.initialize(
+      final initialized = await _plugin.initialize(
         settings,
         onDidReceiveNotificationResponse: _handleNotificationResponse,
-        onDidReceiveBackgroundNotificationResponse:
-            notificationTapBackgroundHandler,
       );
+      if (initialized != true) {
+        debugPrint(
+          'Notification plugin initialize returned: $initialized',
+        );
+        return;
+      }
     } catch (e, st) {
       debugPrint('Notification plugin initialize failed: $e\n$st');
       return;
@@ -241,23 +251,66 @@ class NotificationService {
     return pending.length;
   }
 
-  Future<bool> showTestNotification() async {
+  Future<TestNotificationResult> showTestNotification() async {
     await initialize();
+    if (!_initialized) {
+      debugPrint('Test notification skipped: plugin not initialized');
+      return TestNotificationResult.notInitialized;
+    }
     if (!await hasPermission()) {
       await requestPermissions(force: true);
+      if (!await hasPermission()) {
+        debugPrint('Test notification skipped: permission not granted');
+        return TestNotificationResult.permissionDenied;
+      }
+    }
+
+    if (Platform.isAndroid) {
+      try {
+        await _androidPlugin?.createNotificationChannel(
+          const AndroidNotificationChannel(
+            _channelId,
+            _channelName,
+            description: 'Task reminders',
+            importance: Importance.max,
+            playSound: true,
+            enableVibration: true,
+          ),
+        );
+      } catch (e, st) {
+        debugPrint('Notification channel recreate failed: $e\n$st');
+      }
     }
 
     try {
-      await _plugin.show(
-        testNotificationId,
-        AppConfig.appName,
-        AppConfig.testNotificationBody,
-        _notificationDetails(),
-      );
-      return true;
+      if (Platform.isAndroid) {
+        final android = _androidPlugin;
+        if (android != null) {
+          await android.show(
+            testNotificationId,
+            AppConfig.appName,
+            AppConfig.testNotificationBody,
+            notificationDetails: _notificationDetails().android,
+          );
+          return TestNotificationResult.success;
+        }
+      }
+
+      await _plugin
+          .show(
+            testNotificationId,
+            AppConfig.appName,
+            AppConfig.testNotificationBody,
+            _notificationDetails(),
+          )
+          .timeout(const Duration(seconds: 8));
+      return TestNotificationResult.success;
+    } on TimeoutException {
+      debugPrint('Test notification timed out');
+      return TestNotificationResult.timedOut;
     } catch (e, st) {
       debugPrint('Test notification failed: $e\n$st');
-      return false;
+      return TestNotificationResult.showFailed;
     }
   }
 

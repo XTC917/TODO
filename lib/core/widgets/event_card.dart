@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../models/event.dart';
-import '../data/demo_data.dart';
 import '../theme/app_colors.dart';
-import 'demo_sample_badge.dart';
 
 class EventCard extends StatelessWidget {
   const EventCard({
@@ -91,28 +89,18 @@ class EventCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            if (isDemoEventId(event.id)) ...[
-                              const DemoSampleBadge(),
-                              const SizedBox(width: 6),
-                            ],
-                            Expanded(
-                              child: Text(
-                                event.title,
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  decoration: completed
-                                      ? TextDecoration.lineThrough
-                                      : null,
-                                  color: completed
-                                      ? theme.colorScheme.onSurface
-                                          .withValues(alpha: 0.45)
-                                      : null,
-                                ),
-                              ),
-                            ),
-                          ],
+                        Text(
+                          event.title,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            decoration: completed
+                                ? TextDecoration.lineThrough
+                                : null,
+                            color: completed
+                                ? theme.colorScheme.onSurface
+                                    .withValues(alpha: 0.45)
+                                : null,
+                          ),
                         ),
                         if (hasNote) ...[
                           const SizedBox(height: 6),

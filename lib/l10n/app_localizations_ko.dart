@@ -107,87 +107,28 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settingsPrivacyPolicy => '개인정보 처리방침';
 
   @override
-  String get settingsShowSampleData => '샘플 데이터 표시';
+  String get initialTimelineWelcomeTitle => '👋 JUJU Schedule에 오신 것을 환영합니다';
 
   @override
-  String get settingsShowSampleDataHint => '앱을 빠르게 익히도록 내장 샘플 일정과 할 일을 표시합니다';
+  String get initialTimelineAddTitle => '➕ 오른쪽 하단 + 를 눌러 작업 추가';
 
   @override
-  String get settingsHideSampleDataTitle => '샘플 데이터를 숨길까요?';
+  String get initialTimelineEditTitle => '✏️ 왼쪽으로 밀거나 길게 눌러 편집';
 
   @override
-  String get settingsHideSampleDataMessage =>
-      '샘플 데이터만 숨겨지며, 본인의 일정과 할 일은 그대로 유지됩니다.';
+  String get initialTimelineReminderTitle => '🔔 작업 생성 시 알림 설정';
 
   @override
-  String get settingsHideSampleDataConfirm => '숨기기';
+  String get initialTimelineFocusTitle => '🍅 첫 집중 세션 시작';
 
   @override
-  String get demoSampleReadOnlyHint =>
-      '샘플 항목은 읽기 전용입니다. 더 이상 필요 없으면 설정에서 샘플 데이터를 끌 수 있습니다.';
+  String get initialTodoThemeTitle => '🎨 설정에서 테마 색상 변경';
 
   @override
-  String get demoSampleBadge => '샘플';
+  String get initialTodoLanguageTitle => '🌐 설정에서 언어 전환';
 
   @override
-  String get demoScheduleWelcomeTitle => 'Welcome to JUJU Schedule 👋';
-
-  @override
-  String get demoScheduleWelcomeNote => 'Hope it helps you organize every day.';
-
-  @override
-  String get demoScheduleAddTitle => '오른쪽 하단 + 를 눌러 일정 추가';
-
-  @override
-  String get demoScheduleAddNote => '나만의 일정을 만들어 보세요.';
-
-  @override
-  String get demoScheduleDetailTitle => '카드를 눌러 상세 보기';
-
-  @override
-  String get demoScheduleDetailNote => '제목, 시간, 메모, 알림을 편집할 수 있습니다.';
-
-  @override
-  String get demoScheduleSwipeTitle => '왼쪽으로 밀어 빠른 편집';
-
-  @override
-  String get demoScheduleSwipeNote => '상세 페이지에서도 편집하거나 삭제할 수 있습니다.';
-
-  @override
-  String get demoScheduleReminderTitle => '알림 설정';
-
-  @override
-  String get demoScheduleReminderNote => '\"정시\" 또는 \"5분 전\"을 설정해 보세요.';
-
-  @override
-  String get demoScheduleHideTitle => '설정에서 샘플 데이터 끄기';
-
-  @override
-  String get demoScheduleHideNote => '언제든지 샘플 데이터를 숨기거나 다시 표시할 수 있습니다.';
-
-  @override
-  String get demoTodoWelcomeTitle => 'Welcome to JUJU Schedule 👋';
-
-  @override
-  String get demoTodoAddTitle => '오른쪽 하단 + 를 눌러 할 일 추가';
-
-  @override
-  String get demoTodoSwipeTitle => '왼쪽으로 밀어 할 일 빠른 편집';
-
-  @override
-  String get demoTodoThemeTitle => '테마 색상 변경';
-
-  @override
-  String get demoTodoLanguageTitle => '앱 언어 변경';
-
-  @override
-  String get demoTodoFocusTitle => '집중 세션 시작';
-
-  @override
-  String get demoTodoStatsTitle => '통계 페이지 보기';
-
-  @override
-  String get demoTodoHideTitle => '설정에서 샘플 데이터 끄기';
+  String get initialTodoStatsTitle => '📊 통계 페이지에서 집중 현황 확인';
 
   @override
   String get themeLight => '라이트';
@@ -235,10 +176,21 @@ class AppLocalizationsKo extends AppLocalizations {
   String get testNotificationNow => '테스트 알림 보내기';
 
   @override
+  String get testNotificationSending => '전송 중…';
+
+  @override
   String get testNotificationSuccess => '테스트 알림을 보냈습니다';
 
   @override
   String get testNotificationFailed => '알림을 보낼 수 없습니다. 권한과 시스템 설정을 확인하세요.';
+
+  @override
+  String get testNotificationInitFailed =>
+      '알림 서비스가 준비되지 않았습니다. 앱을 다시 시작한 후 시도하세요.';
+
+  @override
+  String get testNotificationTimedOut =>
+      '시간 초과. 시스템 설정에서 Reminders 알림 채널이 켜져 있는지 확인하세요.';
 
   @override
   String get exactAlarmPermissionHint => '알림이 늦으면 시스템 설정에서 정확한 알람 권한을 허용하세요.';
@@ -816,6 +768,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get statsViewAll => '전체 보기 >';
+
+  @override
+  String get statsViewDetails => '상세 보기 >';
 
   @override
   String get statsMonthlyFocus => '월별 집중';

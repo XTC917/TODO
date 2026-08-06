@@ -18,6 +18,8 @@ class NotificationSettingsPage extends ConsumerStatefulWidget {
 class _NotificationSettingsPageState
     extends ConsumerState<NotificationSettingsPage>
     with WidgetsBindingObserver {
+  bool _sendingTest = false;
+
   @override
   void initState() {
     super.initState();
@@ -106,7 +108,7 @@ class _NotificationSettingsPageState
                     ),
                   ),
                 ],
-                if (granted) ...[
+                if (granted || remindersEnabled) ...[
                   FutureBuilder<bool>(
                     future: NotificationService.instance.canScheduleExactAlarms(),
                     builder: (context, snapshot) {
@@ -123,26 +125,29 @@ class _NotificationSettingsPageState
                       );
                     },
                   ),
-                  FutureBuilder<int>(
-                    future: NotificationService.instance.pendingCount(),
-                    builder: (context, snapshot) {
-                      final count = snapshot.data;
-                      if (count == null) return const SizedBox.shrink();
-                      return Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                        child: Text(
-                          l10n.pendingNotifications(count),
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurface
-                                        .withValues(alpha: 0.6),
-                                  ),
-                        ),
-                      );
-                    },
-                  ),
+                  if (granted)
+                    FutureBuilder<int>(
+                      future: NotificationService.instance.pendingCount(),
+                      builder: (context, snapshot) {
+                        final count = snapshot.data;
+                        if (count == null) return const SizedBox.shrink();
+                        return Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                          child: Text(
+                            l10n.pendingNotifications(count),
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurface
+                                      .withValues(alpha: 0.6),
+                                ),
+                          ),
+                        );
+                      },
+                    ),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                     child: Text(
@@ -158,9 +163,21 @@ class _NotificationSettingsPageState
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                     child: OutlinedButton.icon(
-                      onPressed: () => _sendTestNotification(context),
-                      icon: const Icon(Icons.notifications_active),
-                      label: Text(l10n.testNotificationNow),
+                      onPressed: _sendingTest || !remindersEnabled
+                          ? null
+                          : () => _sendTestNotification(context),
+                      icon: _sendingTest
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.notifications_active),
+                      label: Text(
+                        _sendingTest
+                            ? l10n.testNotificationSending
+                            : l10n.testNotificationNow,
+                      ),
                     ),
                   ),
                 ],
@@ -217,17 +234,27 @@ class _NotificationSettingsPageState
 
   Future<void> _sendTestNotification(BuildContext context) async {
     final l10n = AppLocalizations.of(context);
-    final ok = await NotificationService.instance.showTestNotification();
-    if (!context.mounted) return;
-    if (ok) {
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _sendingTest = true);
+    TestNotificationResult result;
+    try {
+      result = await NotificationService.instance.showTestNotification();
+    } finally {
+      if (mounted) setState(() => _sendingTest = false);
+    }
+    if (!mounted) return;
+    if (result == TestNotificationResult.success) {
       await _rescheduleIfEnabled(ref);
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          ok ? l10n.testNotificationSuccess : l10n.testNotificationFailed,
-        ),
-      ),
+    final message = switch (result) {
+      TestNotificationResult.success => l10n.testNotificationSuccess,
+      TestNotificationResult.permissionDenied => l10n.testNotificationFailed,
+      TestNotificationResult.notInitialized => l10n.testNotificationInitFailed,
+      TestNotificationResult.timedOut => l10n.testNotificationTimedOut,
+      TestNotificationResult.showFailed => l10n.testNotificationFailed,
+    };
+    messenger.showSnackBar(
+      SnackBar(content: Text(message)),
     );
   }
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/data/demo_data.dart';
 import '../../core/providers/app_providers.dart';
 import '../../core/providers/batch_providers.dart';
 import '../../core/widgets/batch_toolbar.dart';
@@ -46,12 +45,10 @@ class TodoPage extends ConsumerWidget {
                   todos: todos,
                   batch: batch,
                   onEnterBatch: (id) {
-                    if (isDemoEventId(id)) return;
                     ref.read(todoBatchProvider.notifier).enterWith(id);
                   },
                   onTap: (todo) {
                     if (batch.active) {
-                      if (isDemoEventId(todo.id)) return;
                       ref.read(todoBatchProvider.notifier).toggle(todo.id);
                     } else {
                       showEventDetailSheet(
@@ -62,7 +59,6 @@ class TodoPage extends ConsumerWidget {
                     }
                   },
                   onToggleComplete: (id, v) {
-                    if (isDemoEventId(id)) return;
                     ref.read(eventActionsProvider).toggleTodo(id, v);
                   },
                 ),
@@ -114,16 +110,10 @@ class _TodoListBody extends ConsumerWidget {
 
     final pendingTimed =
         todos.where((t) => !t.isNoTimeTodo && !t.isCompleted).toList()
-          ..sort((a, b) {
-            final demoOrder = compareDemoFirst(a, b);
-            if (demoOrder != 0) return demoOrder;
-            return a.startTime.compareTo(b.startTime);
-          });
+          ..sort((a, b) => a.startTime.compareTo(b.startTime));
     final pendingNoTime =
-        todos.where((t) => t.isNoTimeTodo && !t.isCompleted).toList()
-          ..sort((a, b) => compareDemoFirst(a, b));
-    final completed = todos.where((t) => t.isCompleted).toList()
-      ..sort((a, b) => compareDemoFirst(a, b));
+        todos.where((t) => t.isNoTimeTodo && !t.isCompleted).toList();
+    final completed = todos.where((t) => t.isCompleted).toList();
 
     final grouped = <String, List<Event>>{};
     for (final t in pendingTimed) {
@@ -136,7 +126,7 @@ class _TodoListBody extends ConsumerWidget {
     Widget wrapSwipe(Event todo, Widget child) {
       return SwipeEventActions(
         event: todo,
-        enabled: !batch.active && !isDemoEventId(todo.id),
+        enabled: !batch.active,
         onEdit: () => Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => EventFormPage(eventId: todo.id),
@@ -145,7 +135,6 @@ class _TodoListBody extends ConsumerWidget {
         onDuplicate: () =>
             ref.read(eventActionsProvider).duplicate(todo.id),
         onDelete: () async {
-          if (isDemoEventId(todo.id)) return;
           if (!await confirmDeleteEvent(context)) return;
           try {
             await ref.read(eventActionsProvider).delete(todo.id);

@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../l10n/app_localizations.dart';
 import '../../database/app_database.dart';
 import '../../database/event_repository.dart';
 import '../../database/focus_repository.dart';
@@ -13,7 +12,6 @@ import '../../models/enums.dart';
 import '../../models/event.dart';
 import '../../models/focus_session.dart';
 import '../../models/reminder_config.dart';
-import '../data/demo_data.dart';
 import 'focus_providers.dart';
 import '../services/database_backup_service.dart';
 import '../services/notification_service.dart';
@@ -23,31 +21,7 @@ const _themeModeKey = 'theme_mode';
 const _accentColorKey = 'accent_color';
 const _remindersEnabledKey = 'reminders_enabled';
 const _appLanguageKey = 'app_language';
-const _showSampleDataKey = 'show_sample_data';
 const notificationPermissionPromptedKey = 'notification_permission_prompted';
-
-AppLocalizations _localizationsFor(Ref ref) {
-  final language = ref.watch(appLanguageProvider);
-  return lookupAppLocalizations(_resolveLocale(language));
-}
-
-Locale _resolveLocale(AppLanguage language) {
-  return switch (language) {
-    AppLanguage.zh => const Locale('zh'),
-    AppLanguage.en => const Locale('en'),
-    AppLanguage.ko => const Locale('ko'),
-    AppLanguage.system => _deviceLocale(),
-  };
-}
-
-Locale _deviceLocale() {
-  final code = WidgetsBinding.instance.platformDispatcher.locale.languageCode;
-  return switch (code) {
-    'zh' => const Locale('zh'),
-    'ko' => const Locale('ko'),
-    _ => const Locale('en'),
-  };
-}
 
 enum AppLanguage { system, zh, en, ko }
 
@@ -166,18 +140,6 @@ class RemindersEnabledController extends StateNotifier<bool> {
   }
 }
 
-class ShowSampleDataController extends StateNotifier<bool> {
-  ShowSampleDataController(this._prefs)
-      : super(_prefs.getBool(_showSampleDataKey) ?? false);
-
-  final SharedPreferences _prefs;
-
-  Future<void> setEnabled(bool enabled) async {
-    state = enabled;
-    await _prefs.setBool(_showSampleDataKey, enabled);
-  }
-}
-
 class AppLanguageController extends StateNotifier<AppLanguage> {
   AppLanguageController(this._prefs)
       : super(_readLanguage(_prefs));
@@ -207,11 +169,6 @@ class AppLanguageController extends StateNotifier<AppLanguage> {
 final remindersEnabledProvider =
     StateNotifierProvider<RemindersEnabledController, bool>((ref) {
   return RemindersEnabledController(ref.watch(sharedPreferencesProvider), ref);
-});
-
-final showSampleDataProvider =
-    StateNotifierProvider<ShowSampleDataController, bool>((ref) {
-  return ShowSampleDataController(ref.watch(sharedPreferencesProvider));
 });
 
 final appLanguageProvider =
@@ -250,25 +207,12 @@ final calendarFocusedMonthProvider = StateProvider<DateTime>((ref) {
 final eventsForDateProvider =
     StreamProvider.family<List<Event>, DateTime>((ref, date) {
   final repo = ref.watch(eventRepositoryProvider);
-  final showSample = ref.watch(showSampleDataProvider);
-  final l10n = _localizationsFor(ref);
   final dateKey = DateTimeFormats.formatDate(date);
-  return repo.watchByDate(dateKey).map((events) {
-    if (!showSample) return events;
-    return mergeDemoFirst(
-      demoScheduleEventsForDate(l10n, dateKey),
-      events,
-    );
-  });
+  return repo.watchByDate(dateKey);
 });
 
 final allTodosProvider = StreamProvider<List<Event>>((ref) {
-  final showSample = ref.watch(showSampleDataProvider);
-  final l10n = _localizationsFor(ref);
-  return ref.watch(eventRepositoryProvider).watchAllTodos().map((todos) {
-    if (!showSample) return todos;
-    return mergeDemoFirst(demoTodos(l10n), todos);
-  });
+  return ref.watch(eventRepositoryProvider).watchAllTodos();
 });
 
 final eventDatesInMonthProvider =
@@ -369,13 +313,11 @@ class EventActions {
   }
 
   Future<void> update(Event event) async {
-    if (isDemoEventId(event.id)) return;
     await _ref.read(eventRepositoryProvider).update(event);
     _deferNotificationSync(event);
   }
 
   Future<void> toggleTodo(int id, bool completed) async {
-    if (isDemoEventId(id)) return;
     await _ref.read(eventRepositoryProvider).toggleTodoComplete(
           id,
           completed: completed,
@@ -388,7 +330,6 @@ class EventActions {
   }
 
   Future<void> toggleTimeline(int id, bool completed) async {
-    if (isDemoEventId(id)) return;
     await _ref.read(eventRepositoryProvider).toggleTimelineComplete(
           id,
           completed: completed,
@@ -401,41 +342,34 @@ class EventActions {
   }
 
   Future<Event> duplicate(int id) async {
-    if (isDemoEventId(id)) {
-      throw StateError('Demo events cannot be duplicated');
-    }
     final event = await _ref.read(eventRepositoryProvider).duplicate(id);
     _deferNotificationSync(event);
     return event;
   }
 
   Future<void> delete(int id) async {
-    if (isDemoEventId(id)) return;
     await _ref.read(eventRepositoryProvider).delete(id);
     _deferNotificationCancel(id);
   }
 
   Future<void> deleteWithScope(Event event, DeleteRepeatScope scope) async {
-    if (isDemoEventId(event.id)) return;
     await _ref.read(eventRepositoryProvider).deleteWithScope(event, scope);
     _deferNotificationCancel(event.id);
   }
 
   Future<void> batchDelete(Set<int> ids) async {
-    final realIds = ids.where((id) => !isDemoEventId(id)).toSet();
-    if (realIds.isEmpty) return;
-    await _ref.read(eventRepositoryProvider).batchDelete(realIds);
-    for (final id in realIds) {
+    if (ids.isEmpty) return;
+    await _ref.read(eventRepositoryProvider).batchDelete(ids);
+    for (final id in ids) {
       _deferNotificationCancel(id);
     }
   }
 
   Future<void> batchUpdateDate(Set<int> ids, String newDate) async {
-    final realIds = ids.where((id) => !isDemoEventId(id)).toSet();
-    if (realIds.isEmpty) return;
-    await _ref.read(eventRepositoryProvider).batchUpdateDate(realIds, newDate);
+    if (ids.isEmpty) return;
+    await _ref.read(eventRepositoryProvider).batchUpdateDate(ids, newDate);
     if (!_ref.read(remindersEnabledProvider)) return;
-    for (final id in realIds) {
+    for (final id in ids) {
       _deferNotificationSyncById(id);
     }
   }
