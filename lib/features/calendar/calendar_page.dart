@@ -146,17 +146,24 @@ class CalendarPage extends ConsumerWidget {
 
     Widget dateHeader({EdgeInsetsGeometry? padding}) {
       return Padding(
-        padding: padding ?? const EdgeInsets.fromLTRB(16, 8, 16, 4),
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            DateTimeFormats.formatSectionDate(selected, l10n),
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w600,
+        padding: padding ?? const EdgeInsets.fromLTRB(16, 8, 12, 4),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                DateTimeFormats.formatSectionDate(selected, l10n),
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
+            if (!batch.active)
+              _CalendarAddButton(
+                onPressed: () => _openForm(context, selected),
+              ),
+          ],
         ),
       );
     }
@@ -328,6 +335,44 @@ class CalendarPage extends ConsumerWidget {
   ) async {
     if (!await confirmDeleteEvent(context)) return;
     await ref.read(eventActionsProvider).delete(event.id);
+  }
+
+  Future<void> _openForm(BuildContext context, DateTime date) {
+    return Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => EventFormPage(initialDate: date),
+      ),
+    );
+  }
+}
+
+class _CalendarAddButton extends StatelessWidget {
+  const _CalendarAddButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return Material(
+      color: scheme.primary.withValues(alpha: 0.14),
+      shape: const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onPressed,
+        customBorder: const CircleBorder(),
+        child: SizedBox(
+          width: 28,
+          height: 28,
+          child: Icon(
+            Icons.add_rounded,
+            size: 18,
+            color: scheme.primary,
+          ),
+        ),
+      ),
+    );
   }
 }
 
