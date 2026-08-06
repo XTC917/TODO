@@ -255,36 +255,7 @@ class EventActions {
 
   final Ref _ref;
 
-  void _deferNotificationSync(Event event) {
-    unawaited(_syncNotification(event));
-  }
-
-  void _deferNotificationSyncById(int id) {
-    unawaited(_syncNotificationById(id));
-  }
-
-  void _deferNotificationCancel(int id) {
-    unawaited(_cancelNotificationSafe(id));
-  }
-
-  Future<void> _cancelNotificationSafe(int id) async {
-    try {
-      await NotificationService.instance.cancelForEvent(id);
-    } catch (e, st) {
-      debugPrint('Notification cancel failed for event $id: $e\n$st');
-    }
-  }
-
-  Future<void> _syncNotificationById(int id) async {
-    try {
-      final event = await _ref.read(eventRepositoryProvider).getById(id);
-      if (event != null) await _syncNotification(event);
-    } catch (e, st) {
-      debugPrint('Notification lookup failed for event $id: $e\n$st');
-    }
-  }
-
-  Future<void> _syncNotification(Event event) async {
+  Future<void> _syncReminder(Event event, {Event? previous}) async {
     try {
       if (!_ref.read(remindersEnabledProvider)) {
         await NotificationService.instance.cancelForEvent(event.id);
@@ -294,27 +265,36 @@ class EventActions {
         await NotificationService.instance.cancelForEvent(event.id);
         return;
       }
-      // Always attempt scheduling; hasPermission() can be wrong on some OEM ROMs.
       await NotificationService.instance.scheduleForEvent(
         event,
+        previousEvent: previous,
         skipPermissionCheck: true,
       );
     } catch (e, st) {
-      debugPrint(
-        'Notification sync failed for event ${event.id}: $e\n$st',
-      );
+      debugPrint('Reminder sync failed for event ${event.id}: $e\n$st');
+    }
+  }
+
+  Future<void> _cancelReminder(int eventId) async {
+    try {
+      await NotificationService.instance.cancelForEvent(eventId);
+    } catch (e, st) {
+      debugPrint('Reminder cancel failed for event $eventId: $e\n$st');
     }
   }
 
   Future<int> create(EventDraft draft) async {
     final id = await _ref.read(eventRepositoryProvider).create(draft);
-    _deferNotificationSyncById(id);
+    final event = await _ref.read(eventRepositoryProvider).getById(id);
+    if (event != null) await _syncReminder(event);
     return id;
   }
 
   Future<void> update(Event event) async {
+    final previous =
+        await _ref.read(eventRepositoryProvider).getById(event.id);
     await _ref.read(eventRepositoryProvider).update(event);
-    _deferNotificationSync(event);
+    await _syncReminder(event, previous: previous);
   }
 
   Future<void> toggleTodo(int id, bool completed) async {
@@ -323,9 +303,10 @@ class EventActions {
           completed: completed,
         );
     if (completed) {
-      _deferNotificationCancel(id);
+      await _cancelReminder(id);
     } else {
-      _deferNotificationSyncById(id);
+      final event = await _ref.read(eventRepositoryProvider).getById(id);
+      if (event != null) await _syncReminder(event);
     }
   }
 
@@ -335,33 +316,34 @@ class EventActions {
           completed: completed,
         );
     if (completed) {
-      _deferNotificationCancel(id);
+      await _cancelReminder(id);
     } else {
-      _deferNotificationSyncById(id);
+      final event = await _ref.read(eventRepositoryProvider).getById(id);
+      if (event != null) await _syncReminder(event);
     }
   }
 
   Future<Event> duplicate(int id) async {
     final event = await _ref.read(eventRepositoryProvider).duplicate(id);
-    _deferNotificationSync(event);
+    await _syncReminder(event);
     return event;
   }
 
   Future<void> delete(int id) async {
     await _ref.read(eventRepositoryProvider).delete(id);
-    _deferNotificationCancel(id);
+    await NotificationService.instance.deleteEventReminders(id);
   }
 
   Future<void> deleteWithScope(Event event, DeleteRepeatScope scope) async {
     await _ref.read(eventRepositoryProvider).deleteWithScope(event, scope);
-    _deferNotificationCancel(event.id);
+    await NotificationService.instance.deleteEventReminders(event.id);
   }
 
   Future<void> batchDelete(Set<int> ids) async {
     if (ids.isEmpty) return;
     await _ref.read(eventRepositoryProvider).batchDelete(ids);
     for (final id in ids) {
-      _deferNotificationCancel(id);
+      await NotificationService.instance.deleteEventReminders(id);
     }
   }
 
@@ -370,7 +352,8 @@ class EventActions {
     await _ref.read(eventRepositoryProvider).batchUpdateDate(ids, newDate);
     if (!_ref.read(remindersEnabledProvider)) return;
     for (final id in ids) {
-      _deferNotificationSyncById(id);
+      final event = await _ref.read(eventRepositoryProvider).getById(id);
+      if (event != null) await _syncReminder(event);
     }
   }
 }

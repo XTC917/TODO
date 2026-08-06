@@ -1,5 +1,22 @@
 # Changelog
 
+## v2.3.1
+
+### Fixed
+- Reminder notifications now request **exact alarm** permission (`SCHEDULE_EXACT_ALARM`) after notification permission — required on Android 12+ for `zonedSchedule` to fire on time; immediate test notifications were unaffected.
+- Removed `USE_EXACT_ALARM` (alarm-clock apps only); scheduling uses `exactAllowWhileIdle` when permitted, with inexact fallback.
+- Settings → Notifications adds **Allow exact alarms** button when exact permission is missing.
+
+## v2.3.0
+
+### Fixed (Release notification investigation)
+- Added release-visible notification diagnostics (`adb logcat | findstr JUJUNotify`) to pinpoint init/permission/show/schedule failures in release APKs.
+- Test notification button no longer depends on the Reminders toggle; it only calls `show()` and does not trigger reschedule.
+- Added ProGuard keep rules for `flutter_local_notifications` (preventive; minify is currently off).
+
+### Notes
+- Confirmed root causes from prior releases: invalid Android icon resource name (`@drawable/...` in Dart) and background notification callback breaking plugin init in release only. Both were fixed in v2.2.5/v2.2.7; if release still fails, use logcat tags above on a fresh v2.3.0 install.
+
 ## v2.2.10
 
 ### Changed

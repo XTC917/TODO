@@ -193,7 +193,18 @@ class AppLocalizationsKo extends AppLocalizations {
       '시간 초과. 시스템 설정에서 Reminders 알림 채널이 켜져 있는지 확인하세요.';
 
   @override
-  String get exactAlarmPermissionHint => '알림이 늦으면 시스템 설정에서 정확한 알람 권한을 허용하세요.';
+  String get exactAlarmPermissionHint =>
+      '알림을 정시에 받으려면 정확한 알람 권한이 필요합니다. 아래 버튼으로 시스템 설정을 여세요.';
+
+  @override
+  String get requestExactAlarmPermission => '정확한 알람 허용';
+
+  @override
+  String get batteryOptimizationHint =>
+      '배터리 최적화가 켜져 있으면 백그라운드에서 알림이 울리지 않을 수 있습니다. 이 앱의 배터리 제한을 해제하세요.';
+
+  @override
+  String get requestBatteryOptimization => '배터리 최적화 해제';
 
   @override
   String pendingNotifications(Object count) {

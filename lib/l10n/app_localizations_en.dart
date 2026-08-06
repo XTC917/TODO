@@ -199,7 +199,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get exactAlarmPermissionHint =>
-      'If reminders are late, allow exact alarm permission in system settings.';
+      'Reminders need exact alarm permission to fire on time. Tap below to open system settings.';
+
+  @override
+  String get requestExactAlarmPermission => 'Allow exact alarms';
+
+  @override
+  String get batteryOptimizationHint =>
+      'Reminders may not fire in the background if battery optimization is enabled. Allow unrestricted background activity for this app.';
+
+  @override
+  String get requestBatteryOptimization => 'Disable battery optimization';
 
   @override
   String pendingNotifications(Object count) {

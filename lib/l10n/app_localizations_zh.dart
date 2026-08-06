@@ -191,7 +191,17 @@ class AppLocalizationsZh extends AppLocalizations {
   String get testNotificationTimedOut => '发送超时，请在系统设置中检查通知渠道是否开启';
 
   @override
-  String get exactAlarmPermissionHint => '若提醒不准时，请在系统设置中允许「闹钟与提醒」精确权限。';
+  String get exactAlarmPermissionHint =>
+      'Reminder 需要精确闹钟权限才能准时触发，请点击下方按钮前往系统设置开启。';
+
+  @override
+  String get requestExactAlarmPermission => '允许精确闹钟';
+
+  @override
+  String get batteryOptimizationHint => '应用在后台时，系统可能会拦截提醒。请将本应用设为「无限制」或关闭电池优化。';
+
+  @override
+  String get requestBatteryOptimization => '允许后台运行';
 
   @override
   String pendingNotifications(Object count) {

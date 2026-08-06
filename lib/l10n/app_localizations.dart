@@ -463,8 +463,26 @@ abstract class AppLocalizations {
   /// No description provided for @exactAlarmPermissionHint.
   ///
   /// In en, this message translates to:
-  /// **'If reminders are late, allow exact alarm permission in system settings.'**
+  /// **'Reminders need exact alarm permission to fire on time. Tap below to open system settings.'**
   String get exactAlarmPermissionHint;
+
+  /// No description provided for @requestExactAlarmPermission.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow exact alarms'**
+  String get requestExactAlarmPermission;
+
+  /// No description provided for @batteryOptimizationHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders may not fire in the background if battery optimization is enabled. Allow unrestricted background activity for this app.'**
+  String get batteryOptimizationHint;
+
+  /// No description provided for @requestBatteryOptimization.
+  ///
+  /// In en, this message translates to:
+  /// **'Disable battery optimization'**
+  String get requestBatteryOptimization;
 
   /// No description provided for @pendingNotifications.
   ///

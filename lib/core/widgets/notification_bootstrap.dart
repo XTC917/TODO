@@ -3,13 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/app_providers.dart';
 import '../providers/l10n_providers.dart';
+import '../reminder/reminder_log.dart';
 import '../services/notification_service.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/reminder_config.dart';
 
-/// Initializes notification scheduling after the first frame.
-/// Requests notification permission once on cold start, then reschedules.
-/// Returning from background only reschedules — never re-requests permission.
+/// Wires reminder init, permissions, and full reschedule on app startup.
 class NotificationBootstrap extends ConsumerStatefulWidget {
   const NotificationBootstrap({super.key, required this.child});
 
@@ -22,14 +21,13 @@ class NotificationBootstrap extends ConsumerStatefulWidget {
 
 class _NotificationBootstrapState extends ConsumerState<NotificationBootstrap>
     with WidgetsBindingObserver {
-  bool _startupPermissionFlowStarted = false;
-  Future<void>? _workInFlight;
+  bool _startupDone = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _bootstrap());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _onStartup());
   }
 
   @override
@@ -42,81 +40,48 @@ class _NotificationBootstrapState extends ConsumerState<NotificationBootstrap>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       ref.invalidate(notificationPermissionProvider);
-      _rescheduleOnly();
+      // Do NOT reschedule on resume — cancelAll()+reschedule races with
+      // background and can wipe AlarmManager entries before they are rewritten.
+      NotificationService.instance.refreshBackgroundPermissions();
     }
   }
 
-  Future<void> _bootstrap() async {
-    if (!mounted) return;
+  Future<void> _onStartup() async {
+    if (!mounted || _startupDone) return;
+    _startupDone = true;
 
-    try {
-      await NotificationService.instance.initialize();
-    } catch (e, st) {
-      debugPrint('Notification init in bootstrap failed: $e\n$st');
-    }
+    reminderLog('NotificationBootstrap startup');
 
-    NotificationService.instance.notificationTimeUntilStartBuilder =
-        (offsetSeconds) {
+    await NotificationService.instance.initialize();
+
+    NotificationService.instance.remindersEnabled =
+        ref.read(remindersEnabledProvider);
+    NotificationService.instance.setBodyBuilder((offsetSeconds) {
       final language = ref.read(appLanguageProvider);
       final l10n = lookupAppLocalizations(resolveAppLocale(language));
       return formatNotificationTimeUntilStart(l10n, offsetSeconds);
-    };
+    });
 
-    await _runStartupPermissionFlow();
+    await _runStartupFlow();
   }
 
-  /// First launch: always prompt once, then reschedule if granted.
-  Future<void> _runStartupPermissionFlow() async {
-    if (!mounted || _startupPermissionFlowStarted) return;
-    if (!ref.read(remindersEnabledProvider)) return;
-
-    _startupPermissionFlowStarted = true;
-    _workInFlight ??= _doStartupPermissionFlow();
-    try {
-      await _workInFlight;
-    } finally {
-      _workInFlight = null;
-    }
-  }
-
-  Future<void> _doStartupPermissionFlow() async {
+  Future<void> _runStartupFlow() async {
     if (!mounted || !ref.read(remindersEnabledProvider)) return;
 
     final prefs = ref.read(sharedPreferencesProvider);
-    final alreadyPrompted =
-        prefs.getBool(notificationPermissionPromptedKey) ?? false;
+    final prompted = prefs.getBool(notificationPermissionPromptedKey) ?? false;
 
-    if (!alreadyPrompted) {
-      if (!mounted) return;
+    if (!prompted) {
       await NotificationService.instance.requestPermissionsWhenReady(
         force: true,
       );
       await prefs.setBool(notificationPermissionPromptedKey, true);
+    } else {
+      await NotificationService.instance.refreshBackgroundPermissions();
     }
 
-    if (!mounted) return;
-    await _rescheduleIfGranted();
-  }
-
-  /// Foreground resume: sync alarms only, never show permission dialog again.
-  Future<void> _rescheduleOnly() async {
     if (!mounted || !ref.read(remindersEnabledProvider)) return;
-    if (_workInFlight != null) return;
-
-    _workInFlight ??= _rescheduleIfGranted();
-    try {
-      await _workInFlight;
-    } finally {
-      _workInFlight = null;
-    }
-  }
-
-  Future<void> _rescheduleIfGranted() async {
-    if (!mounted || !ref.read(remindersEnabledProvider)) return;
-
-    if (!mounted) return;
     ref.invalidate(notificationPermissionProvider);
-
     await NotificationService.instance.rescheduleAll(
       ref.read(eventRepositoryProvider),
     );
