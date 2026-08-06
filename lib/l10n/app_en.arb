@@ -286,6 +286,8 @@
   "focusMinutesFieldLabel": "Minutes",
   "focusAddPreset": "Add",
   "focusTapToToggleDisplay": "Tap to switch display",
+  "focusDoneDelete": "Done",
+  "focusCurrentTask": "Select task",
   "focusDurationHoursMinutes": "{hours}h {minutes}m",
   "@focusDurationHoursMinutes": {
     "placeholders": {

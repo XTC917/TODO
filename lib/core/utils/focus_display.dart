@@ -5,16 +5,34 @@ import '../../models/focus_session.dart';
 class FocusDisplayFormatter {
   FocusDisplayFormatter._();
 
-  static String formatClock(int totalSeconds) {
-    final h = totalSeconds ~/ 3600;
-    final m = (totalSeconds % 3600) ~/ 60;
-    final s = totalSeconds % 60;
-    if (h > 0) {
-      return '${h.toString().padLeft(2, '0')}:'
-          '${m.toString().padLeft(2, '0')}:'
-          '${s.toString().padLeft(2, '0')}';
+  /// Hour mode clock: always HH:MM:SS (e.g. 01:30:00, 00:30:00).
+  static String formatHourModeClock(int totalSeconds) {
+    final clamped = totalSeconds.clamp(0, 359999);
+    final h = clamped ~/ 3600;
+    final m = (clamped % 3600) ~/ 60;
+    final s = clamped % 60;
+    return '${h.toString().padLeft(2, '0')}:'
+        '${m.toString().padLeft(2, '0')}:'
+        '${s.toString().padLeft(2, '0')}';
+  }
+
+  /// Minute mode clock: total minutes and seconds (e.g. 90:00, 30:00).
+  static String formatMinuteModeClock(int totalSeconds) {
+    final clamped = totalSeconds.clamp(0, 359999);
+    final totalMinutes = clamped ~/ 60;
+    final s = clamped % 60;
+    return '$totalMinutes:${s.toString().padLeft(2, '0')}';
+  }
+
+  /// Main timer — numeric clock, toggles between hour/minute modes.
+  static String formatMainDisplay(
+    int totalSeconds,
+    FocusDurationDisplayMode mode,
+  ) {
+    if (mode == FocusDurationDisplayMode.minute) {
+      return formatMinuteModeClock(totalSeconds);
     }
-    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+    return formatHourModeClock(totalSeconds);
   }
 
   static String formatDurationLabel(
@@ -22,10 +40,11 @@ class FocusDisplayFormatter {
     int totalSeconds,
     FocusDurationDisplayMode mode,
   ) {
-    if (totalSeconds <= 0) return formatClock(0);
-    final totalMinutes = (totalSeconds / 60).round();
+    if (totalSeconds <= 0) {
+      return l10n.focusDurationMinutesOnly(0);
+    }
     if (mode == FocusDurationDisplayMode.minute) {
-      return l10n.focusDurationMinutesOnly(totalMinutes);
+      return l10n.focusDurationMinutesOnly(totalSeconds ~/ 60);
     }
     final hours = totalSeconds ~/ 3600;
     final minutes = (totalSeconds % 3600) ~/ 60;

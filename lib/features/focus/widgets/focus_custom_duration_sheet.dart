@@ -1,5 +1,5 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../../l10n/app_localizations.dart';
 
@@ -29,95 +29,142 @@ class _FocusCustomDurationSheet extends StatefulWidget {
 }
 
 class _FocusCustomDurationSheetState extends State<_FocusCustomDurationSheet> {
-  late final TextEditingController _hoursController;
-  late final TextEditingController _minutesController;
+  static const _minuteSteps = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
+
+  late FixedExtentScrollController _hourController;
+  late FixedExtentScrollController _minuteController;
+  late int _hourIndex;
+  late int _minuteIndex;
 
   @override
   void initState() {
     super.initState();
     final h = widget.initialSeconds ~/ 3600;
     final m = (widget.initialSeconds % 3600) ~/ 60;
-    _hoursController = TextEditingController(text: '$h');
-    _minutesController = TextEditingController(text: '$m');
+    _hourIndex = h.clamp(0, 23);
+    _minuteIndex = _nearestMinuteIndex(m);
+    _hourController = FixedExtentScrollController(initialItem: _hourIndex);
+    _minuteController = FixedExtentScrollController(initialItem: _minuteIndex);
   }
 
   @override
   void dispose() {
-    _hoursController.dispose();
-    _minutesController.dispose();
+    _hourController.dispose();
+    _minuteController.dispose();
     super.dispose();
   }
 
-  int? _totalSeconds() {
-    final h = int.tryParse(_hoursController.text.trim()) ?? 0;
-    final m = int.tryParse(_minutesController.text.trim()) ?? 0;
-    if (h < 0 || h > 23 || m < 0 || m > 59) return null;
-    final total = h * 3600 + m * 60;
-    return total > 0 ? total : null;
+  int _nearestMinuteIndex(int minutes) {
+    var best = 0;
+    var diff = 999;
+    for (var i = 0; i < _minuteSteps.length; i++) {
+      final d = (minutes - _minuteSteps[i]).abs();
+      if (d < diff) {
+        diff = d;
+        best = i;
+      }
+    }
+    return best;
   }
+
+  int get _totalSeconds =>
+      _hourIndex * 3600 + _minuteSteps[_minuteIndex] * 60;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final total = _totalSeconds();
+    final theme = Theme.of(context);
+    final total = _totalSeconds;
 
     return SafeArea(
       child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          20,
-          16,
-          20,
-          16 + MediaQuery.viewInsetsOf(context).bottom,
-        ),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
               l10n.focusCustomDuration,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _hoursController,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(2),
-                    ],
-                    decoration: InputDecoration(
-                      labelText: l10n.focusHoursLabel,
-                      border: const OutlineInputBorder(),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 220,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Text(
+                          l10n.focusHoursLabel,
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.6),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Expanded(
+                          child: CupertinoPicker(
+                            scrollController: _hourController,
+                            itemExtent: 40,
+                            onSelectedItemChanged: (index) {
+                              setState(() => _hourIndex = index);
+                            },
+                            children: List.generate(
+                              24,
+                              (i) => Center(
+                                child: Text(
+                                  '$i',
+                                  style: theme.textTheme.titleLarge,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    onChanged: (_) => setState(() {}),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextField(
-                    controller: _minutesController,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(2),
-                    ],
-                    decoration: InputDecoration(
-                      labelText: l10n.focusMinutesFieldLabel,
-                      border: const OutlineInputBorder(),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Text(
+                          l10n.focusMinutesFieldLabel,
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.6),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Expanded(
+                          child: CupertinoPicker(
+                            scrollController: _minuteController,
+                            itemExtent: 40,
+                            onSelectedItemChanged: (index) {
+                              setState(() => _minuteIndex = index);
+                            },
+                            children: _minuteSteps
+                                .map(
+                                  (m) => Center(
+                                    child: Text(
+                                      m.toString().padLeft(2, '0'),
+                                      style: theme.textTheme.titleLarge,
+                                    ),
+                                  ),
+                                )
+                                .toList(),
+                          ),
+                        ),
+                      ],
                     ),
-                    onChanged: (_) => setState(() {}),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
             const SizedBox(height: 16),
             FilledButton(
-              onPressed: total == null
+              onPressed: total <= 0
                   ? null
                   : () => Navigator.pop(context, total),
               child: Text(l10n.save),

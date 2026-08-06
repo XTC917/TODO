@@ -1084,6 +1084,18 @@ abstract class AppLocalizations {
   /// **'Tap to switch display'**
   String get focusTapToToggleDisplay;
 
+  /// No description provided for @focusDoneDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get focusDoneDelete;
+
+  /// No description provided for @focusCurrentTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Select task'**
+  String get focusCurrentTask;
+
   /// No description provided for @focusDurationHoursMinutes.
   ///
   /// In en, this message translates to:

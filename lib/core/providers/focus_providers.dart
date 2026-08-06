@@ -33,7 +33,7 @@ class FocusTimerNotifier extends StateNotifier<FocusTimerTick> {
 
   void _emit({FocusCompletionResult? completion}) {
     state = FocusTimerTick(
-      session: _service.snapshotAt(DateTime.now()),
+      session: _service.session,
       completion: completion,
     );
   }
@@ -50,6 +50,17 @@ class FocusTimerNotifier extends StateNotifier<FocusTimerTick> {
   void _stopUiTimer() {
     _uiTimer?.cancel();
     _uiTimer = null;
+  }
+
+  /// Refresh display after returning from background (wall-clock catch-up).
+  void refreshDisplay() {
+    if (_service.session.state == FocusTimerState.running) {
+      final completion = _service.tick(DateTime.now());
+      if (completion != null) _stopUiTimer();
+      _emit(completion: completion);
+    } else {
+      _emit();
+    }
   }
 
   void configureIdle({

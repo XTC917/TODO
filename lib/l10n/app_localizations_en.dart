@@ -562,6 +562,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get focusTapToToggleDisplay => 'Tap to switch display';
 
   @override
+  String get focusDoneDelete => 'Done';
+
+  @override
+  String get focusCurrentTask => 'Select task';
+
+  @override
   String focusDurationHoursMinutes(int hours, int minutes) {
     return '${hours}h ${minutes}m';
   }

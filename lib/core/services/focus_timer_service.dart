@@ -1,18 +1,42 @@
 import '../../models/enums.dart';
 import '../../models/focus_session.dart';
 
-/// Core focus timer logic — all elapsed time derived from wall clock.
+/// Core focus timer logic — elapsed time derived from [Stopwatch] + wall clock.
 class FocusTimerService {
   FocusRuntimeSession _session =
       const FocusRuntimeSession(mode: FocusMode.pomodoro);
 
+  int _accumulatedMilliseconds = 0;
+  Stopwatch? _segmentStopwatch;
+
   FocusRuntimeSession get session => _session;
+
+  /// Elapsed seconds for the active or paused session.
+  int elapsedSeconds() {
+    if (!_session.isActive) return 0;
+    if (_session.state == FocusTimerState.paused) {
+      return _accumulatedMilliseconds ~/ 1000;
+    }
+    final segmentMs = _segmentStopwatch?.elapsedMilliseconds ?? 0;
+    return (_accumulatedMilliseconds + segmentMs) ~/ 1000;
+  }
+
+  /// Remaining seconds for countdown mode, or null for stopwatch.
+  int? remainingSeconds() {
+    final target = _session.targetSeconds;
+    if (target == null) return null;
+    final remaining = target - elapsedSeconds();
+    return remaining.clamp(0, target);
+  }
 
   void configureIdle({
     required FocusMode mode,
     int? targetSeconds,
   }) {
     if (_session.isActive) return;
+    _accumulatedMilliseconds = 0;
+    _segmentStopwatch?.stop();
+    _segmentStopwatch = null;
     _session = FocusRuntimeSession(
       mode: mode,
       targetSeconds: targetSeconds,
@@ -26,6 +50,8 @@ class FocusTimerService {
     int? linkedEventId,
     String? linkedTaskTitle,
   }) {
+    _accumulatedMilliseconds = 0;
+    _segmentStopwatch = Stopwatch()..start();
     _session = FocusRuntimeSession(
       mode: mode,
       sessionStartedAt: now,
@@ -39,8 +65,13 @@ class FocusTimerService {
 
   void pause(DateTime now) {
     if (_session.state != FocusTimerState.running) return;
+    if (_segmentStopwatch != null) {
+      _accumulatedMilliseconds += _segmentStopwatch!.elapsedMilliseconds;
+      _segmentStopwatch!.stop();
+      _segmentStopwatch = null;
+    }
     _session = _session.copyWith(
-      accumulatedSeconds: _session.elapsedSecondsAt(now),
+      accumulatedSeconds: _accumulatedMilliseconds ~/ 1000,
       clearSegmentStartedAt: true,
       state: FocusTimerState.paused,
     );
@@ -48,6 +79,7 @@ class FocusTimerService {
 
   void resume(DateTime now) {
     if (_session.state != FocusTimerState.paused) return;
+    _segmentStopwatch = Stopwatch()..start();
     _session = _session.copyWith(
       segmentStartedAt: now,
       state: FocusTimerState.running,
@@ -64,7 +96,7 @@ class FocusTimerService {
       return null;
     }
 
-    final elapsed = _session.elapsedSecondsAt(now);
+    final elapsed = elapsedSeconds();
     if (elapsed <= 0) {
       _resetIdle();
       return null;
@@ -90,18 +122,14 @@ class FocusTimerService {
     if (_session.mode != FocusMode.pomodoro || _session.targetSeconds == null) {
       return null;
     }
-    if (_session.elapsedSecondsAt(now) < _session.targetSeconds!) return null;
+    if (elapsedSeconds() < _session.targetSeconds!) return null;
     return stop(now, completed: true);
   }
 
-  FocusRuntimeSession snapshotAt(DateTime now) {
-    if (!_session.isActive) return _session;
-    return _session.copyWith(
-      accumulatedSeconds: _session.elapsedSecondsAt(now),
-    );
-  }
-
   void _resetIdle() {
+    _accumulatedMilliseconds = 0;
+    _segmentStopwatch?.stop();
+    _segmentStopwatch = null;
     _session = FocusRuntimeSession(mode: _session.mode);
   }
 }

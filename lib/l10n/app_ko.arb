@@ -164,6 +164,8 @@
   "focusMinutesFieldLabel": "분",
   "focusAddPreset": "추가",
   "focusTapToToggleDisplay": "탭하여 표시 전환",
+  "focusDoneDelete": "완료",
+  "focusCurrentTask": "작업 선택",
   "focusDurationHoursMinutes": "{hours}시간 {minutes}분",
   "focusDurationHours": "{hours}시간",
   "focusDurationMinutesOnly": "{minutes}분",

@@ -559,6 +559,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get focusTapToToggleDisplay => '点击切换显示方式';
 
   @override
+  String get focusDoneDelete => '完成';
+
+  @override
+  String get focusCurrentTask => '选择任务';
+
+  @override
   String focusDurationHoursMinutes(int hours, int minutes) {
     return '$hours 小时 $minutes 分钟';
   }

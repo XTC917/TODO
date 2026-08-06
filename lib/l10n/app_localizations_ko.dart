@@ -559,6 +559,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get focusTapToToggleDisplay => '탭하여 표시 전환';
 
   @override
+  String get focusDoneDelete => '완료';
+
+  @override
+  String get focusCurrentTask => '작업 선택';
+
+  @override
   String focusDurationHoursMinutes(int hours, int minutes) {
     return '$hours시간 $minutes분';
   }

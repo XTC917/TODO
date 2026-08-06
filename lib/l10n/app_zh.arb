@@ -164,6 +164,8 @@
   "focusMinutesFieldLabel": "分钟",
   "focusAddPreset": "添加",
   "focusTapToToggleDisplay": "点击切换显示方式",
+  "focusDoneDelete": "完成",
+  "focusCurrentTask": "选择任务",
   "focusDurationHoursMinutes": "{hours} 小时 {minutes} 分钟",
   "focusDurationHours": "{hours} 小时",
   "focusDurationMinutesOnly": "{minutes} 分钟",
