@@ -86,6 +86,18 @@ class FocusTimerService {
     );
   }
 
+  void updateLinkedTask({int? eventId, String? taskTitle}) {
+    if (!_session.isActive) return;
+    final trimmed = taskTitle?.trim();
+    final hasTitle = trimmed != null && trimmed.isNotEmpty;
+    _session = _session.copyWith(
+      linkedEventId: eventId,
+      linkedTaskTitle: hasTitle ? trimmed : null,
+      clearLinkedEventId: eventId == null,
+      clearLinkedTaskTitle: !hasTitle,
+    );
+  }
+
   /// Stops the session and returns completion data, or null if nothing to save.
   FocusCompletionResult? stop(
     DateTime now, {

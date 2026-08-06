@@ -13,7 +13,10 @@ Future<void> showFocusSummaryDialog({
 
   return showDialog<void>(
     context: context,
+    useRootNavigator: true,
+    barrierDismissible: true,
     builder: (ctx) {
+      final size = MediaQuery.sizeOf(ctx);
       final taskLabel = result.linkedTaskTitle?.isNotEmpty == true
           ? result.linkedTaskTitle!
           : l10n.focusNoTask;
@@ -24,29 +27,42 @@ Future<void> showFocusSummaryDialog({
       );
 
       return AlertDialog(
+        insetPadding: EdgeInsets.symmetric(
+          horizontal: size.width < 600 ? 24 : size.width * 0.15,
+          vertical: 24,
+        ),
         title: Text(l10n.focusCompletedTitle),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _SummaryRow(label: l10n.focusSummaryTask, value: taskLabel),
-            const SizedBox(height: 8),
-            _SummaryRow(label: l10n.focusSummaryDuration, value: durationLabel),
-            const SizedBox(height: 8),
-            _SummaryRow(
-              label: l10n.focusSummaryStart,
-              value: DateTimeFormats.formatTimeOfDay(result.sessionStartedAt),
+        content: SizedBox(
+          width: size.width < 600 ? double.maxFinite : 360,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _SummaryRow(label: l10n.focusSummaryTask, value: taskLabel),
+                const SizedBox(height: 10),
+                _SummaryRow(
+                  label: l10n.focusSummaryDuration,
+                  value: durationLabel,
+                ),
+                const SizedBox(height: 10),
+                _SummaryRow(
+                  label: l10n.focusSummaryStart,
+                  value:
+                      DateTimeFormats.formatTimeOfDay(result.sessionStartedAt),
+                ),
+                const SizedBox(height: 10),
+                _SummaryRow(
+                  label: l10n.focusSummaryEnd,
+                  value: DateTimeFormats.formatTimeOfDay(result.endedAt),
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-            _SummaryRow(
-              label: l10n.focusSummaryEnd,
-              value: DateTimeFormats.formatTimeOfDay(result.endedAt),
-            ),
-          ],
+          ),
         ),
         actions: [
           FilledButton(
-            onPressed: () => Navigator.pop(ctx),
+            onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
             child: Text(l10n.done),
           ),
         ],
@@ -63,29 +79,22 @@ class _SummaryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    final labelStyle = Theme.of(context).textTheme.labelLarge?.copyWith(
+          color: Theme.of(context)
+              .colorScheme
+              .onSurface
+              .withValues(alpha: 0.55),
+        );
+    final valueStyle = Theme.of(context).textTheme.bodyLarge?.copyWith(
+          fontWeight: FontWeight.w600,
+        );
+
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: 72,
-          child: Text(
-            label,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withValues(alpha: 0.55),
-                ),
-          ),
-        ),
-        Expanded(
-          child: Text(
-            value,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-          ),
-        ),
+        Text(label, style: labelStyle),
+        const SizedBox(height: 4),
+        Text(value, style: valueStyle),
       ],
     );
   }

@@ -523,7 +523,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get focusSelectTask => '집중 작업 선택';
 
   @override
-  String get focusTodayTasks => '오늘 할 일';
+  String get focusTodayTasks => '오늘 일정 및 작업';
 
   @override
   String get focusNoTask => '없음';
@@ -563,6 +563,27 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get focusCurrentTask => '작업 선택';
+
+  @override
+  String get focusCustomTaskHint => '사용자 지정 작업명 입력';
+
+  @override
+  String get focusUseCustomTask => '사용';
+
+  @override
+  String get focusCurrentFocus => '현재 집중';
+
+  @override
+  String get focusSelectTodo => '작업 선택';
+
+  @override
+  String get focusTaskModeCustom => '사용자 지정';
+
+  @override
+  String get focusImmersiveExit => '종료';
+
+  @override
+  String get focusLongPressImmersive => '타이머 길게 눌러 몰입 모드';
 
   @override
   String focusDurationHoursMinutes(int hours, int minutes) {

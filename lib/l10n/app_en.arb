@@ -274,7 +274,7 @@
     }
   },
   "focusSelectTask": "Select Focus Task",
-  "focusTodayTasks": "Today's Tasks",
+  "focusTodayTasks": "Today's Schedule & Tasks",
   "focusNoTask": "None",
   "focusCompletedTitle": "Focus Completed 🎉",
   "focusSummaryTask": "Task",
@@ -288,6 +288,13 @@
   "focusTapToToggleDisplay": "Tap to switch display",
   "focusDoneDelete": "Done",
   "focusCurrentTask": "Select task",
+  "focusCustomTaskHint": "Type a custom task name",
+  "focusUseCustomTask": "Use",
+  "focusCurrentFocus": "Current Focus",
+  "focusSelectTodo": "Select Task",
+  "focusTaskModeCustom": "Custom",
+  "focusImmersiveExit": "Exit",
+  "focusLongPressImmersive": "Long press timer for immersive mode",
   "focusDurationHoursMinutes": "{hours}h {minutes}m",
   "@focusDurationHoursMinutes": {
     "placeholders": {

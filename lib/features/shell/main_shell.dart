@@ -25,6 +25,7 @@ class MainShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final index = ref.watch(shellTabProvider);
+    final immersive = ref.watch(focusImmersiveModeProvider);
     final l10n = AppLocalizations.of(context);
 
     return Scaffold(
@@ -32,12 +33,14 @@ class MainShell extends ConsumerWidget {
         index: index,
         children: _pages,
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: index,
-        onDestinationSelected: (value) {
-          ref.read(shellTabProvider.notifier).state = value;
-        },
-        destinations: [
+      bottomNavigationBar: immersive
+          ? null
+          : NavigationBar(
+              selectedIndex: index,
+              onDestinationSelected: (value) {
+                ref.read(shellTabProvider.notifier).state = value;
+              },
+              destinations: [
           NavigationDestination(
             icon: const Icon(Icons.home_outlined),
             selectedIcon: const Icon(Icons.home_rounded),
@@ -68,8 +71,8 @@ class MainShell extends ConsumerWidget {
             selectedIcon: const Icon(Icons.settings_rounded),
             label: l10n.navSettings,
           ),
-        ],
-      ),
+              ],
+            ),
     );
   }
 }

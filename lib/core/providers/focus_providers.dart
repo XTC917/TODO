@@ -101,6 +101,11 @@ class FocusTimerNotifier extends StateNotifier<FocusTimerTick> {
     _emit();
   }
 
+  void updateLinkedTask({int? eventId, String? taskTitle}) {
+    _service.updateLinkedTask(eventId: eventId, taskTitle: taskTitle);
+    _emit();
+  }
+
   FocusCompletionResult? stop({bool completed = false}) {
     _stopUiTimer();
     final result = _service.stop(DateTime.now(), completed: completed);
@@ -196,3 +201,6 @@ final selectedCountdownSecondsProvider = StateProvider<int>((ref) {
   final presets = ref.watch(focusPresetsProvider);
   return presets.contains(25 * 60) ? 25 * 60 : presets.first;
 });
+
+/// When true, hides shell chrome and shows immersive focus UI.
+final focusImmersiveModeProvider = StateProvider<bool>((ref) => false);

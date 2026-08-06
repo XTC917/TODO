@@ -523,7 +523,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get focusSelectTask => '选择专注任务';
 
   @override
-  String get focusTodayTasks => '今日任务';
+  String get focusTodayTasks => '今日日程与任务';
 
   @override
   String get focusNoTask => '无';
@@ -563,6 +563,27 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get focusCurrentTask => '选择任务';
+
+  @override
+  String get focusCustomTaskHint => '输入自定义任务名';
+
+  @override
+  String get focusUseCustomTask => '使用';
+
+  @override
+  String get focusCurrentFocus => '当前专注';
+
+  @override
+  String get focusSelectTodo => '选择任务';
+
+  @override
+  String get focusTaskModeCustom => '自定义';
+
+  @override
+  String get focusImmersiveExit => '退出';
+
+  @override
+  String get focusLongPressImmersive => '长按计时器进入沉浸模式';
 
   @override
   String focusDurationHoursMinutes(int hours, int minutes) {

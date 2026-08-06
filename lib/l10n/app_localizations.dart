@@ -1015,7 +1015,7 @@ abstract class AppLocalizations {
   /// No description provided for @focusTodayTasks.
   ///
   /// In en, this message translates to:
-  /// **'Today\'s Tasks'**
+  /// **'Today\'s Schedule & Tasks'**
   String get focusTodayTasks;
 
   /// No description provided for @focusNoTask.
@@ -1095,6 +1095,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Select task'**
   String get focusCurrentTask;
+
+  /// No description provided for @focusCustomTaskHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Type a custom task name'**
+  String get focusCustomTaskHint;
+
+  /// No description provided for @focusUseCustomTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Use'**
+  String get focusUseCustomTask;
+
+  /// No description provided for @focusCurrentFocus.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Focus'**
+  String get focusCurrentFocus;
+
+  /// No description provided for @focusSelectTodo.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Task'**
+  String get focusSelectTodo;
+
+  /// No description provided for @focusTaskModeCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get focusTaskModeCustom;
+
+  /// No description provided for @focusImmersiveExit.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit'**
+  String get focusImmersiveExit;
+
+  /// No description provided for @focusLongPressImmersive.
+  ///
+  /// In en, this message translates to:
+  /// **'Long press timer for immersive mode'**
+  String get focusLongPressImmersive;
 
   /// No description provided for @focusDurationHoursMinutes.
   ///

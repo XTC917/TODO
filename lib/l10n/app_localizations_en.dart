@@ -526,7 +526,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get focusSelectTask => 'Select Focus Task';
 
   @override
-  String get focusTodayTasks => 'Today\'s Tasks';
+  String get focusTodayTasks => 'Today\'s Schedule & Tasks';
 
   @override
   String get focusNoTask => 'None';
@@ -566,6 +566,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get focusCurrentTask => 'Select task';
+
+  @override
+  String get focusCustomTaskHint => 'Type a custom task name';
+
+  @override
+  String get focusUseCustomTask => 'Use';
+
+  @override
+  String get focusCurrentFocus => 'Current Focus';
+
+  @override
+  String get focusSelectTodo => 'Select Task';
+
+  @override
+  String get focusTaskModeCustom => 'Custom';
+
+  @override
+  String get focusImmersiveExit => 'Exit';
+
+  @override
+  String get focusLongPressImmersive => 'Long press timer for immersive mode';
 
   @override
   String focusDurationHoursMinutes(int hours, int minutes) {
