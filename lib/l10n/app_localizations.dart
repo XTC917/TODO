@@ -484,6 +484,18 @@ abstract class AppLocalizations {
   /// **'Disable battery optimization'**
   String get requestBatteryOptimization;
 
+  /// No description provided for @autostartPermissionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'On Xiaomi/Redmi: swiping the app away cancels all scheduled reminders. Enable Autostart and use the Home button instead of swiping the app closed.'**
+  String get autostartPermissionHint;
+
+  /// No description provided for @requestAutostartPermission.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable autostart (Xiaomi)'**
+  String get requestAutostartPermission;
+
   /// No description provided for @pendingNotifications.
   ///
   /// In en, this message translates to:

@@ -207,6 +207,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get requestBatteryOptimization => '배터리 최적화 해제';
 
   @override
+  String get autostartPermissionHint =>
+      '샤오미/레드미: 앱을 위로 밀어 종료하면 예약된 알림이 모두 취소됩니다. 자동 시작을 켜고 Home 버튼으로 백그라운드에 두세요.';
+
+  @override
+  String get requestAutostartPermission => '자동 시작 허용 (샤오미)';
+
+  @override
   String pendingNotifications(Object count) {
     return '예약된 알림 $count개';
   }

@@ -212,6 +212,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get requestBatteryOptimization => 'Disable battery optimization';
 
   @override
+  String get autostartPermissionHint =>
+      'On Xiaomi/Redmi: swiping the app away cancels all scheduled reminders. Enable Autostart and use the Home button instead of swiping the app closed.';
+
+  @override
+  String get requestAutostartPermission => 'Enable autostart (Xiaomi)';
+
+  @override
   String pendingNotifications(Object count) {
     return '$count scheduled reminder(s)';
   }

@@ -204,6 +204,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get requestBatteryOptimization => '允许后台运行';
 
   @override
+  String get autostartPermissionHint =>
+      '小米/红米手机：上滑清除应用会取消所有已安排的提醒。请务必开启「自启动」，平时用 Home 键切后台，不要上滑清除。';
+
+  @override
+  String get requestAutostartPermission => '开启自启动（小米）';
+
+  @override
   String pendingNotifications(Object count) {
     return '已安排 $count 条提醒';
   }
