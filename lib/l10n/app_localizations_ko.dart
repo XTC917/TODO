@@ -520,6 +520,60 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get focusSelectTask => '집중 작업 선택';
+
+  @override
+  String get focusTodayTasks => '오늘 할 일';
+
+  @override
+  String get focusNoTask => '없음';
+
+  @override
+  String get focusCompletedTitle => '집중 완료 🎉';
+
+  @override
+  String get focusSummaryTask => '작업';
+
+  @override
+  String get focusSummaryDuration => '시간';
+
+  @override
+  String get focusSummaryStart => '시작';
+
+  @override
+  String get focusSummaryEnd => '종료';
+
+  @override
+  String get focusCustomDuration => '사용자 지정 시간';
+
+  @override
+  String get focusHoursLabel => '시간';
+
+  @override
+  String get focusMinutesFieldLabel => '분';
+
+  @override
+  String get focusAddPreset => '추가';
+
+  @override
+  String get focusTapToToggleDisplay => '탭하여 표시 전환';
+
+  @override
+  String focusDurationHoursMinutes(int hours, int minutes) {
+    return '$hours시간 $minutes분';
+  }
+
+  @override
+  String focusDurationHours(int hours) {
+    return '$hours시간';
+  }
+
+  @override
+  String focusDurationMinutesOnly(int minutes) {
+    return '$minutes분';
+  }
+
+  @override
   String get statsTitle => '통계';
 
   @override

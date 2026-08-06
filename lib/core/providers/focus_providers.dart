@@ -4,134 +4,184 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/enums.dart';
 import '../../models/event.dart';
+import '../../models/focus_session.dart';
+import '../services/focus_preset_service.dart';
+import '../services/focus_timer_service.dart';
+import 'app_providers.dart';
 
-enum FocusTimerState { idle, running, paused }
+export '../../models/focus_session.dart';
 
-class FocusSession {
-  const FocusSession({
-    required this.mode,
-    this.startedAt,
-    this.linkedEventId,
-    this.targetSeconds,
-    this.elapsedSeconds = 0,
-    this.state = FocusTimerState.idle,
+class FocusTimerTick {
+  const FocusTimerTick({
+    required this.session,
+    this.completion,
   });
 
-  final FocusMode mode;
-  final DateTime? startedAt;
-  final int? linkedEventId;
-  final int? targetSeconds;
-  final int elapsedSeconds;
-  final FocusTimerState state;
-
-  bool get isActive =>
-      state == FocusTimerState.running || state == FocusTimerState.paused;
-
-  FocusSession copyWith({
-    FocusMode? mode,
-    DateTime? startedAt,
-    int? linkedEventId,
-    bool clearLinkedEventId = false,
-    int? targetSeconds,
-    bool clearTargetSeconds = false,
-    int? elapsedSeconds,
-    FocusTimerState? state,
-  }) {
-    return FocusSession(
-      mode: mode ?? this.mode,
-      startedAt: startedAt ?? this.startedAt,
-      linkedEventId:
-          clearLinkedEventId ? null : (linkedEventId ?? this.linkedEventId),
-      targetSeconds:
-          clearTargetSeconds ? null : (targetSeconds ?? this.targetSeconds),
-      elapsedSeconds: elapsedSeconds ?? this.elapsedSeconds,
-      state: state ?? this.state,
-    );
-  }
+  final FocusRuntimeSession session;
+  final FocusCompletionResult? completion;
 }
 
-class FocusTimerNotifier extends StateNotifier<FocusSession> {
-  FocusTimerNotifier() : super(const FocusSession(mode: FocusMode.pomodoro));
+class FocusTimerNotifier extends StateNotifier<FocusTimerTick> {
+  FocusTimerNotifier(this._service) : super(_initialTick(_service));
 
-  Timer? _timer;
+  final FocusTimerService _service;
+  Timer? _uiTimer;
+
+  static FocusTimerTick _initialTick(FocusTimerService service) {
+    return FocusTimerTick(session: service.session);
+  }
+
+  void _emit({FocusCompletionResult? completion}) {
+    state = FocusTimerTick(
+      session: _service.snapshotAt(DateTime.now()),
+      completion: completion,
+    );
+  }
+
+  void _startUiTimer() {
+    _uiTimer?.cancel();
+    _uiTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      final completion = _service.tick(DateTime.now());
+      if (completion != null) _stopUiTimer();
+      _emit(completion: completion);
+    });
+  }
+
+  void _stopUiTimer() {
+    _uiTimer?.cancel();
+    _uiTimer = null;
+  }
+
+  void configureIdle({
+    required FocusMode mode,
+    int? targetSeconds,
+  }) {
+    if (_service.session.isActive) return;
+    _service.configureIdle(mode: mode, targetSeconds: targetSeconds);
+    _emit();
+  }
 
   void start({
     required FocusMode mode,
-    int? targetMinutes,
+    int? targetSeconds,
     int? linkedEventId,
+    String? linkedTaskTitle,
   }) {
-    _timer?.cancel();
-    state = FocusSession(
+    _service.start(
       mode: mode,
-      startedAt: DateTime.now(),
+      now: DateTime.now(),
+      targetSeconds: targetSeconds,
       linkedEventId: linkedEventId,
-      targetSeconds: targetMinutes != null ? targetMinutes * 60 : null,
-      elapsedSeconds: 0,
-      state: FocusTimerState.running,
+      linkedTaskTitle: linkedTaskTitle,
     );
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
+    _startUiTimer();
+    _emit();
   }
 
   void pause() {
-    if (state.state != FocusTimerState.running) return;
-    _timer?.cancel();
-    state = state.copyWith(state: FocusTimerState.paused);
+    _service.pause(DateTime.now());
+    _stopUiTimer();
+    _emit();
   }
 
   void resume() {
-    if (state.state != FocusTimerState.paused) return;
-    state = state.copyWith(
-      startedAt: DateTime.now(),
-      state: FocusTimerState.running,
-    );
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
+    _service.resume(DateTime.now());
+    _startUiTimer();
+    _emit();
   }
 
-  FocusSession? stop() {
-    _timer?.cancel();
-    if (!state.isActive || state.startedAt == null) {
-      state = const FocusSession(mode: FocusMode.pomodoro);
-      return null;
-    }
-    final ended = DateTime.now();
-    final session = state;
-    state = const FocusSession(mode: FocusMode.pomodoro);
-    return session.copyWith(elapsedSeconds: _currentElapsed(ended));
+  FocusCompletionResult? stop({bool completed = false}) {
+    _stopUiTimer();
+    final result = _service.stop(DateTime.now(), completed: completed);
+    _emit();
+    return result;
   }
 
-  void _tick() {
-    if (state.startedAt == null) return;
-    final elapsed = _currentElapsed(DateTime.now());
-    state = state.copyWith(elapsedSeconds: elapsed);
-
-    if (state.mode == FocusMode.pomodoro &&
-        state.targetSeconds != null &&
-        elapsed >= state.targetSeconds!) {
-      stop();
-    }
-  }
-
-  int _currentElapsed(DateTime now) {
-    if (state.startedAt == null) return state.elapsedSeconds;
-    final delta = now.difference(state.startedAt!).inSeconds;
-    return state.elapsedSeconds + delta;
+  void clearCompletion() {
+    state = FocusTimerTick(session: state.session);
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _stopUiTimer();
     super.dispose();
   }
 }
 
+final focusTimerServiceProvider = Provider<FocusTimerService>((ref) {
+  return FocusTimerService();
+});
+
 final focusTimerProvider =
-    StateNotifierProvider<FocusTimerNotifier, FocusSession>((ref) {
-  return FocusTimerNotifier();
+    StateNotifierProvider<FocusTimerNotifier, FocusTimerTick>((ref) {
+  return FocusTimerNotifier(ref.watch(focusTimerServiceProvider));
 });
 
 final focusLaunchProvider = StateProvider<FocusLaunchConfig?>((ref) => null);
 
 final shellTabProvider = StateProvider<int>((ref) => 0);
 
-final completedSectionExpandedProvider =
-    StateProvider<bool>((ref) => false);
+final completedSectionExpandedProvider = StateProvider<bool>((ref) => false);
+
+final focusPresetServiceProvider = Provider<FocusPresetService>((ref) {
+  return FocusPresetService(ref.watch(sharedPreferencesProvider));
+});
+
+class FocusPresetsController extends StateNotifier<List<int>> {
+  FocusPresetsController(this._service) : super(_service.loadPresets());
+
+  final FocusPresetService _service;
+
+  Future<void> addPreset(int seconds) async {
+    await _service.addPreset(seconds);
+    state = _service.loadPresets();
+  }
+
+  Future<void> removePreset(int seconds) async {
+    await _service.removePreset(seconds);
+    state = _service.loadPresets();
+  }
+
+  Future<void> reload() async {
+    state = _service.loadPresets();
+  }
+}
+
+final focusPresetsProvider =
+    StateNotifierProvider<FocusPresetsController, List<int>>((ref) {
+  return FocusPresetsController(ref.watch(focusPresetServiceProvider));
+});
+
+class FocusDisplayModeController extends StateNotifier<FocusDurationDisplayMode> {
+  FocusDisplayModeController(this._service)
+      : super(_parseMode(_service.loadDisplayMode()));
+
+  final FocusPresetService _service;
+
+  static FocusDurationDisplayMode _parseMode(String raw) {
+    return raw == 'minute'
+        ? FocusDurationDisplayMode.minute
+        : FocusDurationDisplayMode.hour;
+  }
+
+  Future<void> toggle() async {
+    final next = state == FocusDurationDisplayMode.hour
+        ? FocusDurationDisplayMode.minute
+        : FocusDurationDisplayMode.hour;
+    state = next;
+    await _service.saveDisplayMode(
+      next == FocusDurationDisplayMode.minute ? 'minute' : 'hour',
+    );
+  }
+}
+
+final focusDisplayModeProvider =
+    StateNotifierProvider<FocusDisplayModeController, FocusDurationDisplayMode>(
+        (ref) {
+  return FocusDisplayModeController(ref.watch(focusPresetServiceProvider));
+});
+
+final selectedCountdownSecondsProvider = StateProvider<int>((ref) {
+  final presets = ref.watch(focusPresetsProvider);
+  return presets.contains(25 * 60) ? 25 * 60 : presets.first;
+});

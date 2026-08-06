@@ -523,6 +523,60 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get focusSelectTask => 'Select Focus Task';
+
+  @override
+  String get focusTodayTasks => 'Today\'s Tasks';
+
+  @override
+  String get focusNoTask => 'None';
+
+  @override
+  String get focusCompletedTitle => 'Focus Completed 🎉';
+
+  @override
+  String get focusSummaryTask => 'Task';
+
+  @override
+  String get focusSummaryDuration => 'Duration';
+
+  @override
+  String get focusSummaryStart => 'Start Time';
+
+  @override
+  String get focusSummaryEnd => 'End Time';
+
+  @override
+  String get focusCustomDuration => 'Custom Duration';
+
+  @override
+  String get focusHoursLabel => 'Hours';
+
+  @override
+  String get focusMinutesFieldLabel => 'Minutes';
+
+  @override
+  String get focusAddPreset => 'Add';
+
+  @override
+  String get focusTapToToggleDisplay => 'Tap to switch display';
+
+  @override
+  String focusDurationHoursMinutes(int hours, int minutes) {
+    return '${hours}h ${minutes}m';
+  }
+
+  @override
+  String focusDurationHours(int hours) {
+    return '${hours}h';
+  }
+
+  @override
+  String focusDurationMinutesOnly(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
   String get statsTitle => 'Statistics';
 
   @override

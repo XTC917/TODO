@@ -8,6 +8,7 @@ import '../../database/event_repository.dart';
 import '../../database/focus_repository.dart';
 import '../../models/enums.dart';
 import '../../models/event.dart';
+import '../../models/focus_session.dart';
 import '../../models/reminder_config.dart';
 import 'focus_providers.dart';
 import '../services/database_backup_service.dart';
@@ -318,24 +319,31 @@ class FocusActions {
 
   final Ref _ref;
 
-  Future<void> saveSession(FocusSession session) async {
-    if (session.startedAt == null || session.elapsedSeconds <= 0) return;
-    final end = DateTime.now();
-    final start = end.subtract(Duration(seconds: session.elapsedSeconds));
+  Future<FocusRecord?> saveCompletion(FocusCompletionResult result) async {
+    if (result.elapsedSeconds <= 0) return null;
 
-    await _ref.read(focusRepositoryProvider).save(
-          start: start,
-          end: end,
-          mode: session.mode,
-          eventId: session.linkedEventId,
-        );
+    await _ref.read(focusRepositoryProvider).saveCompletion(result);
 
-    if (session.linkedEventId != null) {
+    if (result.linkedEventId != null) {
       await _ref.read(eventRepositoryProvider).addFocusedSeconds(
-            session.linkedEventId!,
-            session.elapsedSeconds,
+            result.linkedEventId!,
+            result.elapsedSeconds,
           );
     }
+
+    return FocusRecord(
+      id: 0,
+      date: DateTimeFormats.formatDate(result.sessionStartedAt),
+      startTime: DateTimeFormats.formatTimeOfDay(result.sessionStartedAt),
+      endTime: DateTimeFormats.formatTimeOfDay(result.endedAt),
+      durationSeconds: result.elapsedSeconds,
+      mode: result.mode,
+      eventId: result.linkedEventId,
+      taskTitle: result.linkedTaskTitle,
+      plannedDurationSeconds: result.plannedDurationSeconds,
+      completed: result.completed,
+      createdAt: DateTime.now(),
+    );
   }
 }
 

@@ -1006,6 +1006,102 @@ abstract class AppLocalizations {
   /// **'Saved {duration}'**
   String focusSaved(String duration);
 
+  /// No description provided for @focusSelectTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Focus Task'**
+  String get focusSelectTask;
+
+  /// No description provided for @focusTodayTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s Tasks'**
+  String get focusTodayTasks;
+
+  /// No description provided for @focusNoTask.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get focusNoTask;
+
+  /// No description provided for @focusCompletedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus Completed 🎉'**
+  String get focusCompletedTitle;
+
+  /// No description provided for @focusSummaryTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Task'**
+  String get focusSummaryTask;
+
+  /// No description provided for @focusSummaryDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration'**
+  String get focusSummaryDuration;
+
+  /// No description provided for @focusSummaryStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Time'**
+  String get focusSummaryStart;
+
+  /// No description provided for @focusSummaryEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'End Time'**
+  String get focusSummaryEnd;
+
+  /// No description provided for @focusCustomDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom Duration'**
+  String get focusCustomDuration;
+
+  /// No description provided for @focusHoursLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Hours'**
+  String get focusHoursLabel;
+
+  /// No description provided for @focusMinutesFieldLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Minutes'**
+  String get focusMinutesFieldLabel;
+
+  /// No description provided for @focusAddPreset.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get focusAddPreset;
+
+  /// No description provided for @focusTapToToggleDisplay.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to switch display'**
+  String get focusTapToToggleDisplay;
+
+  /// No description provided for @focusDurationHoursMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours}h {minutes}m'**
+  String focusDurationHoursMinutes(int hours, int minutes);
+
+  /// No description provided for @focusDurationHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours}h'**
+  String focusDurationHours(int hours);
+
+  /// No description provided for @focusDurationMinutesOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min'**
+  String focusDurationMinutesOnly(int minutes);
+
   /// No description provided for @statsTitle.
   ///
   /// In en, this message translates to:

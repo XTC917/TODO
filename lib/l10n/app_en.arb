@@ -273,6 +273,34 @@
       "duration": { "type": "String" }
     }
   },
+  "focusSelectTask": "Select Focus Task",
+  "focusTodayTasks": "Today's Tasks",
+  "focusNoTask": "None",
+  "focusCompletedTitle": "Focus Completed 🎉",
+  "focusSummaryTask": "Task",
+  "focusSummaryDuration": "Duration",
+  "focusSummaryStart": "Start Time",
+  "focusSummaryEnd": "End Time",
+  "focusCustomDuration": "Custom Duration",
+  "focusHoursLabel": "Hours",
+  "focusMinutesFieldLabel": "Minutes",
+  "focusAddPreset": "Add",
+  "focusTapToToggleDisplay": "Tap to switch display",
+  "focusDurationHoursMinutes": "{hours}h {minutes}m",
+  "@focusDurationHoursMinutes": {
+    "placeholders": {
+      "hours": { "type": "int" },
+      "minutes": { "type": "int" }
+    }
+  },
+  "focusDurationHours": "{hours}h",
+  "@focusDurationHours": {
+    "placeholders": { "hours": { "type": "int" } }
+  },
+  "focusDurationMinutesOnly": "{minutes} min",
+  "@focusDurationMinutesOnly": {
+    "placeholders": { "minutes": { "type": "int" } }
+  },
   "statsTitle": "Statistics",
   "statsDay": "Day",
   "statsWeek": "Week",

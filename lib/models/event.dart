@@ -190,6 +190,9 @@ class FocusRecord {
     required this.durationSeconds,
     required this.mode,
     this.eventId,
+    this.taskTitle,
+    this.plannedDurationSeconds,
+    this.completed = true,
     required this.createdAt,
   });
 
@@ -200,6 +203,9 @@ class FocusRecord {
   final int durationSeconds;
   final FocusMode mode;
   final int? eventId;
+  final String? taskTitle;
+  final int? plannedDurationSeconds;
+  final bool completed;
   final DateTime createdAt;
 }
 

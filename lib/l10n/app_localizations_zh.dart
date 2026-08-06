@@ -520,6 +520,60 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get focusSelectTask => '选择专注任务';
+
+  @override
+  String get focusTodayTasks => '今日任务';
+
+  @override
+  String get focusNoTask => '无';
+
+  @override
+  String get focusCompletedTitle => '专注完成 🎉';
+
+  @override
+  String get focusSummaryTask => '任务';
+
+  @override
+  String get focusSummaryDuration => '时长';
+
+  @override
+  String get focusSummaryStart => '开始时间';
+
+  @override
+  String get focusSummaryEnd => '结束时间';
+
+  @override
+  String get focusCustomDuration => '自定义时长';
+
+  @override
+  String get focusHoursLabel => '小时';
+
+  @override
+  String get focusMinutesFieldLabel => '分钟';
+
+  @override
+  String get focusAddPreset => '添加';
+
+  @override
+  String get focusTapToToggleDisplay => '点击切换显示方式';
+
+  @override
+  String focusDurationHoursMinutes(int hours, int minutes) {
+    return '$hours 小时 $minutes 分钟';
+  }
+
+  @override
+  String focusDurationHours(int hours) {
+    return '$hours 小时';
+  }
+
+  @override
+  String focusDurationMinutesOnly(int minutes) {
+    return '$minutes 分钟';
+  }
+
+  @override
   String get statsTitle => '统计';
 
   @override

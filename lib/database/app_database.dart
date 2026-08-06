@@ -43,6 +43,10 @@ class FocusRecords extends Table {
   IntColumn get durationSeconds => integer()();
   TextColumn get mode => text()();
   IntColumn get eventId => integer().nullable()();
+  TextColumn get taskTitle => text().nullable()();
+  IntColumn get plannedDurationSeconds => integer().nullable()();
+  BoolColumn get completed =>
+      boolean().withDefault(const Constant(true))();
   DateTimeColumn get createdAt => dateTime()();
 }
 
@@ -53,7 +57,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -93,6 +97,11 @@ class AppDatabase extends _$AppDatabase {
               SET reminder_offsets_json = '[' || reminder_offset_seconds || ']'
               WHERE reminder_offset_seconds IS NOT NULL
             ''');
+          }
+          if (from < 6) {
+            await m.addColumn(focusRecords, focusRecords.taskTitle);
+            await m.addColumn(focusRecords, focusRecords.plannedDurationSeconds);
+            await m.addColumn(focusRecords, focusRecords.completed);
           }
         },
       );
