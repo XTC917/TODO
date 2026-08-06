@@ -1021,7 +1021,7 @@ abstract class AppLocalizations {
   /// No description provided for @focusNoTask.
   ///
   /// In en, this message translates to:
-  /// **'None'**
+  /// **'Uncategorized'**
   String get focusNoTask;
 
   /// No description provided for @focusCompletedTitle.
@@ -1138,6 +1138,54 @@ abstract class AppLocalizations {
   /// **'Long press timer for immersive mode'**
   String get focusLongPressImmersive;
 
+  /// No description provided for @focusViewRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'View focus records'**
+  String get focusViewRecords;
+
+  /// No description provided for @focusRecordsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus records'**
+  String get focusRecordsTitle;
+
+  /// No description provided for @focusRecordsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No focus records yet'**
+  String get focusRecordsEmpty;
+
+  /// No description provided for @focusEditRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit focus record'**
+  String get focusEditRecord;
+
+  /// No description provided for @focusRecordTaskLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Task name'**
+  String get focusRecordTaskLabel;
+
+  /// No description provided for @focusRecordDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get focusRecordDate;
+
+  /// No description provided for @focusRecordStartTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Start time'**
+  String get focusRecordStartTime;
+
+  /// No description provided for @focusRecordEndTime.
+  ///
+  /// In en, this message translates to:
+  /// **'End time'**
+  String get focusRecordEndTime;
+
   /// No description provided for @focusDurationHoursMinutes.
   ///
   /// In en, this message translates to:
@@ -1173,6 +1221,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Week'**
   String get statsWeek;
+
+  /// No description provided for @statsMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Month'**
+  String get statsMonth;
+
+  /// No description provided for @statsYear.
+  ///
+  /// In en, this message translates to:
+  /// **'Year'**
+  String get statsYear;
+
+  /// No description provided for @statsOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get statsOverview;
+
+  /// No description provided for @statsCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get statsCompleted;
+
+  /// No description provided for @statsPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get statsPending;
+
+  /// No description provided for @statsFocusTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus Time'**
+  String get statsFocusTime;
+
+  /// No description provided for @statsFocusRanking.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus Ranking'**
+  String get statsFocusRanking;
+
+  /// No description provided for @statsViewAll.
+  ///
+  /// In en, this message translates to:
+  /// **'View All >'**
+  String get statsViewAll;
+
+  /// No description provided for @statsMonthlyFocus.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly Focus'**
+  String get statsMonthlyFocus;
+
+  /// No description provided for @statsThisWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'This Week'**
+  String get statsThisWeek;
+
+  /// No description provided for @statsLastWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Last Week'**
+  String get statsLastWeek;
+
+  /// No description provided for @statsNextWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Next Week'**
+  String get statsNextWeek;
+
+  /// No description provided for @statsFocus.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus'**
+  String get statsFocus;
+
+  /// No description provided for @statsSessionsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Sessions {count}'**
+  String statsSessionsCount(int count);
+
+  /// No description provided for @statsSessionDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'{start}–{end}  {duration}'**
+  String statsSessionDetail(String start, String end, String duration);
+
+  /// No description provided for @statsRankingEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No focus sessions yet'**
+  String get statsRankingEmpty;
 
   /// No description provided for @statsDailyFocus.
   ///

@@ -275,7 +275,7 @@
   },
   "focusSelectTask": "Select Focus Task",
   "focusTodayTasks": "Today's Schedule & Tasks",
-  "focusNoTask": "None",
+  "focusNoTask": "Uncategorized",
   "focusCompletedTitle": "Focus Completed 🎉",
   "focusSummaryTask": "Task",
   "focusSummaryDuration": "Duration",
@@ -295,6 +295,14 @@
   "focusTaskModeCustom": "Custom",
   "focusImmersiveExit": "Exit",
   "focusLongPressImmersive": "Long press timer for immersive mode",
+  "focusViewRecords": "View focus records",
+  "focusRecordsTitle": "Focus records",
+  "focusRecordsEmpty": "No focus records yet",
+  "focusEditRecord": "Edit focus record",
+  "focusRecordTaskLabel": "Task name",
+  "focusRecordDate": "Date",
+  "focusRecordStartTime": "Start time",
+  "focusRecordEndTime": "End time",
   "focusDurationHoursMinutes": "{hours}h {minutes}m",
   "@focusDurationHoursMinutes": {
     "placeholders": {
@@ -313,6 +321,32 @@
   "statsTitle": "Statistics",
   "statsDay": "Day",
   "statsWeek": "Week",
+  "statsMonth": "Month",
+  "statsYear": "Year",
+  "statsOverview": "Overview",
+  "statsCompleted": "Completed",
+  "statsPending": "Pending",
+  "statsFocusTime": "Focus Time",
+  "statsFocusRanking": "Focus Ranking",
+  "statsViewAll": "View All >",
+  "statsMonthlyFocus": "Monthly Focus",
+  "statsThisWeek": "This Week",
+  "statsLastWeek": "Last Week",
+  "statsNextWeek": "Next Week",
+  "statsFocus": "Focus",
+  "statsSessionsCount": "Sessions {count}",
+  "@statsSessionsCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "statsSessionDetail": "{start}–{end}  {duration}",
+  "@statsSessionDetail": {
+    "placeholders": {
+      "start": { "type": "String" },
+      "end": { "type": "String" },
+      "duration": { "type": "String" }
+    }
+  },
+  "statsRankingEmpty": "No focus sessions yet",
   "statsDailyFocus": "Daily Focus",
   "statsWeeklyFocus": "Weekly Focus",
   "statsDailyTodo": "Daily Todo Completion",

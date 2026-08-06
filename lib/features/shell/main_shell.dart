@@ -27,6 +27,8 @@ class MainShell extends ConsumerWidget {
     final index = ref.watch(shellTabProvider);
     final immersive = ref.watch(focusImmersiveModeProvider);
     final l10n = AppLocalizations.of(context);
+    final isLandscape =
+        MediaQuery.orientationOf(context) == Orientation.landscape;
 
     return Scaffold(
       body: IndexedStack(
@@ -36,6 +38,7 @@ class MainShell extends ConsumerWidget {
       bottomNavigationBar: immersive
           ? null
           : NavigationBar(
+              height: isLandscape ? 52 : 58,
               selectedIndex: index,
               onDestinationSelected: (value) {
                 ref.read(shellTabProvider.notifier).state = value;

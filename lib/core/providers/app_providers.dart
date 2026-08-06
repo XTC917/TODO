@@ -44,6 +44,10 @@ final focusRepositoryProvider = Provider<FocusRepository>((ref) {
   return FocusRepository(ref.watch(appDatabaseProvider));
 });
 
+final allFocusRecordsProvider = StreamProvider<List<FocusRecord>>((ref) {
+  return ref.watch(focusRepositoryProvider).watchAll();
+});
+
 final databaseBackupProvider = Provider<DatabaseBackupService>((ref) {
   return DatabaseBackupService(ref.watch(appDatabaseProvider));
 });
@@ -344,6 +348,39 @@ class FocusActions {
       completed: result.completed,
       createdAt: DateTime.now(),
     );
+  }
+
+  Future<void> deleteRecord(FocusRecord record) async {
+    await _ref.read(focusRepositoryProvider).deleteRecord(record.id);
+    if (record.eventId != null) {
+      await _ref.read(eventRepositoryProvider).addFocusedSeconds(
+            record.eventId!,
+            -record.durationSeconds,
+          );
+    }
+  }
+
+  Future<void> updateRecord(
+    FocusRecord previous,
+    FocusRecord updated,
+  ) async {
+    await _ref.read(focusRepositoryProvider).updateRecord(
+          id: updated.id,
+          date: updated.date,
+          startTime: updated.startTime,
+          endTime: updated.endTime,
+          durationSeconds: updated.durationSeconds,
+          taskTitle: updated.taskTitle,
+          eventId: updated.eventId,
+        );
+
+    final delta = updated.durationSeconds - previous.durationSeconds;
+    if (previous.eventId != null && delta != 0) {
+      await _ref.read(eventRepositoryProvider).addFocusedSeconds(
+            previous.eventId!,
+            delta,
+          );
+    }
   }
 }
 

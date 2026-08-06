@@ -526,7 +526,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get focusTodayTasks => '오늘 일정 및 작업';
 
   @override
-  String get focusNoTask => '없음';
+  String get focusNoTask => '미분류';
 
   @override
   String get focusCompletedTitle => '집중 완료 🎉';
@@ -586,6 +586,30 @@ class AppLocalizationsKo extends AppLocalizations {
   String get focusLongPressImmersive => '타이머 길게 눌러 몰입 모드';
 
   @override
+  String get focusViewRecords => '집중 기록 보기';
+
+  @override
+  String get focusRecordsTitle => '집중 기록';
+
+  @override
+  String get focusRecordsEmpty => '집중 기록이 없습니다';
+
+  @override
+  String get focusEditRecord => '집중 기록 편집';
+
+  @override
+  String get focusRecordTaskLabel => '작업 이름';
+
+  @override
+  String get focusRecordDate => '날짜';
+
+  @override
+  String get focusRecordStartTime => '시작 시간';
+
+  @override
+  String get focusRecordEndTime => '종료 시간';
+
+  @override
   String focusDurationHoursMinutes(int hours, int minutes) {
     return '$hours시간 $minutes분';
   }
@@ -608,6 +632,58 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get statsWeek => '주';
+
+  @override
+  String get statsMonth => '월';
+
+  @override
+  String get statsYear => '년';
+
+  @override
+  String get statsOverview => '개요';
+
+  @override
+  String get statsCompleted => '완료';
+
+  @override
+  String get statsPending => '대기';
+
+  @override
+  String get statsFocusTime => '집중 시간';
+
+  @override
+  String get statsFocusRanking => '집중 순위';
+
+  @override
+  String get statsViewAll => '전체 보기 >';
+
+  @override
+  String get statsMonthlyFocus => '월별 집중';
+
+  @override
+  String get statsThisWeek => '이번 주';
+
+  @override
+  String get statsLastWeek => '지난 주';
+
+  @override
+  String get statsNextWeek => '다음 주';
+
+  @override
+  String get statsFocus => '집중';
+
+  @override
+  String statsSessionsCount(int count) {
+    return '세션 $count';
+  }
+
+  @override
+  String statsSessionDetail(String start, String end, String duration) {
+    return '$start–$end  $duration';
+  }
+
+  @override
+  String get statsRankingEmpty => '집중 기록 없음';
 
   @override
   String get statsDailyFocus => '일별 집중';

@@ -100,7 +100,7 @@ class AppTheme {
         backgroundColor: isLight ? AppColors.cream : AppColors.creamDark,
         indicatorColor: seed.withValues(alpha: isLight ? 0.25 : 0.35),
         elevation: 0,
-        height: 68,
+        height: 58,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);
           return TextStyle(

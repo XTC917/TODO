@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/providers/app_providers.dart';
+import '../../../core/providers/focus_providers.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../l10n/app_localizations.dart';
 
-class FocusImmersiveView extends StatelessWidget {
+class FocusImmersiveView extends ConsumerWidget {
   const FocusImmersiveView({
     super.key,
     required this.taskTitle,
@@ -13,6 +17,47 @@ class FocusImmersiveView extends StatelessWidget {
   final String? taskTitle;
   final String timerLabel;
   final VoidCallback onExit;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = ref.watch(focusImmersiveDarkModeProvider);
+    final accent = ref.watch(accentColorProvider);
+    final immersiveTheme =
+        isDark ? AppTheme.dark(accent) : AppTheme.light(accent);
+
+    return AnimatedTheme(
+      data: immersiveTheme,
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+      child: Builder(
+        builder: (context) => _ImmersiveContent(
+          taskTitle: taskTitle,
+          timerLabel: timerLabel,
+          isDark: isDark,
+          onExit: onExit,
+          onToggleTheme: () {
+            ref.read(focusImmersiveDarkModeProvider.notifier).state = !isDark;
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _ImmersiveContent extends StatelessWidget {
+  const _ImmersiveContent({
+    required this.taskTitle,
+    required this.timerLabel,
+    required this.isDark,
+    required this.onExit,
+    required this.onToggleTheme,
+  });
+
+  final String? taskTitle;
+  final String timerLabel;
+  final bool isDark;
+  final VoidCallback onExit;
+  final VoidCallback onToggleTheme;
 
   static const _taskGap = 28.0;
 
@@ -56,7 +101,10 @@ class FocusImmersiveView extends StatelessWidget {
                   Positioned(
                     left: 32,
                     right: 32,
-                    bottom: constraints.maxHeight - centerY + timerFontSize * 0.5 + _taskGap,
+                    bottom: constraints.maxHeight -
+                        centerY +
+                        timerFontSize * 0.5 +
+                        _taskGap,
                     child: Text(
                       taskTitle!,
                       textAlign: TextAlign.center,
@@ -69,6 +117,22 @@ class FocusImmersiveView extends StatelessWidget {
                       ),
                     ),
                   ),
+                Positioned(
+                  left: 8,
+                  bottom: 4,
+                  child: IconButton(
+                    onPressed: onToggleTheme,
+                    tooltip: isDark ? l10n.themeLight : l10n.themeDark,
+                    icon: Icon(
+                      isDark
+                          ? Icons.light_mode_outlined
+                          : Icons.dark_mode_outlined,
+                      size: 20,
+                    ),
+                    color: muted,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
                 Positioned(
                   right: 16,
                   bottom: 12,

@@ -204,3 +204,9 @@ final selectedCountdownSecondsProvider = StateProvider<int>((ref) {
 
 /// When true, hides shell chrome and shows immersive focus UI.
 final focusImmersiveModeProvider = StateProvider<bool>((ref) => false);
+
+/// Local dark/light override while in immersive focus (does not affect app theme).
+final focusImmersiveDarkModeProvider = StateProvider<bool>((ref) => false);
+
+/// Open focus record swipe row id.
+final focusRecordSwipeOpenProvider = StateProvider<int?>((ref) => null);

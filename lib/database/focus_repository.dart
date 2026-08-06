@@ -110,6 +110,38 @@ class FocusRepository {
     return rows.take(limit).map(_toDomain).toList(growable: false);
   }
 
+  Future<bool> updateRecord({
+    required int id,
+    required String date,
+    required String startTime,
+    required String endTime,
+    required int durationSeconds,
+    String? taskTitle,
+    int? eventId,
+  }) async {
+    await _db.updateFocusRecord(
+      FocusRecordsCompanion(
+        id: Value(id),
+        date: Value(date),
+        startTime: Value(startTime),
+        endTime: Value(endTime),
+        durationSeconds: Value(durationSeconds),
+        taskTitle: Value(taskTitle),
+        eventId: Value(eventId),
+      ),
+    );
+    return true;
+  }
+
+  Future<int> deleteRecord(int id) {
+    return _db.deleteFocusRecord(id);
+  }
+
+  Future<FocusRecord?> getById(int id) async {
+    final row = await _db.getFocusRecordById(id);
+    return row == null ? null : _toDomain(row);
+  }
+
   FocusRecord _toDomain(FocusRecordRow row) {
     return FocusRecord(
       id: row.id,

@@ -207,6 +207,55 @@ class FocusRecord {
   final int? plannedDurationSeconds;
   final bool completed;
   final DateTime createdAt;
+
+  FocusRecord copyWith({
+    String? date,
+    String? startTime,
+    String? endTime,
+    int? durationSeconds,
+    String? taskTitle,
+    bool clearTaskTitle = false,
+    int? eventId,
+    bool clearEventId = false,
+  }) {
+    return FocusRecord(
+      id: id,
+      date: date ?? this.date,
+      startTime: startTime ?? this.startTime,
+      endTime: endTime ?? this.endTime,
+      durationSeconds: durationSeconds ?? this.durationSeconds,
+      mode: mode,
+      eventId: clearEventId ? null : (eventId ?? this.eventId),
+      taskTitle: clearTaskTitle ? null : (taskTitle ?? this.taskTitle),
+      plannedDurationSeconds: plannedDurationSeconds,
+      completed: completed,
+      createdAt: createdAt,
+    );
+  }
+
+  DateTime get startDateTime {
+    final d = DateTime.parse(date);
+    final parts = startTime.split(':');
+    return DateTime(
+      d.year,
+      d.month,
+      d.day,
+      int.parse(parts[0]),
+      int.parse(parts[1]),
+    );
+  }
+
+  DateTime get endDateTime {
+    final d = DateTime.parse(date);
+    final parts = endTime.split(':');
+    return DateTime(
+      d.year,
+      d.month,
+      d.day,
+      int.parse(parts[0]),
+      int.parse(parts[1]),
+    );
+  }
 }
 
 class FocusLaunchConfig {

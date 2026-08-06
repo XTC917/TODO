@@ -224,6 +224,21 @@ class AppDatabase extends _$AppDatabase {
     return into(focusRecords).insert(companion);
   }
 
+  Future<int> updateFocusRecord(FocusRecordsCompanion companion) {
+    final id = companion.id.value;
+    return (update(focusRecords)..where((t) => t.id.equals(id)))
+        .write(companion);
+  }
+
+  Future<int> deleteFocusRecord(int id) {
+    return (delete(focusRecords)..where((t) => t.id.equals(id))).go();
+  }
+
+  Future<FocusRecordRow?> getFocusRecordById(int id) {
+    return (select(focusRecords)..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
+  }
+
   Future<List<FocusRecordRow>> getFocusRecordsInRange(
     String startDate,
     String endDate,

@@ -529,7 +529,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get focusTodayTasks => 'Today\'s Schedule & Tasks';
 
   @override
-  String get focusNoTask => 'None';
+  String get focusNoTask => 'Uncategorized';
 
   @override
   String get focusCompletedTitle => 'Focus Completed 🎉';
@@ -589,6 +589,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get focusLongPressImmersive => 'Long press timer for immersive mode';
 
   @override
+  String get focusViewRecords => 'View focus records';
+
+  @override
+  String get focusRecordsTitle => 'Focus records';
+
+  @override
+  String get focusRecordsEmpty => 'No focus records yet';
+
+  @override
+  String get focusEditRecord => 'Edit focus record';
+
+  @override
+  String get focusRecordTaskLabel => 'Task name';
+
+  @override
+  String get focusRecordDate => 'Date';
+
+  @override
+  String get focusRecordStartTime => 'Start time';
+
+  @override
+  String get focusRecordEndTime => 'End time';
+
+  @override
   String focusDurationHoursMinutes(int hours, int minutes) {
     return '${hours}h ${minutes}m';
   }
@@ -611,6 +635,58 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get statsWeek => 'Week';
+
+  @override
+  String get statsMonth => 'Month';
+
+  @override
+  String get statsYear => 'Year';
+
+  @override
+  String get statsOverview => 'Overview';
+
+  @override
+  String get statsCompleted => 'Completed';
+
+  @override
+  String get statsPending => 'Pending';
+
+  @override
+  String get statsFocusTime => 'Focus Time';
+
+  @override
+  String get statsFocusRanking => 'Focus Ranking';
+
+  @override
+  String get statsViewAll => 'View All >';
+
+  @override
+  String get statsMonthlyFocus => 'Monthly Focus';
+
+  @override
+  String get statsThisWeek => 'This Week';
+
+  @override
+  String get statsLastWeek => 'Last Week';
+
+  @override
+  String get statsNextWeek => 'Next Week';
+
+  @override
+  String get statsFocus => 'Focus';
+
+  @override
+  String statsSessionsCount(int count) {
+    return 'Sessions $count';
+  }
+
+  @override
+  String statsSessionDetail(String start, String end, String duration) {
+    return '$start–$end  $duration';
+  }
+
+  @override
+  String get statsRankingEmpty => 'No focus sessions yet';
 
   @override
   String get statsDailyFocus => 'Daily Focus';

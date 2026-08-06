@@ -1,316 +1,287 @@
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/providers/app_providers.dart';
-import '../../core/utils/date_time_formats.dart';
+import '../../core/providers/statistics_providers.dart';
 import '../../l10n/app_localizations.dart';
-import '../../models/event.dart';
+import '../../models/statistics.dart';
+import 'widgets/focus_bar_chart.dart';
+import 'widgets/focus_ranking_card.dart';
+import 'widgets/overview_card.dart';
+import 'widgets/stats_period_label.dart';
 
-enum StatsRange { day, week }
-
-class StatisticsPage extends ConsumerStatefulWidget {
+class StatisticsPage extends ConsumerWidget {
   const StatisticsPage({super.key});
 
   @override
-  ConsumerState<StatisticsPage> createState() => _StatisticsPageState();
-}
-
-class _StatisticsPageState extends ConsumerState<StatisticsPage> {
-  StatsRange _range = StatsRange.day;
-
-  @override
-  Widget build(BuildContext context) {
-    final today = DateTimeFormats.dateOnly(DateTime.now());
-    final summary = ref.watch(daySummaryProvider(today));
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final period = ref.watch(statsPeriodProvider);
+    final offset = ref.watch(statsPeriodOffsetProvider);
+    final query = StatsQuery(period: period, offset: offset);
+    final dashboard = ref.watch(statsDashboardProvider(query));
+    final locale = Localizations.localeOf(context);
+    final periodLabel = statsPeriodLabel(l10n, period, offset, locale);
+    final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            Text(
-              l10n.statsTitle,
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-            ),
-            const SizedBox(height: 16),
-            SegmentedButton<StatsRange>(
-              segments: [
-                ButtonSegment(value: StatsRange.day, label: Text(l10n.statsDay)),
-                ButtonSegment(
-                  value: StatsRange.week,
-                  label: Text(l10n.statsWeek),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                l10n.statsTitle,
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+              const SizedBox(height: 14),
+              SegmentedButton<StatsPeriod>(
+                showSelectedIcon: false,
+                style: SegmentedButton.styleFrom(
+                  selectedBackgroundColor:
+                      scheme.onSurface.withValues(alpha: 0.12),
+                  selectedForegroundColor: scheme.onSurface,
+                  foregroundColor: scheme.onSurface.withValues(alpha: 0.5),
                 ),
-              ],
-              selected: {_range},
-              onSelectionChanged: (s) => setState(() => _range = s.first),
-            ),
-            const SizedBox(height: 20),
-            summary.when(
-              data: (s) => _TodayCard(summary: s),
-              loading: () => const CircularProgressIndicator.adaptive(),
-              error: (_, __) => const SizedBox.shrink(),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              _range == StatsRange.day
-                  ? l10n.statsDailyFocus
-                  : l10n.statsWeeklyFocus,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
+                segments: [
+                  ButtonSegment(
+                    value: StatsPeriod.day,
+                    label: Text(l10n.statsDay),
                   ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: 220,
-              child: _FocusChart(range: _range),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              _range == StatsRange.day
-                  ? l10n.statsDailyTodo
-                  : l10n.statsWeeklyTodo,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
+                  ButtonSegment(
+                    value: StatsPeriod.week,
+                    label: Text(l10n.statsWeek),
                   ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: 220,
-              child: _TodoChart(range: _range),
-            ),
-          ],
+                  ButtonSegment(
+                    value: StatsPeriod.month,
+                    label: Text(l10n.statsMonth),
+                  ),
+                  ButtonSegment(
+                    value: StatsPeriod.year,
+                    label: Text(l10n.statsYear),
+                  ),
+                ],
+                selected: {period},
+                onSelectionChanged: (selection) {
+                  ref.read(statsPeriodProvider.notifier).state =
+                      selection.first;
+                  ref.read(statsPeriodOffsetProvider.notifier).state = 0;
+                },
+              ),
+              const SizedBox(height: 12),
+              Text(
+                periodLabel,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+              const SizedBox(height: 8),
+              Expanded(
+                child: _StatsSwipeArea(
+                  onSwipePrevious: () {
+                    ref.read(statsPeriodOffsetProvider.notifier).state =
+                        offset - 1;
+                  },
+                  onSwipeNext: () {
+                    ref.read(statsPeriodOffsetProvider.notifier).state =
+                        offset + 1;
+                  },
+                  child: dashboard.when(
+                    data: (data) => AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 260),
+                      switchInCurve: Curves.easeOutCubic,
+                      switchOutCurve: Curves.easeInCubic,
+                      transitionBuilder: (child, animation) {
+                        final offsetAnim = Tween<Offset>(
+                          begin: const Offset(0.04, 0),
+                          end: Offset.zero,
+                        ).animate(animation);
+                        return FadeTransition(
+                          opacity: animation,
+                          child: SlideTransition(
+                            position: offsetAnim,
+                            child: child,
+                          ),
+                        );
+                      },
+                      child: _StatsBody(
+                        key: ValueKey('$period-$offset'),
+                        period: period,
+                        dashboard: data,
+                      ),
+                    ),
+                    loading: () => const Center(
+                      child: CircularProgressIndicator.adaptive(),
+                    ),
+                    error: (_, __) => const SizedBox.shrink(),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _TodayCard extends StatelessWidget {
-  const _TodayCard({required this.summary});
+/// Only horizontal swipes change the stats period offset.
+class _StatsSwipeArea extends StatelessWidget {
+  const _StatsSwipeArea({
+    required this.onSwipePrevious,
+    required this.onSwipeNext,
+    required this.child,
+  });
 
-  final DaySummary summary;
+  final VoidCallback onSwipePrevious;
+  final VoidCallback onSwipeNext;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onPanEnd: (details) {
+        final velocity = details.velocity.pixelsPerSecond;
+        if (velocity.dx.abs() <= velocity.dy.abs()) return;
+        if (velocity.dx > 180) {
+          onSwipePrevious();
+        } else if (velocity.dx < -180) {
+          onSwipeNext();
+        }
+      },
+      child: child,
+    );
+  }
+}
+
+class _StatsBody extends StatelessWidget {
+  const _StatsBody({
+    super.key,
+    required this.period,
+    required this.dashboard,
+  });
+
+  final StatsPeriod period;
+  final StatsDashboard dashboard;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    final isLandscape =
+        MediaQuery.orientationOf(context) == Orientation.landscape;
+
+    if (period == StatsPeriod.day) {
+      if (isLandscape) {
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(l10n.today,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    )),
-            const SizedBox(height: 12),
-            Text(l10n.statsFocusLabel(
-              DateTimeFormats.formatDuration(summary.focusSeconds),
-            )),
-            Text(l10n.statsTasksLabel(
-              summary.todoCompleted,
-              summary.todoTotal,
-            )),
-            Text(l10n.statsProgressLabel(
-              (summary.progress * 100).round(),
-            )),
+            Expanded(
+              flex: 4,
+              child: OverviewCard(overview: dashboard.overview),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 6,
+              child: FocusRankingCard(
+                entries: dashboard.ranking,
+                period: period,
+              ),
+            ),
           ],
-        ),
-      ),
+        );
+      }
+      return Column(
+        children: [
+          Expanded(
+            flex: 4,
+            child: OverviewCard(overview: dashboard.overview),
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            flex: 6,
+            child: FocusRankingCard(
+              entries: dashboard.ranking,
+              period: period,
+            ),
+          ),
+        ],
+      );
+    }
+
+    final chartTitle = period == StatsPeriod.year
+        ? l10n.statsMonthlyFocus
+        : l10n.statsDailyFocus;
+    final chart = FocusBarChart(
+      title: chartTitle,
+      buckets: dashboard.chartBuckets,
+      period: period,
     );
-  }
-}
 
-class _FocusChart extends ConsumerWidget {
-  const _FocusChart({required this.range});
-
-  final StatsRange range;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final now = DateTime.now();
-    final start = range == StatsRange.day
-        ? now.subtract(const Duration(days: 6))
-        : DateTimeFormats.startOfWeek(now).subtract(const Duration(days: 21));
-    final end = now;
-    final focusRepo = ref.watch(focusRepositoryProvider);
-
-    return StreamBuilder(
-      stream: focusRepo.watchInRange(
-        DateTimeFormats.formatDate(start),
-        DateTimeFormats.formatDate(end),
-      ),
-      builder: (context, snapshot) {
-        final records = snapshot.data ?? [];
-        final buckets = <String, int>{};
-
-        if (range == StatsRange.day) {
-          for (var i = 0; i < 7; i++) {
-            final d = now.subtract(Duration(days: 6 - i));
-            buckets[DateTimeFormats.formatDate(d)] = 0;
-          }
-          for (final r in records) {
-            buckets[r.date] = (buckets[r.date] ?? 0) + r.durationSeconds;
-          }
-        } else {
-          for (var i = 0; i < 4; i++) {
-            final w = DateTimeFormats.startOfWeek(
-              now.subtract(Duration(days: (3 - i) * 7)),
-            );
-            buckets['W${i + 1}'] = 0;
-            for (final r in records) {
-              final rd = DateTime.parse(r.date);
-              final ws = DateTimeFormats.startOfWeek(rd);
-              if (ws == w) {
-                buckets['W${i + 1}'] =
-                    (buckets['W${i + 1}'] ?? 0) + r.durationSeconds;
-              }
-            }
-          }
-        }
-
-        final keys = buckets.keys.toList();
-        final spots = <BarChartGroupData>[];
-        for (var i = 0; i < keys.length; i++) {
-          spots.add(
-            BarChartGroupData(
-              x: i,
-              barRods: [
-                BarChartRodData(
-                  toY: (buckets[keys[i]]! / 60).toDouble(),
-                  color: Theme.of(context).colorScheme.primary,
-                  width: 16,
-                  borderRadius: BorderRadius.circular(6),
+    if (isLandscape) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            flex: 5,
+            child: Column(
+              children: [
+                Expanded(
+                  child: OverviewCard(
+                    overview: dashboard.overview,
+                    compact: true,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Expanded(
+                  child: FocusRankingCard(
+                    entries: dashboard.ranking,
+                    period: period,
+                    maxItems: 5,
+                    compact: true,
+                  ),
                 ),
               ],
             ),
-          );
-        }
-
-        return BarChart(
-          BarChartData(
-            gridData: const FlGridData(show: false),
-            titlesData: FlTitlesData(
-              bottomTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  getTitlesWidget: (v, _) => Text(
-                    range == StatsRange.day
-                        ? DateTimeFormats.formatMonthDay(
-                            DateTime.parse(keys[v.toInt()]),
-                          )
-                        : keys[v.toInt()],
-                    style: const TextStyle(fontSize: 10),
-                  ),
-                ),
-              ),
-              leftTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: true, reservedSize: 32),
-              ),
-              topTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false),
-              ),
-              rightTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false),
-              ),
-            ),
-            borderData: FlBorderData(show: false),
-            barGroups: spots,
           ),
-        );
-      },
-    );
-  }
-}
+          const SizedBox(width: 10),
+          Expanded(flex: 6, child: chart),
+        ],
+      );
+    }
 
-class _TodoChart extends ConsumerWidget {
-  const _TodoChart({required this.range});
-
-  final StatsRange range;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final now = DateTime.now();
-    final repo = ref.watch(eventRepositoryProvider);
-    final start = range == StatsRange.day
-        ? now.subtract(const Duration(days: 6))
-        : DateTimeFormats.startOfWeek(now).subtract(const Duration(days: 21));
-
-    return StreamBuilder(
-      stream: repo.watchInRange(
-        DateTimeFormats.formatDate(start),
-        DateTimeFormats.formatDate(now),
-      ),
-      builder: (context, snapshot) {
-        final events = (snapshot.data ?? []).where((e) => e.isTodo).toList();
-        final buckets = <String, double>{};
-
-        if (range == StatsRange.day) {
-          for (var i = 0; i < 7; i++) {
-            final d = now.subtract(Duration(days: 6 - i));
-            buckets[DateTimeFormats.formatDate(d)] = 0;
-          }
-          for (final key in buckets.keys) {
-            final dayTodos =
-                events.where((e) => e.date == key).toList(growable: false);
-            if (dayTodos.isEmpty) continue;
-            final done = dayTodos.where((e) => e.isCompleted).length;
-            buckets[key] = done / dayTodos.length;
-          }
-        } else {
-          for (var i = 0; i < 4; i++) {
-            buckets['W${i + 1}'] = 0;
-          }
-        }
-
-        final keys = buckets.keys.toList();
-        return LineChart(
-          LineChartData(
-            gridData: const FlGridData(show: false),
-            titlesData: FlTitlesData(
-              bottomTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  getTitlesWidget: (v, _) => Text(
-                    range == StatsRange.day && v.toInt() < keys.length
-                        ? DateTimeFormats.formatMonthDay(
-                            DateTime.parse(keys[v.toInt()]),
-                          )
-                        : keys[v.toInt()],
-                    style: const TextStyle(fontSize: 10),
-                  ),
+    return Column(
+      children: [
+        Expanded(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                flex: 5,
+                child: OverviewCard(
+                  overview: dashboard.overview,
+                  compact: true,
                 ),
               ),
-              leftTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: true, reservedSize: 32),
-              ),
-              topTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false),
-              ),
-              rightTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false),
-              ),
-            ),
-            borderData: FlBorderData(show: false),
-            lineBarsData: [
-              LineChartBarData(
-                spots: [
-                  for (var i = 0; i < keys.length; i++)
-                    FlSpot(i.toDouble(), buckets[keys[i]]! * 100),
-                ],
-                isCurved: true,
-                color: Theme.of(context).colorScheme.primary,
-                barWidth: 3,
-                dotData: const FlDotData(show: true),
+              const SizedBox(width: 10),
+              Expanded(
+                flex: 6,
+                child: FocusRankingCard(
+                  entries: dashboard.ranking,
+                  period: period,
+                  maxItems: 5,
+                  compact: true,
+                ),
               ),
             ],
           ),
-        );
-      },
+        ),
+        const SizedBox(height: 10),
+        Expanded(child: chart),
+      ],
     );
   }
 }

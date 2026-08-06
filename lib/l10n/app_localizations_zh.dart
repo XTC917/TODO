@@ -526,7 +526,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get focusTodayTasks => '今日日程与任务';
 
   @override
-  String get focusNoTask => '无';
+  String get focusNoTask => '无分类';
 
   @override
   String get focusCompletedTitle => '专注完成 🎉';
@@ -586,6 +586,30 @@ class AppLocalizationsZh extends AppLocalizations {
   String get focusLongPressImmersive => '长按计时器进入沉浸模式';
 
   @override
+  String get focusViewRecords => '查看专注记录';
+
+  @override
+  String get focusRecordsTitle => '专注记录';
+
+  @override
+  String get focusRecordsEmpty => '暂无专注记录';
+
+  @override
+  String get focusEditRecord => '编辑专注记录';
+
+  @override
+  String get focusRecordTaskLabel => '任务名称';
+
+  @override
+  String get focusRecordDate => '日期';
+
+  @override
+  String get focusRecordStartTime => '开始时间';
+
+  @override
+  String get focusRecordEndTime => '结束时间';
+
+  @override
   String focusDurationHoursMinutes(int hours, int minutes) {
     return '$hours 小时 $minutes 分钟';
   }
@@ -608,6 +632,58 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get statsWeek => '周';
+
+  @override
+  String get statsMonth => '月';
+
+  @override
+  String get statsYear => '年';
+
+  @override
+  String get statsOverview => '概览';
+
+  @override
+  String get statsCompleted => '已完成';
+
+  @override
+  String get statsPending => '待完成';
+
+  @override
+  String get statsFocusTime => '专注时长';
+
+  @override
+  String get statsFocusRanking => '专注排行';
+
+  @override
+  String get statsViewAll => '查看全部 >';
+
+  @override
+  String get statsMonthlyFocus => '每月专注';
+
+  @override
+  String get statsThisWeek => '本周';
+
+  @override
+  String get statsLastWeek => '上周';
+
+  @override
+  String get statsNextWeek => '下周';
+
+  @override
+  String get statsFocus => '专注';
+
+  @override
+  String statsSessionsCount(int count) {
+    return '次数 $count';
+  }
+
+  @override
+  String statsSessionDetail(String start, String end, String duration) {
+    return '$start–$end  $duration';
+  }
+
+  @override
+  String get statsRankingEmpty => '暂无专注记录';
 
   @override
   String get statsDailyFocus => '每日专注';

@@ -12,6 +12,7 @@ import '../../../models/enums.dart';
 import '../../../models/event.dart';
 import 'widgets/focus_custom_duration_sheet.dart';
 import 'widgets/focus_immersive_view.dart';
+import 'widgets/focus_records_sheet.dart';
 import 'widgets/focus_summary_dialog.dart';
 import 'widgets/focus_task_picker_sheet.dart';
 
@@ -51,6 +52,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
   void deactivate() {
     WakelockPlus.disable();
     ref.read(focusImmersiveModeProvider.notifier).state = false;
+    ref.read(focusImmersiveDarkModeProvider.notifier).state = false;
     super.deactivate();
   }
 
@@ -171,6 +173,8 @@ class _FocusPageState extends ConsumerState<FocusPage>
 
   void _enterImmersive() {
     if (!ref.read(focusTimerProvider).session.isActive) return;
+    ref.read(focusImmersiveDarkModeProvider.notifier).state =
+        Theme.of(context).brightness == Brightness.dark;
     ref.read(focusImmersiveModeProvider.notifier).state = true;
     WakelockPlus.enable();
   }
@@ -178,6 +182,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
   void _exitImmersive() {
     if (!ref.read(focusImmersiveModeProvider)) return;
     ref.read(focusImmersiveModeProvider.notifier).state = false;
+    ref.read(focusImmersiveDarkModeProvider.notifier).state = false;
     WakelockPlus.disable();
   }
 
@@ -196,6 +201,39 @@ class _FocusPageState extends ConsumerState<FocusPage>
 
   String? _taskTitle(FocusRuntimeSession session) {
     return session.isActive ? session.linkedTaskTitle : _pendingTaskTitle;
+  }
+
+  Future<void> _openRecords() async {
+    await showFocusRecordsSheet(context: context, ref: ref);
+  }
+
+  Widget _buildRecordsLink({
+    required AppLocalizations l10n,
+    required ThemeData theme,
+    required Color muted,
+  }) {
+    return InkWell(
+      onTap: _openRecords,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.history_outlined, size: 16, color: muted),
+            const SizedBox(width: 6),
+            Text(
+              l10n.focusViewRecords,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: muted.withValues(alpha: 0.75),
+              ),
+            ),
+            Icon(Icons.chevron_right, size: 16, color: muted),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildTaskLink({
@@ -414,6 +452,8 @@ class _FocusPageState extends ConsumerState<FocusPage>
             muted: muted,
             taskTitle: taskTitle,
           ),
+          SizedBox(height: gapS),
+          _buildRecordsLink(l10n: l10n, theme: theme, muted: muted),
         ],
       ],
     );
@@ -532,6 +572,12 @@ class _FocusPageState extends ConsumerState<FocusPage>
                                   theme: theme,
                                   muted: muted,
                                   taskTitle: taskTitle,
+                                ),
+                                SizedBox(height: gapS),
+                                _buildRecordsLink(
+                                  l10n: l10n,
+                                  theme: theme,
+                                  muted: muted,
                                 ),
                               ],
                             ),

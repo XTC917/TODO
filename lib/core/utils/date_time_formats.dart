@@ -8,6 +8,7 @@ class DateTimeFormats {
 
   static final weekday = DateFormat('EEEE');
   static final shortWeekday = DateFormat('EEE');
+  static final shortMonth = DateFormat('MMM');
   static final ymd = DateFormat('yyyy-MM-dd');
   static final displayDate = DateFormat('yyyy-MM-dd');
   static final monthDay = DateFormat('MM/dd');
