@@ -131,6 +131,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get initialTodoStatsTitle => '📊 통계 페이지에서 집중 현황 확인';
 
   @override
+  String get initialTodoWidgetTitle => '📱 설정에서 홈 화면 위젯 추가 방법 보기';
+
+  @override
   String get themeLight => '라이트';
 
   @override
@@ -156,6 +159,72 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get colorLightness => '명도';
+
+  @override
+  String get widgetTodoTitle => '오늘 할 일';
+
+  @override
+  String get widgetScheduleTitle => '오늘 일정';
+
+  @override
+  String get widgetFocusTitle => '오늘 집중';
+
+  @override
+  String get widgetStartFocus => '집중 시작';
+
+  @override
+  String get widgetOpenFocus => '집중 열기';
+
+  @override
+  String get widgetEmpty => '내용 없음';
+
+  @override
+  String widgetTodoProgress(int done, int total) {
+    return '$done/$total 완료';
+  }
+
+  @override
+  String get settingsWidgets => '홈 화면 위젯';
+
+  @override
+  String get widgetSetupIntro =>
+      'Android 홈 화면에 JUJU 위젯을 추가해 할 일, 일정, 집중을 빠르게 확인하세요.';
+
+  @override
+  String get widgetSetupStep1 => '홈 화면 빈 곳을 길게 누르기';
+
+  @override
+  String get widgetSetupStep2 => '「위젯 / Widgets」 메뉴 선택';
+
+  @override
+  String get widgetSetupStep3 => 'JUJU Schedule 찾기';
+
+  @override
+  String get widgetSetupStep4 => '할 일, 일정, 집중 위젯 중 하나 추가';
+
+  @override
+  String get widgetSetupTypesTitle => '사용 가능한 위젯';
+
+  @override
+  String get widgetSetupTypeTodo => '오늘 할 일';
+
+  @override
+  String get widgetSetupTypeTodoHint => '오늘 할 일과 진행률; 왼쪽 상자로 완료 토글; + 로 추가';
+
+  @override
+  String get widgetSetupTypeSchedule => '오늘 일정';
+
+  @override
+  String get widgetSetupTypeScheduleHint => '오늘 일정; + 로 일정 추가';
+
+  @override
+  String get widgetSetupTypeFocus => '집중';
+
+  @override
+  String get widgetSetupTypeFocusHint => '오늘 집중 시간; 탭하면 집중 페이지로 이동';
+
+  @override
+  String get widgetSetupToggleHint => '팁: 할 일 위젯 왼쪽 상자를 눌러 앱 없이 완료/취소할 수 있습니다.';
 
   @override
   String get language => '언어';

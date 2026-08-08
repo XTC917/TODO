@@ -10,6 +10,7 @@ import 'focus_settings_page.dart';
 import 'general_settings_page.dart';
 import 'language_settings_page.dart';
 import 'notification_settings_page.dart';
+import 'widget_settings_page.dart';
 import 'settings_summaries.dart';
 import 'widgets/settings_widgets.dart';
 
@@ -79,6 +80,15 @@ class SettingsPage extends ConsumerWidget {
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => const LanguageSettingsPage(),
+                    ),
+                  ),
+                ),
+                SettingsNavTile(
+                  icon: Icons.widgets_outlined,
+                  title: l10n.settingsWidgets,
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const WidgetSettingsPage(),
                     ),
                   ),
                 ),

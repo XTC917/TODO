@@ -260,13 +260,13 @@ class FocusRecord {
 
 class FocusLaunchConfig {
   const FocusLaunchConfig({
-    required this.eventId,
+    this.eventId,
     this.mode = FocusMode.pomodoro,
     this.durationMinutes = 25,
     this.autoStart = true,
   });
 
-  final int eventId;
+  final int? eventId;
   final FocusMode mode;
   final int durationMinutes;
   final bool autoStart;

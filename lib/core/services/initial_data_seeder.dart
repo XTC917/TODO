@@ -9,7 +9,8 @@ import '../theme/app_colors.dart';
 import '../utils/date_time_formats.dart';
 
 const initialDataSeededKey = 'initial_data_seeded_v2';
-const expectedInitialEventCount = 8;
+const expectedInitialEventCount = 9;
+const onboardingWidgetTodoMigrationKey = 'onboarding_widget_todo_v1';
 
 const _supportedSeedLocales = [
   Locale('en'),
@@ -100,6 +101,15 @@ List<EventDraft> buildInitialDrafts(AppLocalizations l10n) {
       startTime: '',
       endTime: '',
       color: colorAt(7),
+      taskType: TaskType.todo,
+      todoTimeMode: TodoTimeMode.noTime,
+    ),
+    EventDraft(
+      title: l10n.initialTodoWidgetTitle,
+      date: '',
+      startTime: '',
+      endTime: '',
+      color: colorAt(8),
       taskType: TaskType.todo,
       todoTimeMode: TodoTimeMode.noTime,
     ),
@@ -198,6 +208,41 @@ class InitialDataSeeder {
 
     await _seedAll(repo, l10n);
     await prefs.setBool(initialDataSeededKey, true);
+  }
+
+  /// Adds the widget onboarding todo for installs that still have the 8-item set.
+  static Future<void> ensureWidgetOnboardingTodo({
+    required SharedPreferences prefs,
+    required EventRepository repo,
+    required AppLocalizations l10n,
+  }) async {
+    if (prefs.getBool(onboardingWidgetTodoMigrationKey) == true) return;
+
+    final titlesBySlot = _onboardingTitlesBySlot();
+    final slot8Titles = titlesBySlot[8];
+    final events = await repo.getAllEvents();
+
+    if (events.any((e) => slot8Titles.contains(e.title.trim()))) {
+      await prefs.setBool(onboardingWidgetTodoMigrationKey, true);
+      return;
+    }
+
+    final matched8 = <int, Event>{};
+    for (final event in events) {
+      for (var i = 0; i < 8; i++) {
+        if (titlesBySlot[i].contains(event.title.trim())) {
+          matched8[i] = event;
+          break;
+        }
+      }
+    }
+    if (matched8.length != 8) {
+      await prefs.setBool(onboardingWidgetTodoMigrationKey, true);
+      return;
+    }
+
+    await repo.create(buildInitialDrafts(l10n)[8]);
+    await prefs.setBool(onboardingWidgetTodoMigrationKey, true);
   }
 
   /// Updates starter event titles when the app language changes.

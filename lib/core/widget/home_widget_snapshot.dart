@@ -1,0 +1,164 @@
+import 'dart:convert';
+
+import 'package:flutter/widgets.dart';
+import 'package:home_widget/home_widget.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../database/app_database.dart';
+import '../../database/event_repository.dart';
+import '../../database/focus_repository.dart';
+import '../../l10n/app_localizations.dart';
+import '../../models/event.dart';
+import '../providers/app_providers.dart';
+import '../providers/l10n_providers.dart';
+import '../theme/app_colors.dart';
+import '../theme/theme_palette.dart';
+import '../utils/date_time_formats.dart';
+import 'home_widget_keys.dart';
+
+/// Writes widget snapshot data without Riverpod (for background isolate too).
+class HomeWidgetSnapshotWriter {
+  HomeWidgetSnapshotWriter._();
+
+  static Future<void> syncFromDatabase({SharedPreferences? prefs}) async {
+    WidgetsFlutterBinding.ensureInitialized();
+    final sharedPrefs = prefs ?? await SharedPreferences.getInstance();
+    final db = AppDatabase();
+    try {
+      final eventRepo = EventRepository(db);
+      final focusRepo = FocusRepository(db);
+      final today = DateTimeFormats.dateOnly(DateTime.now());
+      final dateKey = DateTimeFormats.formatDate(today);
+      final language = _readLanguage(sharedPrefs);
+      final l10n = lookupAppLocalizations(resolveAppLocale(language));
+      final palette = ThemePalette.fromPrefs(sharedPrefs);
+
+      final events = await eventRepo.watchByDate(dateKey).first;
+      final allTodos = await eventRepo.watchAllTodos().first;
+      final records = await focusRepo.watchByDate(dateKey).first;
+      final datedToday =
+          events.where((e) => e.showsOnHomeDate(dateKey)).toList();
+      final undatedPending =
+          allTodos.where((e) => !e.hasDate && !e.isCompleted).toList();
+      final seen = <int>{};
+      final todos = <Event>[];
+      for (final event in [...datedToday, ...undatedPending.take(4)]) {
+        if (seen.add(event.id)) todos.add(event);
+      }
+      todos.sort((a, b) {
+        final done =
+            a.isCompleted == b.isCompleted ? 0 : (a.isCompleted ? 1 : -1);
+        if (done != 0) return done;
+        return a.title.compareTo(b.title);
+      });
+      final todosAll = events.where((e) => e.isTodo).toList();
+      final todoCompleted = todosAll.where((e) => e.isTodoDone()).length;
+      final focusSeconds =
+          records.fold<int>(0, (sum, r) => sum + r.durationSeconds);
+
+      final schedules = events.where((e) => e.isSchedule && e.hasDate).toList()
+        ..sort((a, b) => a.timelineSortKey.compareTo(b.timelineSortKey));
+
+      await HomeWidget.saveWidgetData<String>(HomeWidgetKeys.date, dateKey);
+      await HomeWidget.saveWidgetData<int>(
+        HomeWidgetKeys.todoDone,
+        todoCompleted,
+      );
+      await HomeWidget.saveWidgetData<int>(
+        HomeWidgetKeys.todoTotal,
+        todosAll.length,
+      );
+      await HomeWidget.saveWidgetData<String>(
+        HomeWidgetKeys.todosJson,
+        jsonEncode(todos.take(6).map(_todoItem).toList()),
+      );
+      await HomeWidget.saveWidgetData<String>(
+        HomeWidgetKeys.schedulesJson,
+        jsonEncode(schedules.take(6).map(_scheduleItem).toList()),
+      );
+      await HomeWidget.saveWidgetData<int>(
+        HomeWidgetKeys.focusSeconds,
+        focusSeconds,
+      );
+      await HomeWidget.saveWidgetData<String>(
+        HomeWidgetKeys.accentHex,
+        AppColors.toHex(palette.seedColor),
+      );
+
+      await HomeWidget.saveWidgetData<String>(
+        HomeWidgetKeys.labelTodoTitle,
+        l10n.widgetTodoTitle,
+      );
+      await HomeWidget.saveWidgetData<String>(
+        HomeWidgetKeys.labelScheduleTitle,
+        l10n.widgetScheduleTitle,
+      );
+      await HomeWidget.saveWidgetData<String>(
+        HomeWidgetKeys.labelFocusTitle,
+        l10n.widgetFocusTitle,
+      );
+      await HomeWidget.saveWidgetData<String>(
+        HomeWidgetKeys.labelStartFocus,
+        l10n.widgetStartFocus,
+      );
+      await HomeWidget.saveWidgetData<String>(
+        HomeWidgetKeys.labelEmpty,
+        l10n.widgetEmpty,
+      );
+      await HomeWidget.saveWidgetData<String>(
+        HomeWidgetKeys.labelTodoProgress,
+        l10n.widgetTodoProgress(todoCompleted, todosAll.length),
+      );
+      await HomeWidget.saveWidgetData<String>(
+        HomeWidgetKeys.labelFocusDuration,
+        l10n.focusMinutes(focusSeconds ~/ 60),
+      );
+      await HomeWidget.saveWidgetData<String>(
+        HomeWidgetKeys.labelOpenFocus,
+        l10n.widgetOpenFocus,
+      );
+
+      await Future.wait([
+        HomeWidget.updateWidget(
+          qualifiedAndroidName: HomeWidgetKeys.androidTodoReceiver,
+        ),
+        HomeWidget.updateWidget(
+          qualifiedAndroidName: HomeWidgetKeys.androidScheduleReceiver,
+        ),
+        HomeWidget.updateWidget(
+          qualifiedAndroidName: HomeWidgetKeys.androidFocusReceiver,
+        ),
+      ]);
+    } finally {
+      await db.close();
+    }
+  }
+
+  static AppLanguage _readLanguage(SharedPreferences prefs) {
+    return AppLanguage.values.firstWhere(
+      (language) => language.name == prefs.getString(_appLanguageKey),
+      orElse: () => AppLanguage.system,
+    );
+  }
+
+  static Map<String, Object?> _todoItem(Event event) => {
+        'id': event.id,
+        'title': event.title,
+        'done': event.isCompleted,
+      };
+
+  static Map<String, String> _scheduleItem(Event event) {
+    final time = event.startTime.isEmpty
+        ? ''
+        : event.endTime.isEmpty
+            ? event.startTime
+            : '${event.startTime}-${event.endTime}';
+    return {
+      'id': '${event.id}',
+      'title': event.title,
+      'time': time,
+    };
+  }
+}
+
+const _appLanguageKey = 'app_language';

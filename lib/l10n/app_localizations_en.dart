@@ -135,6 +135,10 @@ class AppLocalizationsEn extends AppLocalizations {
       '📊 View focus stats on the Statistics page';
 
   @override
+  String get initialTodoWidgetTitle =>
+      '📱 See Settings for how to add home screen widgets';
+
+  @override
   String get themeLight => 'Light';
 
   @override
@@ -160,6 +164,76 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get colorLightness => 'Lightness';
+
+  @override
+  String get widgetTodoTitle => 'Today\'s todos';
+
+  @override
+  String get widgetScheduleTitle => 'Today\'s schedule';
+
+  @override
+  String get widgetFocusTitle => 'Focus today';
+
+  @override
+  String get widgetStartFocus => 'Start focus';
+
+  @override
+  String get widgetOpenFocus => 'Open focus';
+
+  @override
+  String get widgetEmpty => 'Nothing here';
+
+  @override
+  String widgetTodoProgress(int done, int total) {
+    return '$done/$total done';
+  }
+
+  @override
+  String get settingsWidgets => 'Home screen widgets';
+
+  @override
+  String get widgetSetupIntro =>
+      'Add JUJU widgets to your Android home screen to see todos, schedule, and focus at a glance.';
+
+  @override
+  String get widgetSetupStep1 => 'Long-press an empty area on your home screen';
+
+  @override
+  String get widgetSetupStep2 => 'Open Widgets (or 小部件 / 窗口小工具)';
+
+  @override
+  String get widgetSetupStep3 => 'Find JUJU Schedule';
+
+  @override
+  String get widgetSetupStep4 => 'Pick Todo, Schedule, or Focus and add it';
+
+  @override
+  String get widgetSetupTypesTitle => 'Available widgets';
+
+  @override
+  String get widgetSetupTypeTodo => 'Today\'s todos';
+
+  @override
+  String get widgetSetupTypeTodoHint =>
+      'Today\'s todos and progress; tap the box to check off; + to add';
+
+  @override
+  String get widgetSetupTypeSchedule => 'Today\'s schedule';
+
+  @override
+  String get widgetSetupTypeScheduleHint =>
+      'Today\'s schedule; + to add an event';
+
+  @override
+  String get widgetSetupTypeFocus => 'Focus';
+
+  @override
+  String get widgetSetupTypeFocusHint =>
+      'Today\'s focus time; tap to open the Focus tab';
+
+  @override
+  String get widgetSetupToggleHint =>
+      'Tip: Tap the box on the left in the todo widget to toggle completion without opening the app.';
 
   @override
   String get language => 'Language';

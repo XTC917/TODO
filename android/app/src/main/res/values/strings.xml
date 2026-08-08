@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_todo_label">JUJU 待办</string>
+    <string name="widget_todo_description">今日待办与完成情况</string>
+    <string name="widget_schedule_label">JUJU 日程</string>
+    <string name="widget_schedule_description">今日日程安排</string>
+    <string name="widget_focus_label">JUJU 专注</string>
+    <string name="widget_focus_description">今日专注时长，一键开始专注</string>
+</resources>

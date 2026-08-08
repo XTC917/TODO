@@ -131,6 +131,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get initialTodoStatsTitle => '📊 在统计页面查看专注情况';
 
   @override
+  String get initialTodoWidgetTitle => '📱 在设置中查看如何添加小组件';
+
+  @override
   String get themeLight => '浅色';
 
   @override
@@ -156,6 +159,71 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get colorLightness => '亮度';
+
+  @override
+  String get widgetTodoTitle => '今日待办';
+
+  @override
+  String get widgetScheduleTitle => '今日日程';
+
+  @override
+  String get widgetFocusTitle => '今日专注';
+
+  @override
+  String get widgetStartFocus => '开始专注';
+
+  @override
+  String get widgetOpenFocus => '打开专注';
+
+  @override
+  String get widgetEmpty => '暂无内容';
+
+  @override
+  String widgetTodoProgress(int done, int total) {
+    return '$done/$total 已完成';
+  }
+
+  @override
+  String get settingsWidgets => '桌面小组件';
+
+  @override
+  String get widgetSetupIntro => '在 Android 主屏幕添加 JUJU 小组件，快速查看待办、日程与专注进度。';
+
+  @override
+  String get widgetSetupStep1 => '长按主屏幕空白处';
+
+  @override
+  String get widgetSetupStep2 => '选择「小部件 / 窗口小工具 / Widgets」';
+
+  @override
+  String get widgetSetupStep3 => '找到 JUJU Schedule';
+
+  @override
+  String get widgetSetupStep4 => '选择待办、日程或专注小组件并添加';
+
+  @override
+  String get widgetSetupTypesTitle => '可用小组件';
+
+  @override
+  String get widgetSetupTypeTodo => '今日待办';
+
+  @override
+  String get widgetSetupTypeTodoHint => '显示今日待办与完成进度；点左侧方框勾选；右上角 + 添加待办';
+
+  @override
+  String get widgetSetupTypeSchedule => '今日日程';
+
+  @override
+  String get widgetSetupTypeScheduleHint => '显示今日日程；右上角 + 添加日程';
+
+  @override
+  String get widgetSetupTypeFocus => '专注';
+
+  @override
+  String get widgetSetupTypeFocusHint => '显示今日专注时长，点击进入专注页';
+
+  @override
+  String get widgetSetupToggleHint => '提示：在待办小组件上点击左侧方框可直接勾选/取消，无需打开 App。';
 
   @override
   String get language => '语言';

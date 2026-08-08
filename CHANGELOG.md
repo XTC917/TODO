@@ -1,5 +1,28 @@
 # Changelog
 
+## v2.4.4
+
+### Added
+- Todo and schedule widgets: **+** button (top-right) opens add todo / add schedule form.
+- Todo widget: visible checkbox squares; tap to toggle completion (native + background sync).
+
+### Changed
+- Focus widget opens the Focus tab only (no auto-start countdown).
+- Widget todo list also includes undated pending todos when today’s list is sparse.
+
+## v2.4.3
+
+### Added
+- Settings → **桌面小组件**: step-by-step guide for adding home screen widgets.
+- Todo widget: tap **○ / ✓** to check off items without opening the app.
+- Onboarding sample todo: see Settings for widget setup.
+
+## v2.4.2
+
+### Added
+- Android home screen widgets: **今日待办** (todos + completion), **今日日程** (schedule list), **专注** (focus time + one-tap start).
+- Widget data syncs from the app; tap opens the relevant tab or starts a focus session.
+
 ## v2.4.1
 
 ### Added

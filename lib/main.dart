@@ -54,6 +54,13 @@ Future<void> main() async {
         resolveAppLocale(_readAppLanguage(prefs)),
       ),
     );
+    await InitialDataSeeder.ensureWidgetOnboardingTodo(
+      prefs: prefs,
+      repo: container.read(eventRepositoryProvider),
+      l10n: lookupAppLocalizations(
+        resolveAppLocale(_readAppLanguage(prefs)),
+      ),
+    );
   } catch (e, st) {
     debugPrint('Initial data seed failed (app will continue): $e\n$st');
   }

@@ -340,6 +340,12 @@ abstract class AppLocalizations {
   /// **'📊 View focus stats on the Statistics page'**
   String get initialTodoStatsTitle;
 
+  /// No description provided for @initialTodoWidgetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'📱 See Settings for how to add home screen widgets'**
+  String get initialTodoWidgetTitle;
+
   /// No description provided for @themeLight.
   ///
   /// In en, this message translates to:
@@ -393,6 +399,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Lightness'**
   String get colorLightness;
+
+  /// No description provided for @widgetTodoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s todos'**
+  String get widgetTodoTitle;
+
+  /// No description provided for @widgetScheduleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s schedule'**
+  String get widgetScheduleTitle;
+
+  /// No description provided for @widgetFocusTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus today'**
+  String get widgetFocusTitle;
+
+  /// No description provided for @widgetStartFocus.
+  ///
+  /// In en, this message translates to:
+  /// **'Start focus'**
+  String get widgetStartFocus;
+
+  /// No description provided for @widgetOpenFocus.
+  ///
+  /// In en, this message translates to:
+  /// **'Open focus'**
+  String get widgetOpenFocus;
+
+  /// No description provided for @widgetEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing here'**
+  String get widgetEmpty;
+
+  /// No description provided for @widgetTodoProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{done}/{total} done'**
+  String widgetTodoProgress(int done, int total);
+
+  /// No description provided for @settingsWidgets.
+  ///
+  /// In en, this message translates to:
+  /// **'Home screen widgets'**
+  String get settingsWidgets;
+
+  /// No description provided for @widgetSetupIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Add JUJU widgets to your Android home screen to see todos, schedule, and focus at a glance.'**
+  String get widgetSetupIntro;
+
+  /// No description provided for @widgetSetupStep1.
+  ///
+  /// In en, this message translates to:
+  /// **'Long-press an empty area on your home screen'**
+  String get widgetSetupStep1;
+
+  /// No description provided for @widgetSetupStep2.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Widgets (or 小部件 / 窗口小工具)'**
+  String get widgetSetupStep2;
+
+  /// No description provided for @widgetSetupStep3.
+  ///
+  /// In en, this message translates to:
+  /// **'Find JUJU Schedule'**
+  String get widgetSetupStep3;
+
+  /// No description provided for @widgetSetupStep4.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick Todo, Schedule, or Focus and add it'**
+  String get widgetSetupStep4;
+
+  /// No description provided for @widgetSetupTypesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Available widgets'**
+  String get widgetSetupTypesTitle;
+
+  /// No description provided for @widgetSetupTypeTodo.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s todos'**
+  String get widgetSetupTypeTodo;
+
+  /// No description provided for @widgetSetupTypeTodoHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s todos and progress; tap the box to check off; + to add'**
+  String get widgetSetupTypeTodoHint;
+
+  /// No description provided for @widgetSetupTypeSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s schedule'**
+  String get widgetSetupTypeSchedule;
+
+  /// No description provided for @widgetSetupTypeScheduleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s schedule; + to add an event'**
+  String get widgetSetupTypeScheduleHint;
+
+  /// No description provided for @widgetSetupTypeFocus.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus'**
+  String get widgetSetupTypeFocus;
+
+  /// No description provided for @widgetSetupTypeFocusHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s focus time; tap to open the Focus tab'**
+  String get widgetSetupTypeFocusHint;
+
+  /// No description provided for @widgetSetupToggleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tip: Tap the box on the left in the todo widget to toggle completion without opening the app.'**
+  String get widgetSetupToggleHint;
 
   /// No description provided for @language.
   ///
