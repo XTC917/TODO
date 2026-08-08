@@ -140,6 +140,24 @@ class AppLocalizationsKo extends AppLocalizations {
   String get accentColor => '강조 색상';
 
   @override
+  String get backgroundColor => '배경 색상';
+
+  @override
+  String get backgroundFollowAccent => '테마 따라가기';
+
+  @override
+  String get backgroundCustom => '사용자 지정';
+
+  @override
+  String get colorHue => '색상';
+
+  @override
+  String get colorSaturation => '채도';
+
+  @override
+  String get colorLightness => '명도';
+
+  @override
   String get language => '언어';
 
   @override

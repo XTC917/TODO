@@ -358,6 +358,42 @@ abstract class AppLocalizations {
   /// **'Accent Color'**
   String get accentColor;
 
+  /// No description provided for @backgroundColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Background Color'**
+  String get backgroundColor;
+
+  /// No description provided for @backgroundFollowAccent.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow accent'**
+  String get backgroundFollowAccent;
+
+  /// No description provided for @backgroundCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get backgroundCustom;
+
+  /// No description provided for @colorHue.
+  ///
+  /// In en, this message translates to:
+  /// **'Hue'**
+  String get colorHue;
+
+  /// No description provided for @colorSaturation.
+  ///
+  /// In en, this message translates to:
+  /// **'Saturation'**
+  String get colorSaturation;
+
+  /// No description provided for @colorLightness.
+  ///
+  /// In en, this message translates to:
+  /// **'Lightness'**
+  String get colorLightness;
+
   /// No description provided for @language.
   ///
   /// In en, this message translates to:

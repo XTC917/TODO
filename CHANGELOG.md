@@ -1,5 +1,14 @@
 # Changelog
 
+## v2.4.1
+
+### Added
+- Appearance: accent-tinted backgrounds that follow the selected theme color.
+- Custom accent and background colors via HSL sliders (continuous hue/saturation/lightness).
+
+### Changed
+- Scaffold, app bar, navigation bar, cards, and inputs now derive from the active accent or custom background.
+
 ## v2.4.0
 
 First friend-share release with reliable Android reminders.

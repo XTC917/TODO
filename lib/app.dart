@@ -20,7 +20,7 @@ class SoftScheduleApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
-    final accent = ref.watch(accentColorProvider);
+    final palette = ref.watch(themePaletteProvider);
     final language = ref.watch(appLanguageProvider);
 
     ref.listen<int?>(pendingNotificationEventIdProvider, (prev, next) {
@@ -37,8 +37,8 @@ class SoftScheduleApp extends ConsumerWidget {
       title: AppConfig.appName,
       debugShowCheckedModeBanner: false,
       themeMode: themeMode,
-      theme: AppTheme.light(accent),
-      darkTheme: AppTheme.dark(accent),
+      theme: AppTheme.light(palette),
+      darkTheme: AppTheme.dark(palette),
       locale: switch (language) {
         AppLanguage.zh => const Locale('zh'),
         AppLanguage.en => const Locale('en'),

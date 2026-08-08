@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/stats_format.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../models/statistics.dart';

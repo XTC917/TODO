@@ -21,9 +21,10 @@ class FocusImmersiveView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = ref.watch(focusImmersiveDarkModeProvider);
-    final accent = ref.watch(accentColorProvider);
-    final immersiveTheme =
-        isDark ? AppTheme.dark(accent) : AppTheme.light(accent);
+    final palette = ref.watch(themePaletteProvider);
+    final immersiveTheme = isDark
+        ? AppTheme.dark(palette)
+        : AppTheme.light(palette);
 
     return AnimatedTheme(
       data: immersiveTheme,

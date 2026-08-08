@@ -15,10 +15,15 @@ import '../../models/reminder_config.dart';
 import 'focus_providers.dart';
 import '../services/database_backup_service.dart';
 import '../services/notification_service.dart';
+import '../theme/app_colors.dart';
+import '../theme/theme_palette.dart';
 import '../utils/date_time_formats.dart';
 
 const _themeModeKey = 'theme_mode';
 const _accentColorKey = 'accent_color';
+const _bgModeKey = 'bg_mode';
+const _bgCustomLightKey = 'bg_custom_light';
+const _bgCustomDarkKey = 'bg_custom_dark';
 const _remindersEnabledKey = 'reminders_enabled';
 const _appLanguageKey = 'app_language';
 const notificationPermissionPromptedKey = 'notification_permission_prompted';
@@ -73,9 +78,9 @@ final themeModeProvider =
   return ThemeModeController(ref.watch(sharedPreferencesProvider));
 });
 
-final accentColorProvider =
-    StateNotifierProvider<AccentColorController, AccentColor>((ref) {
-  return AccentColorController(ref.watch(sharedPreferencesProvider));
+final themePaletteProvider =
+    StateNotifierProvider<ThemePaletteController, ThemePalette>((ref) {
+  return ThemePaletteController(ref.watch(sharedPreferencesProvider));
 });
 
 class ThemeModeController extends StateNotifier<ThemeMode> {
@@ -98,15 +103,48 @@ class ThemeModeController extends StateNotifier<ThemeMode> {
   }
 }
 
-class AccentColorController extends StateNotifier<AccentColor> {
-  AccentColorController(this._prefs)
-      : super(AccentColorX.fromStorage(_prefs.getString(_accentColorKey)));
+class ThemePaletteController extends StateNotifier<ThemePalette> {
+  ThemePaletteController(this._prefs) : super(ThemePalette.fromPrefs(_prefs));
 
   final SharedPreferences _prefs;
 
-  Future<void> setAccent(AccentColor color) async {
-    state = color;
+  Future<void> setPresetAccent(AccentColor color) async {
+    state = state.copyWith(seedColor: color.seed, preset: color);
     await _prefs.setString(_accentColorKey, color.storage);
+  }
+
+  Future<void> setCustomSeed(Color color) async {
+    state = state.copyWith(
+      seedColor: color,
+      clearPreset: true,
+    );
+    await _prefs.setString(_accentColorKey, 'custom:${AppColors.toHex(color)}');
+  }
+
+  Future<void> setBackgroundMode(BackgroundMode mode) async {
+    state = state.copyWith(backgroundMode: mode);
+    await _prefs.setString(
+      _bgModeKey,
+      mode == BackgroundMode.custom ? 'custom' : 'follow',
+    );
+  }
+
+  Future<void> setCustomBackground(Color color, Brightness brightness) async {
+    if (brightness == Brightness.light) {
+      state = state.copyWith(
+        backgroundMode: BackgroundMode.custom,
+        customBackgroundLight: color,
+      );
+      await _prefs.setString(_bgModeKey, 'custom');
+      await _prefs.setString(_bgCustomLightKey, AppColors.toHex(color));
+      return;
+    }
+    state = state.copyWith(
+      backgroundMode: BackgroundMode.custom,
+      customBackgroundDark: color,
+    );
+    await _prefs.setString(_bgModeKey, 'custom');
+    await _prefs.setString(_bgCustomDarkKey, AppColors.toHex(color));
   }
 }
 

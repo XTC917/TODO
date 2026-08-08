@@ -20,7 +20,7 @@ class CalendarPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(themeModeProvider);
-    ref.watch(accentColorProvider);
+    ref.watch(themePaletteProvider);
 
     final selected = ref.watch(calendarSelectedDateProvider);
     final focused = ref.watch(calendarFocusedMonthProvider);

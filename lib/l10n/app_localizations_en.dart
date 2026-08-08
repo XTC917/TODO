@@ -144,6 +144,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accentColor => 'Accent Color';
 
   @override
+  String get backgroundColor => 'Background Color';
+
+  @override
+  String get backgroundFollowAccent => 'Follow accent';
+
+  @override
+  String get backgroundCustom => 'Custom';
+
+  @override
+  String get colorHue => 'Hue';
+
+  @override
+  String get colorSaturation => 'Saturation';
+
+  @override
+  String get colorLightness => 'Lightness';
+
+  @override
   String get language => 'Language';
 
   @override
