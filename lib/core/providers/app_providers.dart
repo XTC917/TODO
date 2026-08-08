@@ -415,12 +415,10 @@ class EventActions {
   Future<void> deleteWithScope(Event event, RepeatScope scope) async {
     final repo = _ref.read(eventRepositoryProvider);
     if (scope == RepeatScope.all && event.repeatGroupId != null) {
-      final rows = await repo.getAllEvents();
-      final ids = rows
-          .where((e) => e.repeatGroupId == event.repeatGroupId)
-          .map((e) => e.id);
-      for (final id in ids) {
-        await NotificationService.instance.deleteEventReminders(id);
+      final rows =
+          await repo.getEventsByRepeatGroup(event.repeatGroupId!);
+      for (final row in rows) {
+        await NotificationService.instance.deleteEventReminders(row.id);
       }
     } else {
       await NotificationService.instance.deleteEventReminders(event.id);

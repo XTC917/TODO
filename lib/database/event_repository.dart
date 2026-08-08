@@ -49,6 +49,11 @@ class EventRepository {
     return rows.map(_toDomain).toList();
   }
 
+  Future<List<Event>> getEventsByRepeatGroup(String groupId) async {
+    final rows = await _db.getEventsByRepeatGroup(groupId);
+    return rows.map(_toDomain).toList();
+  }
+
   Future<Set<String>> datesWithEvents(String startDate, String endDate) async {
     final rows = await _db.getAllEvents();
     final domain = rows.map(_toDomain).toList();
@@ -102,9 +107,6 @@ class EventRepository {
       ),
     );
 
-    if (draft.repeatType != RepeatType.oneTime) {
-      await _materializeRepeats(groupId!, draft, excludeDate: draft.date);
-    }
     return id;
   }
 
@@ -132,23 +134,6 @@ class EventRepository {
       updatedAt: DateTime.now(),
     );
     await _db.updateEventRow(_toRow(master));
-    await _materializeRepeats(
-      groupId,
-      EventDraft(
-        title: master.title,
-        date: master.date,
-        startTime: master.startTime,
-        endTime: master.endTime,
-        note: master.note,
-        color: master.color,
-        taskType: master.taskType,
-        todoTimeMode: master.todoTimeMode,
-        repeatType: master.repeatType,
-        repeatGroupId: groupId,
-        reminderOffsetsSeconds: master.reminderOffsetsSeconds,
-      ),
-      excludeDate: master.date,
-    );
   }
 
   Future<void> toggleTodoComplete(int id, {required bool completed}) async {
@@ -268,6 +253,7 @@ class EventRepository {
     }
 
     final groupId = occurrence.repeatGroupId!;
+    await _compactRedundantInstances(groupId);
     switch (scope) {
       case RepeatScope.onlyThis:
         await _deleteSingleOccurrence(occurrence);
@@ -525,43 +511,31 @@ class EventRepository {
     return DateTimeFormats.formatDate(day.subtract(const Duration(days: 1)));
   }
 
-  Future<void> _materializeRepeats(
-    String groupId,
-    EventDraft template, {
-    required String excludeDate,
-  }) async {
-    final now = DateTime.now();
-    final start = DateTime.parse(template.date);
-    final end = start.add(const Duration(days: 365));
-    var cursor = start;
+  /// One-time cleanup for repeat series materialized by older app versions.
+  Future<void> compactAllLegacyMaterialized() async {
+    final rows = await _db.getAllEvents();
+    final groupIds = rows
+        .map((row) => row.repeatGroupId)
+        .whereType<String>()
+        .toSet();
+    for (final groupId in groupIds) {
+      await _compactRedundantInstances(groupId);
+    }
+  }
 
-    while (!cursor.isAfter(end)) {
-      final key = DateTimeFormats.formatDate(cursor);
-      if (key != excludeDate && RepeatExpander.occursOnDraft(template, cursor)) {
-        final exists = await _db.getEventByRepeatGroupAndDate(groupId, key);
-        if (exists == null) {
-          await _db.insertEvent(
-            EventsCompanion.insert(
-              title: template.title.trim(),
-              date: key,
-              startTime: template.startTime,
-              endTime: template.endTime,
-              note: Value(_nullableNote(template.note)),
-              color: template.color,
-              taskType: Value(template.taskType.storage),
-              todoTimeMode: Value(template.todoTimeMode.storage),
-              repeatType: const Value('oneTime'),
-              repeatGroupId: Value(groupId),
-              reminderOffsetsJson: Value(
-                encodeReminderOffsets(template.reminderOffsetsSeconds),
-              ),
-              createdAt: now,
-              updatedAt: now,
-            ),
-          );
-        }
-      }
-      cursor = cursor.add(const Duration(days: 1));
+  /// Removes bulk materialized copies left by older versions. Keeps skips,
+  /// completed days, and edited single occurrences.
+  Future<void> _compactRedundantInstances(String groupId) async {
+    final master = await _seriesMasterRow(groupId);
+    if (master == null) return;
+
+    final rows = await _db.getEventsByRepeatGroup(groupId);
+    for (final row in rows) {
+      if (row.id == master.id || row.title == kRepeatSkipMarker) continue;
+      if (row.repeatType != RepeatType.oneTime.storage) continue;
+      if (row.isCompleted) continue;
+      if (row.title != master.title) continue;
+      await delete(row.id);
     }
   }
 

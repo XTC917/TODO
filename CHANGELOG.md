@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.5.0
+
+### Fixed
+- Database export: checkpoint WAL before copying so recent writes are included in the `.sqlite` backup.
+- Database import: reject non-SQLite files before overwrite so a bad pick cannot replace the live database.
+
 ## v2.4.9
 
 ### Added

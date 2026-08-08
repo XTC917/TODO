@@ -67,6 +67,16 @@ Future<void> main() async {
     debugPrint('Initial data seed failed (app will continue): $e\n$st');
   }
 
+  Future(() async {
+    try {
+      await container
+          .read(eventRepositoryProvider)
+          .compactAllLegacyMaterialized();
+    } catch (e, st) {
+      debugPrint('Repeat series compact failed (app will continue): $e\n$st');
+    }
+  });
+
   try {
     await NotificationService.instance.initialize();
   } catch (e, st) {
