@@ -189,6 +189,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String widgetFocusPending(int count) {
+    return '$count pending';
+  }
+
+  @override
   String get settingsWidgets => 'Home screen widgets';
 
   @override
@@ -218,6 +223,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Today\'s todos and progress; tap the box to check off; + to add';
 
   @override
+  String get widgetSetupTypeTodoCompact => 'Today\'s todos (2×2)';
+
+  @override
+  String get widgetSetupTypeTodoCompactHint =>
+      'Compact size: progress plus 2 todos; tap the box to toggle';
+
+  @override
   String get widgetSetupTypeSchedule => 'Today\'s schedule';
 
   @override
@@ -229,7 +241,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get widgetSetupTypeFocusHint =>
-      'Today\'s focus time; tap to open the Focus tab';
+      'Pending todo count and today\'s focus time; tap to open Focus';
 
   @override
   String get widgetSetupToggleHint =>
@@ -455,6 +467,41 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get confirmDeleteMessage => 'Delete this item?';
+
+  @override
+  String get repeatScopeEditTitle => 'Edit recurring event';
+
+  @override
+  String get repeatScopeDeleteTitle => 'Delete recurring event';
+
+  @override
+  String get repeatScopeOnlyThis => 'This occurrence only';
+
+  @override
+  String get repeatScopeThisAndFuture => 'This and future';
+
+  @override
+  String get repeatScopeAll => 'All occurrences';
+
+  @override
+  String get repeatScopeEditOnlyThisHint => 'Change only this occurrence';
+
+  @override
+  String get repeatScopeEditFutureHint =>
+      'Change this and all future occurrences';
+
+  @override
+  String get repeatScopeEditAllHint => 'Change the entire series';
+
+  @override
+  String get repeatScopeDeleteOnlyThisHint => 'Delete only this occurrence';
+
+  @override
+  String get repeatScopeDeleteFutureHint =>
+      'Delete this and all future occurrences';
+
+  @override
+  String get repeatScopeDeleteAllHint => 'Delete the entire series';
 
   @override
   String get addTitle => 'Add';

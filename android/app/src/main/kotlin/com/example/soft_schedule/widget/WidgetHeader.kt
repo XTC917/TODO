@@ -25,6 +25,7 @@ fun WidgetHeader(
     title: String,
     openUri: String,
     addUri: String,
+    compact: Boolean = false,
 ) {
     val openAction = actionStartActivity<MainActivity>(
         context,
@@ -49,7 +50,7 @@ fun WidgetHeader(
     ) {
         Text(
             text = title,
-            style = WidgetTheme.titleStyle,
+            style = if (compact) WidgetTheme.compactTitleStyle else WidgetTheme.titleStyle,
             modifier = GlanceModifier.clickable(onClick = openAction),
         )
         Spacer(GlanceModifier.defaultWeight())

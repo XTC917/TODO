@@ -25,7 +25,7 @@ class EventRepository {
   }
 
   Stream<List<Event>> watchInRange(String startDate, String endDate) {
-    return _db.watchEventsInRange(startDate, endDate).map((rows) {
+    return _db.watchAllEvents().map((rows) {
       final domain = rows.map(_toDomain).toList();
       return RepeatExpander.expandForRange(
         domain,
@@ -109,17 +109,46 @@ class EventRepository {
   }
 
   Future<void> update(Event event) async {
-    if (event.title.trim().isEmpty) {
-      throw ArgumentError('Title cannot be empty');
-    }
-    if (event.title.length > kMaxEventTitleLength) {
-      throw ArgumentError('Title too long');
-    }
-    final note = _nullableNote(event.note);
-    if (note != null && note.length > kMaxEventNoteLength) {
-      throw ArgumentError('Note too long');
-    }
+    _validateEvent(event);
+    final previous = await getById(event.id);
     await _db.updateEventRow(_toRow(event.copyWith(updatedAt: DateTime.now())));
+    if (previous != null) {
+      await _maybeUpgradeToRecurring(previous, event);
+    }
+  }
+
+  /// When an existing one-time row becomes recurring, assign a group and materialize.
+  Future<void> _maybeUpgradeToRecurring(Event previous, Event updated) async {
+    if (updated.repeatType == RepeatType.oneTime ||
+        updated.repeatGroupId != null ||
+        previous.repeatType != RepeatType.oneTime ||
+        !updated.hasDate) {
+      return;
+    }
+
+    final groupId = _uuid.v4();
+    final master = updated.copyWith(
+      repeatGroupId: groupId,
+      updatedAt: DateTime.now(),
+    );
+    await _db.updateEventRow(_toRow(master));
+    await _materializeRepeats(
+      groupId,
+      EventDraft(
+        title: master.title,
+        date: master.date,
+        startTime: master.startTime,
+        endTime: master.endTime,
+        note: master.note,
+        color: master.color,
+        taskType: master.taskType,
+        todoTimeMode: master.todoTimeMode,
+        repeatType: master.repeatType,
+        repeatGroupId: groupId,
+        reminderOffsetsSeconds: master.reminderOffsetsSeconds,
+      ),
+      excludeDate: master.date,
+    );
   }
 
   Future<void> toggleTodoComplete(int id, {required bool completed}) async {
@@ -156,6 +185,35 @@ class EventRepository {
     } else {
       await toggleScheduleComplete(id, completed: completed);
     }
+  }
+
+  /// Complete/uncomplete a single calendar occurrence (never the whole series).
+  Future<void> toggleTimelineForOccurrence(
+    Event occurrence, {
+    required bool completed,
+  }) async {
+    if (occurrence.repeatGroupId == null) {
+      await toggleTimelineComplete(occurrence.id, completed: completed);
+      return;
+    }
+
+    final groupId = occurrence.repeatGroupId!;
+    final dateKey = occurrence.date;
+    final concrete = await _db.getEventByRepeatGroupAndDate(groupId, dateKey);
+
+    if (concrete != null) {
+      if (concrete.title == kRepeatSkipMarker) return;
+      await toggleTimelineComplete(concrete.id, completed: completed);
+      return;
+    }
+
+    final template = await _seriesTemplate(groupId, fallbackId: occurrence.id);
+    if (template == null) return;
+    await _insertOccurrenceRow(
+      template: template,
+      dateKey: dateKey,
+      completed: completed,
+    );
   }
 
   Future<void> addFocusedSeconds(int eventId, int seconds) async {
@@ -201,28 +259,270 @@ class EventRepository {
   }
 
   Future<void> deleteWithScope(
-    Event event,
-    DeleteRepeatScope scope,
+    Event occurrence,
+    RepeatScope scope,
   ) async {
-    if (event.repeatType == RepeatType.oneTime || event.repeatGroupId == null) {
-      await delete(event.id);
+    if (occurrence.repeatGroupId == null) {
+      await delete(occurrence.id);
       return;
     }
 
-    final groupId = event.repeatGroupId!;
+    final groupId = occurrence.repeatGroupId!;
     switch (scope) {
-      case DeleteRepeatScope.onlyThis:
-        await delete(event.id);
-      case DeleteRepeatScope.thisAndFuture:
-        await _db.deleteEventsByRepeatGroupFromDate(groupId, event.date);
-      case DeleteRepeatScope.all:
+      case RepeatScope.onlyThis:
+        await _deleteSingleOccurrence(occurrence);
+      case RepeatScope.thisAndFuture:
+        await _db.deleteEventsByRepeatGroupFromDate(groupId, occurrence.date);
+        await _truncateSeriesFrom(groupId, occurrence.date);
+        await _demoteMaterializedMasters(groupId);
+      case RepeatScope.all:
         await _db.deleteEventsByRepeatGroup(groupId);
+    }
+  }
+
+  Future<void> updateWithScope(
+    Event occurrence,
+    Event updated,
+    RepeatScope scope,
+  ) async {
+    _validateEvent(updated);
+    if (occurrence.repeatGroupId == null) {
+      await update(updated.copyWith(id: occurrence.id, date: occurrence.date));
+      return;
+    }
+
+    final groupId = occurrence.repeatGroupId!;
+    switch (scope) {
+      case RepeatScope.onlyThis:
+        await _updateSingleOccurrence(occurrence, updated);
+      case RepeatScope.thisAndFuture:
+        await _updateFutureOccurrences(groupId, occurrence.date, updated);
+        await _demoteMaterializedMasters(groupId);
+      case RepeatScope.all:
+        await _updateAllInGroup(groupId, updated);
     }
   }
 
   Future<FilePath> databasePath() async {
     final file = await _db.databaseFile();
     return FilePath(file.path);
+  }
+
+  Future<void> _deleteSingleOccurrence(Event occurrence) async {
+    final groupId = occurrence.repeatGroupId!;
+    final dateKey = occurrence.date;
+    final master = await _seriesMasterRow(groupId);
+    final concrete = await _db.getEventByRepeatGroupAndDate(groupId, dateKey);
+    if (concrete != null &&
+        concrete.title != kRepeatSkipMarker &&
+        (master == null || concrete.id != master.id)) {
+      await delete(concrete.id);
+    }
+
+    final template = await _seriesTemplate(groupId, fallbackId: occurrence.id);
+    if (template == null) return;
+    await _insertSkipOccurrence(template, dateKey);
+  }
+
+  Future<void> _updateSingleOccurrence(Event occurrence, Event updated) async {
+    final groupId = occurrence.repeatGroupId!;
+    final dateKey = occurrence.date;
+    final concrete = await _db.getEventByRepeatGroupAndDate(groupId, dateKey);
+    final now = DateTime.now();
+    final master = await _seriesMasterRow(groupId);
+
+    if (concrete != null && concrete.title != kRepeatSkipMarker) {
+      if (master != null && concrete.id == master.id) {
+        await _insertOccurrenceRow(
+          template: updated.copyWith(
+            id: master.id,
+            date: dateKey,
+            repeatType: RepeatType.oneTime,
+            repeatGroupId: groupId,
+            updatedAt: now,
+          ),
+          dateKey: dateKey,
+          completed: updated.isCompleted,
+        );
+        return;
+      }
+
+      await update(
+        updated.copyWith(
+          id: concrete.id,
+          date: dateKey,
+          repeatType: RepeatType.oneTime,
+          repeatGroupId: groupId,
+        ),
+      );
+      return;
+    }
+
+    final template = await _seriesTemplate(groupId, fallbackId: occurrence.id);
+    if (template == null) return;
+    await _insertOccurrenceRow(
+      template: updated.copyWith(
+        id: template.id,
+        date: dateKey,
+        repeatType: RepeatType.oneTime,
+        repeatGroupId: groupId,
+        updatedAt: now,
+      ),
+      dateKey: dateKey,
+      completed: updated.isCompleted,
+    );
+  }
+
+  Future<void> _updateFutureOccurrences(
+    String groupId,
+    String fromDate,
+    Event updated,
+  ) async {
+    final now = DateTime.now();
+    final companion = EventsCompanion(
+      title: Value(updated.title.trim()),
+      startTime: Value(updated.startTime),
+      endTime: Value(updated.endTime),
+      note: Value(_nullableNote(updated.note)),
+      color: Value(updated.color),
+      taskType: Value(updated.taskType.storage),
+      todoTimeMode: Value(updated.todoTimeMode.storage),
+      repeatType: Value(updated.repeatType.storage),
+      reminderOffsetsJson: Value(
+        encodeReminderOffsets(updated.reminderOffsetsSeconds),
+      ),
+      updatedAt: Value(now),
+    );
+    await _db.updateEventsByRepeatGroupFromDate(groupId, fromDate, companion);
+
+    final template = await _seriesTemplate(groupId);
+    if (template != null && template.date.compareTo(fromDate) < 0) {
+      await update(
+        template.copyWith(
+          repeatType: updated.repeatType,
+          note: _noteWithRepeatUntil(template.note, _dayBefore(fromDate)),
+        ),
+      );
+    }
+  }
+
+  Future<void> _updateAllInGroup(String groupId, Event updated) async {
+    final rows = await _db.getEventsByRepeatGroup(groupId);
+    final now = DateTime.now();
+    for (final row in rows) {
+      if (row.title == kRepeatSkipMarker) continue;
+      await update(
+        updated.copyWith(
+          id: row.id,
+          date: row.date,
+          repeatType: updated.repeatType,
+          repeatGroupId: groupId,
+          updatedAt: now,
+        ),
+      );
+    }
+  }
+
+  Future<void> _truncateSeriesFrom(String groupId, String fromDate) async {
+    final template = await _seriesTemplate(groupId);
+    if (template == null) return;
+    if (template.date.compareTo(fromDate) < 0) {
+      await update(
+        template.copyWith(
+          note: _noteWithRepeatUntil(template.note, _dayBefore(fromDate)),
+        ),
+      );
+    }
+  }
+
+  /// Legacy materialized rows were stored with repeatType != oneTime and could
+  /// each expand into duplicate virtual instances after partial series edits.
+  Future<void> _demoteMaterializedMasters(String groupId) async {
+    final master = await _seriesMasterRow(groupId);
+    if (master == null) return;
+
+    final rows = await _db.getEventsByRepeatGroup(groupId);
+    for (final row in rows) {
+      if (row.id == master.id || row.title == kRepeatSkipMarker) continue;
+      if (row.repeatType == RepeatType.oneTime.storage) continue;
+      await update(_toDomain(row).copyWith(repeatType: RepeatType.oneTime));
+    }
+  }
+
+  String _noteWithRepeatUntil(String? note, String until) {
+    final base = (note ?? '')
+        .replaceAll(RegExp(r'\n#repeatUntil:\d{4}-\d{2}-\d{2}'), '')
+        .trim();
+    if (base.isEmpty) return '#repeatUntil:$until';
+    return '$base\n#repeatUntil:$until';
+  }
+
+  Future<Event?> _seriesTemplate(String groupId, {int? fallbackId}) async {
+    final row = await _seriesMasterRow(groupId);
+    if (row != null) return _toDomain(row);
+    if (fallbackId != null) return getById(fallbackId);
+    return null;
+  }
+
+  Future<EventRow?> _seriesMasterRow(String groupId) async {
+    return _db.getSeriesTemplateRow(groupId);
+  }
+
+  Future<void> _insertOccurrenceRow({
+    required Event template,
+    required String dateKey,
+    required bool completed,
+  }) async {
+    final now = DateTime.now();
+    await _db.insertEvent(
+      EventsCompanion.insert(
+        title: template.title.trim(),
+        date: dateKey,
+        startTime: template.startTime,
+        endTime: template.endTime,
+        note: Value(_nullableNote(template.note)),
+        color: template.color,
+        taskType: Value(template.taskType.storage),
+        todoTimeMode: Value(template.todoTimeMode.storage),
+        isCompleted: Value(completed),
+        repeatType: const Value('oneTime'),
+        repeatGroupId: Value(template.repeatGroupId),
+        reminderOffsetsJson: Value(
+          encodeReminderOffsets(template.reminderOffsetsSeconds),
+        ),
+        completedAt: Value(completed ? now : null),
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+  }
+
+  Future<void> _insertSkipOccurrence(Event template, String dateKey) async {
+    final existing =
+        await _db.getEventByRepeatGroupAndDate(template.repeatGroupId!, dateKey);
+    if (existing != null) return;
+
+    final now = DateTime.now();
+    await _db.insertEvent(
+      EventsCompanion.insert(
+        title: kRepeatSkipMarker,
+        date: dateKey,
+        startTime: template.startTime,
+        endTime: template.endTime,
+        color: template.color,
+        taskType: Value(template.taskType.storage),
+        todoTimeMode: Value(template.todoTimeMode.storage),
+        repeatType: const Value('oneTime'),
+        repeatGroupId: Value(template.repeatGroupId),
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+  }
+
+  String _dayBefore(String dateKey) {
+    final day = DateTimeFormats.parseDate(dateKey);
+    return DateTimeFormats.formatDate(day.subtract(const Duration(days: 1)));
   }
 
   Future<void> _materializeRepeats(
@@ -237,28 +537,44 @@ class EventRepository {
 
     while (!cursor.isAfter(end)) {
       final key = DateTimeFormats.formatDate(cursor);
-      if (key != excludeDate && RepeatExpander.occursOn(template, cursor)) {
-        await _db.insertEvent(
-          EventsCompanion.insert(
-            title: template.title.trim(),
-            date: key,
-            startTime: template.startTime,
-            endTime: template.endTime,
-            note: Value(_nullableNote(template.note)),
-            color: template.color,
-            taskType: Value(template.taskType.storage),
-            todoTimeMode: Value(template.todoTimeMode.storage),
-            repeatType: Value(template.repeatType.storage),
-            repeatGroupId: Value(groupId),
-            reminderOffsetsJson: Value(
-              encodeReminderOffsets(template.reminderOffsetsSeconds),
+      if (key != excludeDate && RepeatExpander.occursOnDraft(template, cursor)) {
+        final exists = await _db.getEventByRepeatGroupAndDate(groupId, key);
+        if (exists == null) {
+          await _db.insertEvent(
+            EventsCompanion.insert(
+              title: template.title.trim(),
+              date: key,
+              startTime: template.startTime,
+              endTime: template.endTime,
+              note: Value(_nullableNote(template.note)),
+              color: template.color,
+              taskType: Value(template.taskType.storage),
+              todoTimeMode: Value(template.todoTimeMode.storage),
+              repeatType: const Value('oneTime'),
+              repeatGroupId: Value(groupId),
+              reminderOffsetsJson: Value(
+                encodeReminderOffsets(template.reminderOffsetsSeconds),
+              ),
+              createdAt: now,
+              updatedAt: now,
             ),
-            createdAt: now,
-            updatedAt: now,
-          ),
-        );
+          );
+        }
       }
       cursor = cursor.add(const Duration(days: 1));
+    }
+  }
+
+  void _validateEvent(Event event) {
+    if (event.title.trim().isEmpty) {
+      throw ArgumentError('Title cannot be empty');
+    }
+    if (event.title.length > kMaxEventTitleLength) {
+      throw ArgumentError('Title too long');
+    }
+    final note = _nullableNote(event.note);
+    if (note != null && note.length > kMaxEventNoteLength) {
+      throw ArgumentError('Note too long');
     }
   }
 

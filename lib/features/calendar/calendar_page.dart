@@ -8,6 +8,7 @@ import '../../core/utils/date_time_formats.dart';
 import '../../core/widgets/batch_toolbar.dart';
 import '../../core/widgets/compact_todo_card.dart';
 import '../../core/widgets/event_detail_sheet.dart';
+import '../../core/widgets/repeat_scope_dialog.dart';
 import '../../core/widgets/swipe_event_actions.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/event.dart';
@@ -180,9 +181,10 @@ class CalendarPage extends ConsumerWidget {
         },
         onToggleComplete: batch.active
             ? null
-            : (e) => ref
-                .read(eventActionsProvider)
-                .toggleTimeline(e.id, !e.isCompleted),
+            : (e) => ref.read(eventActionsProvider).toggleOccurrence(
+                  e,
+                  !e.isCompleted,
+                ),
         onSwipeEdit: (e) => _editEvent(context, e),
         onSwipeDuplicate: (e) =>
             ref.read(eventActionsProvider).duplicate(e.id),
@@ -196,8 +198,8 @@ class CalendarPage extends ConsumerWidget {
         onEnterBatch: (id) {
           ref.read(calendarBatchProvider.notifier).enterWith(id);
         },
-        onToggleTodo: (id, v) {
-          ref.read(eventActionsProvider).toggleTodo(id, v);
+        onToggleTodo: (event, v) {
+          ref.read(eventActionsProvider).toggleOccurrence(event, v);
         },
         onSwipeEdit: (e) => _editEvent(context, e),
         onSwipeDuplicate: (e) =>
@@ -327,7 +329,12 @@ class CalendarPage extends ConsumerWidget {
 
   void _editEvent(BuildContext context, Event event) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => EventFormPage(eventId: event.id)),
+      MaterialPageRoute(
+        builder: (_) => EventFormPage(
+          eventId: event.id,
+          editingOccurrence: event,
+        ),
+      ),
     );
   }
 
@@ -336,9 +343,10 @@ class CalendarPage extends ConsumerWidget {
     WidgetRef ref,
     Event event,
   ) async {
-    if (!await confirmDeleteEvent(context)) return;
+    final scope = await pickDeleteScope(context, event: event);
+    if (scope == null) return;
     try {
-      await ref.read(eventActionsProvider).delete(event.id);
+      await ref.read(eventActionsProvider).deleteWithScope(event, scope);
     } catch (_) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -406,7 +414,7 @@ class _CalendarTodoPanel extends StatelessWidget {
   final BatchSelection batch;
   final ValueChanged<Event> onItemTap;
   final ValueChanged<int> onEnterBatch;
-  final void Function(int id, bool completed) onToggleTodo;
+  final void Function(Event event, bool completed) onToggleTodo;
   final ValueChanged<Event> onSwipeEdit;
   final ValueChanged<Event> onSwipeDuplicate;
   final Future<void> Function(Event event) onSwipeDelete;
@@ -460,7 +468,7 @@ class _CalendarTodoPanel extends StatelessWidget {
               selected: batch.selectedIds.contains(todo.id),
               onTap: () => onItemTap(todo),
               onLongPress: () => onEnterBatch(todo.id),
-              onToggle: (v) => onToggleTodo(todo.id, v),
+              onToggle: (v) => onToggleTodo(todo, v),
             ),
           ),
         ),
@@ -488,7 +496,7 @@ class _CalendarTodoPanel extends StatelessWidget {
                 selected: batch.selectedIds.contains(todo.id),
                 onTap: () => onItemTap(todo),
                 onLongPress: () => onEnterBatch(todo.id),
-                onToggle: (v) => onToggleTodo(todo.id, v),
+                onToggle: (v) => onToggleTodo(todo, v),
               ),
             ),
           ),

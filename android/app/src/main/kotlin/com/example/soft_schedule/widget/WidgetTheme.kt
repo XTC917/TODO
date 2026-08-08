@@ -3,11 +3,18 @@ package com.example.soft_schedule.widget
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.glance.GlanceModifier
+import androidx.glance.appwidget.cornerRadius
+import androidx.glance.background
+import androidx.glance.layout.fillMaxSize
+import androidx.glance.layout.padding
 import androidx.glance.text.FontWeight
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 
 object WidgetTheme {
+    val cornerRadius = 18.dp
+    val buttonCornerRadius = 12.dp
     val background = Color(0xFFFFF8F4)
     val textPrimary = Color(0xFF3D3835)
     val textSecondary = Color(0xFF8A827C)
@@ -58,5 +65,44 @@ object WidgetTheme {
         fontWeight = FontWeight.Bold,
     )
 
+    val focusPendingStyle = TextStyle(
+        color = ColorProvider(textPrimary),
+        fontSize = 22.sp,
+        fontWeight = FontWeight.Bold,
+    )
+
+    val compactLineStyle = TextStyle(
+        color = ColorProvider(textPrimary),
+        fontSize = 12.sp,
+        fontWeight = FontWeight.Normal,
+    )
+
+    val compactDoneLineStyle = TextStyle(
+        color = ColorProvider(textSecondary),
+        fontSize = 12.sp,
+        fontWeight = FontWeight.Normal,
+    )
+
+    val compactTitleStyle = TextStyle(
+        color = ColorProvider(textPrimary),
+        fontSize = 14.sp,
+        fontWeight = FontWeight.Bold,
+    )
+
     val padding = 14.dp
+    val compactPadding = 10.dp
+
+    fun surface(modifier: GlanceModifier = GlanceModifier): GlanceModifier =
+        modifier
+            .fillMaxSize()
+            .cornerRadius(cornerRadius)
+            .background(background)
+            .padding(padding)
+
+    fun compactSurface(modifier: GlanceModifier = GlanceModifier): GlanceModifier =
+        modifier
+            .fillMaxSize()
+            .cornerRadius(cornerRadius)
+            .background(background)
+            .padding(compactPadding)
 }

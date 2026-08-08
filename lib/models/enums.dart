@@ -10,7 +10,10 @@ enum RepeatType { oneTime, daily, weekly, monthly }
 
 enum FocusMode { pomodoro, stopwatch }
 
-enum DeleteRepeatScope { onlyThis, thisAndFuture, all }
+enum RepeatScope { onlyThis, thisAndFuture, all }
+
+@Deprecated('Use RepeatScope')
+typedef DeleteRepeatScope = RepeatScope;
 
 extension TaskTypeX on TaskType {
   String get storage => name;

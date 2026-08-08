@@ -442,6 +442,12 @@ abstract class AppLocalizations {
   /// **'{done}/{total} done'**
   String widgetTodoProgress(int done, int total);
 
+  /// No description provided for @widgetFocusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} pending'**
+  String widgetFocusPending(int count);
+
   /// No description provided for @settingsWidgets.
   ///
   /// In en, this message translates to:
@@ -496,6 +502,18 @@ abstract class AppLocalizations {
   /// **'Today\'s todos and progress; tap the box to check off; + to add'**
   String get widgetSetupTypeTodoHint;
 
+  /// No description provided for @widgetSetupTypeTodoCompact.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s todos (2×2)'**
+  String get widgetSetupTypeTodoCompact;
+
+  /// No description provided for @widgetSetupTypeTodoCompactHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Compact size: progress plus 2 todos; tap the box to toggle'**
+  String get widgetSetupTypeTodoCompactHint;
+
   /// No description provided for @widgetSetupTypeSchedule.
   ///
   /// In en, this message translates to:
@@ -517,7 +535,7 @@ abstract class AppLocalizations {
   /// No description provided for @widgetSetupTypeFocusHint.
   ///
   /// In en, this message translates to:
-  /// **'Today\'s focus time; tap to open the Focus tab'**
+  /// **'Pending todo count and today\'s focus time; tap to open Focus'**
   String get widgetSetupTypeFocusHint;
 
   /// No description provided for @widgetSetupToggleHint.
@@ -909,6 +927,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete this item?'**
   String get confirmDeleteMessage;
+
+  /// No description provided for @repeatScopeEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit recurring event'**
+  String get repeatScopeEditTitle;
+
+  /// No description provided for @repeatScopeDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete recurring event'**
+  String get repeatScopeDeleteTitle;
+
+  /// No description provided for @repeatScopeOnlyThis.
+  ///
+  /// In en, this message translates to:
+  /// **'This occurrence only'**
+  String get repeatScopeOnlyThis;
+
+  /// No description provided for @repeatScopeThisAndFuture.
+  ///
+  /// In en, this message translates to:
+  /// **'This and future'**
+  String get repeatScopeThisAndFuture;
+
+  /// No description provided for @repeatScopeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All occurrences'**
+  String get repeatScopeAll;
+
+  /// No description provided for @repeatScopeEditOnlyThisHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Change only this occurrence'**
+  String get repeatScopeEditOnlyThisHint;
+
+  /// No description provided for @repeatScopeEditFutureHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Change this and all future occurrences'**
+  String get repeatScopeEditFutureHint;
+
+  /// No description provided for @repeatScopeEditAllHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Change the entire series'**
+  String get repeatScopeEditAllHint;
+
+  /// No description provided for @repeatScopeDeleteOnlyThisHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete only this occurrence'**
+  String get repeatScopeDeleteOnlyThisHint;
+
+  /// No description provided for @repeatScopeDeleteFutureHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this and all future occurrences'**
+  String get repeatScopeDeleteFutureHint;
+
+  /// No description provided for @repeatScopeDeleteAllHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete the entire series'**
+  String get repeatScopeDeleteAllHint;
 
   /// No description provided for @addTitle.
   ///

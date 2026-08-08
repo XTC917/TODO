@@ -7,6 +7,7 @@ import 'package:home_widget/home_widget.dart';
 import '../providers/app_providers.dart';
 import '../providers/focus_providers.dart';
 import '../utils/date_time_formats.dart';
+import 'home_widget_keys.dart';
 import 'home_widget_snapshot.dart';
 import 'widget_background_handler.dart';
 import 'widget_launch_handler.dart';
@@ -49,18 +50,29 @@ class WidgetBootstrap extends ConsumerStatefulWidget {
   ConsumerState<WidgetBootstrap> createState() => _WidgetBootstrapState();
 }
 
-class _WidgetBootstrapState extends ConsumerState<WidgetBootstrap> {
+class _WidgetBootstrapState extends ConsumerState<WidgetBootstrap>
+    with WidgetsBindingObserver {
   StreamSubscription<Uri?>? _clickSub;
+  Timer? _revisionTimer;
+  int _lastDataRevision = 0;
 
   @override
   void initState() {
     super.initState();
-    HomeWidget.registerInteractivityCallback(widgetInteractivityCallback);
+    WidgetsBinding.instance.addObserver(this);
+    _lastDataRevision = ref
+            .read(sharedPreferencesProvider)
+            .getInt(HomeWidgetKeys.dataRevision) ??
+        0;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(homeWidgetSyncProvider).syncNow();
       _bindWidgetClicks();
       _handleInitialWidgetLaunch();
     });
+    _revisionTimer = Timer.periodic(
+      const Duration(milliseconds: 500),
+      (_) => unawaited(_pollDataRevision()),
+    );
   }
 
   Future<void> _bindWidgetClicks() async {
@@ -76,8 +88,29 @@ class _WidgetBootstrapState extends ConsumerState<WidgetBootstrap> {
     handleWidgetLaunch(ref, uri);
   }
 
+  Future<void> _pollDataRevision() async {
+    if (!mounted) return;
+    final prefs = ref.read(sharedPreferencesProvider);
+    await prefs.reload();
+    final revision = prefs.getInt(HomeWidgetKeys.dataRevision) ?? 0;
+    if (revision == _lastDataRevision) return;
+    _lastDataRevision = revision;
+    await reloadDatabaseAfterExternalChange(ref);
+    if (!mounted) return;
+    ref.read(homeWidgetSyncProvider).scheduleSync();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_pollDataRevision());
+    }
+  }
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _revisionTimer?.cancel();
     _clickSub?.cancel();
     super.dispose();
   }

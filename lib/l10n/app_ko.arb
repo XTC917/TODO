@@ -60,6 +60,12 @@
   "widgetOpenFocus": "집중 열기",
   "widgetEmpty": "내용 없음",
   "widgetTodoProgress": "{done}/{total} 완료",
+  "widgetFocusPending": "미완료 {count}개",
+  "@widgetFocusPending": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
   "settingsWidgets": "홈 화면 위젯",
   "widgetSetupIntro": "Android 홈 화면에 JUJU 위젯을 추가해 할 일, 일정, 집중을 빠르게 확인하세요.",
   "widgetSetupStep1": "홈 화면 빈 곳을 길게 누르기",
@@ -69,10 +75,12 @@
   "widgetSetupTypesTitle": "사용 가능한 위젯",
   "widgetSetupTypeTodo": "오늘 할 일",
   "widgetSetupTypeTodoHint": "오늘 할 일과 진행률; 왼쪽 상자로 완료 토글; + 로 추가",
+  "widgetSetupTypeTodoCompact": "오늘 할 일 (2×2)",
+  "widgetSetupTypeTodoCompactHint": "작은 크기: 진행률과 할 일 2개; 상자 탭으로 완료 토글",
   "widgetSetupTypeSchedule": "오늘 일정",
   "widgetSetupTypeScheduleHint": "오늘 일정; + 로 일정 추가",
   "widgetSetupTypeFocus": "집중",
-  "widgetSetupTypeFocusHint": "오늘 집중 시간; 탭하면 집중 페이지로 이동",
+  "widgetSetupTypeFocusHint": "미완료 개수와 오늘 집중 시간 표시; 탭하면 집중 페이지로 이동",
   "widgetSetupToggleHint": "팁: 할 일 위젯 왼쪽 상자를 눌러 앱 없이 완료/취소할 수 있습니다.",
   "@widgetTodoProgress": {
     "placeholders": {
@@ -144,6 +152,17 @@
   "saveFailedRetry": "저장 실패. 다시 시도하세요.",
   "confirmDeleteTitle": "삭제",
   "confirmDeleteMessage": "이 항목을 삭제할까요?",
+  "repeatScopeEditTitle": "반복 일정 편집",
+  "repeatScopeDeleteTitle": "반복 일정 삭제",
+  "repeatScopeOnlyThis": "이번만",
+  "repeatScopeThisAndFuture": "이번 및 이후",
+  "repeatScopeAll": "전체",
+  "repeatScopeEditOnlyThisHint": "현재 일정만 수정",
+  "repeatScopeEditFutureHint": "이번 및 이후 반복 모두 수정",
+  "repeatScopeEditAllHint": "전체 반복 일정 수정",
+  "repeatScopeDeleteOnlyThisHint": "현재 일정만 삭제",
+  "repeatScopeDeleteFutureHint": "이번 및 이후 반복 모두 삭제",
+  "repeatScopeDeleteAllHint": "전체 반복 일정 삭제",
   "addTitle": "추가",
   "editTitle": "편집",
   "titleLabel": "제목",

@@ -7,6 +7,7 @@ import '../../core/utils/event_constants.dart';
 import '../../core/utils/theme_event_color.dart';
 import '../../core/utils/date_time_formats.dart';
 import '../../core/widgets/reminder_picker_sheet.dart';
+import '../../core/widgets/repeat_scope_dialog.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/enums.dart';
 import '../../models/event.dart';
@@ -16,12 +17,15 @@ class EventFormPage extends ConsumerStatefulWidget {
   const EventFormPage({
     super.key,
     this.eventId,
+    this.editingOccurrence,
     this.initialDate,
     this.forceTaskType,
     this.forceTodoTimeMode,
   });
 
   final int? eventId;
+  /// The occurrence shown in the list (date may differ from stored row).
+  final Event? editingOccurrence;
   final DateTime? initialDate;
   final TaskType? forceTaskType;
   final TodoTimeMode? forceTodoTimeMode;
@@ -70,6 +74,8 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
     }
   }
 
+  Event? _occurrence;
+
   Future<void> _loadExisting() async {
     final event =
         await ref.read(eventRepositoryProvider).getById(widget.eventId!);
@@ -78,12 +84,14 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
       Navigator.of(context).pop();
       return;
     }
+    final display = widget.editingOccurrence ?? event;
     setState(() {
       _existing = event;
-      _titleController.text = event.title;
-      _noteController.text = event.note ?? '';
-      _date = event.hasDate
-          ? DateTimeFormats.parseDate(event.date)
+      _occurrence = display;
+      _titleController.text = display.title;
+      _noteController.text = display.note ?? '';
+      _date = display.hasDate
+          ? DateTimeFormats.parseDate(display.date)
           : DateTimeFormats.dateOnly(DateTime.now());
       if (event.startTime.isNotEmpty) {
         _start = _parseTime(event.startTime);
@@ -459,21 +467,34 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
 
     try {
       if (widget.isEditing && _existing != null) {
-        await actions.update(
-          _existing!.copyWith(
-            title: title,
-            date: fields.$1,
-            startTime: fields.$2,
-            endTime: fields.$3,
-            note: _noteController.text,
-            color: color,
-            taskType: _taskType,
-            todoTimeMode: todoMode,
-            repeatType: _repeatType,
-            reminderOffsetsSeconds: _reminderOffsetsSeconds,
-            clearReminderOffsets: _reminderOffsetsSeconds.isEmpty,
-          ),
+        final updated = _existing!.copyWith(
+          title: title,
+          date: fields.$1,
+          startTime: fields.$2,
+          endTime: fields.$3,
+          note: _noteController.text,
+          color: color,
+          taskType: _taskType,
+          todoTimeMode: todoMode,
+          repeatType: _repeatType,
+          reminderOffsetsSeconds: _reminderOffsetsSeconds,
+          clearReminderOffsets: _reminderOffsetsSeconds.isEmpty,
         );
+        final occurrence = (_occurrence ?? _existing!).copyWith(date: fields.$1);
+        if (occurrence.isRepeatSeriesOccurrence) {
+          final scope = await pickRepeatScope(
+            context,
+            action: RepeatScopeAction.edit,
+            event: occurrence,
+          );
+          if (scope == null) {
+            if (mounted) setState(() => _loading = false);
+            return;
+          }
+          await actions.updateWithScope(occurrence, updated, scope);
+        } else {
+          await actions.update(updated.copyWith(id: occurrence.id));
+        }
       } else {
         await actions.create(
           EventDraft(
@@ -513,26 +534,12 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
 
   Future<void> _confirmDelete() async {
     final l10n = AppLocalizations.of(context);
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.confirmDeleteTitle),
-        content: Text(l10n.confirmDeleteMessage),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l10n.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.delete),
-          ),
-        ],
-      ),
-    );
-    if (ok != true) return;
+    if (_existing == null) return;
+    final occurrence = _occurrence ?? _existing!;
+    final scope = await pickDeleteScope(context, event: occurrence);
+    if (scope == null) return;
     try {
-      await ref.read(eventActionsProvider).delete(widget.eventId!);
+      await ref.read(eventActionsProvider).deleteWithScope(occurrence, scope);
       if (!mounted) return;
       Navigator.of(context).pop();
     } catch (_) {

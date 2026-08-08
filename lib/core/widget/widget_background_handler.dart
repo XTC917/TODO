@@ -19,12 +19,28 @@ Future<void> handleWidgetBackgroundUri(Uri? uri) async {
       final repo = EventRepository(db);
       final event = await repo.getById(id);
       if (event == null || !event.isTodo) return;
-      await repo.toggleTodoComplete(id, completed: !event.isCompleted);
+      await repo.toggleTimelineForOccurrence(
+        event,
+        completed: !event.isCompleted,
+      );
       await HomeWidgetSnapshotWriter.syncFromDatabase();
     } catch (e, st) {
       debugPrint('Widget background toggle failed: $e\n$st');
     } finally {
       await db.close();
+    }
+    return;
+  }
+
+  if (uri.host == 'todo' && uri.path == '/sync') {
+    WidgetsFlutterBinding.ensureInitialized();
+    try {
+      final dropCompleted = uri.queryParameters['drop'] == '1';
+      await HomeWidgetSnapshotWriter.syncFromDatabase(
+        dropCompletedFromWidget: dropCompleted,
+      );
+    } catch (e, st) {
+      debugPrint('Widget background sync failed: $e\n$st');
     }
   }
 }

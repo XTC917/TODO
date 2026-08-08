@@ -21,11 +21,11 @@ object WidgetNativeToggle {
             ).use { cursor ->
                 if (!cursor.moveToFirst()) return false
                 if (cursor.getString(1) != "todo") return false
-                val wasDone = cursor.getInt(0) == 1
+                val wasDone = cursor.getInt(0) != 0
                 val nowDone = !wasDone
                 val nowMs = System.currentTimeMillis()
                 val values = ContentValues().apply {
-                    put("is_completed", nowDone)
+                    put("is_completed", if (nowDone) 1 else 0)
                     if (nowDone) {
                         put("completed_at", nowMs)
                     } else {
@@ -41,6 +41,7 @@ object WidgetNativeToggle {
                 )
                 if (updated <= 0) return false
                 flipTodoInWidgetPrefs(context, eventId, nowDone)
+                bumpDataRevision(context)
                 return true
             }
         } finally {
@@ -67,5 +68,11 @@ object WidgetNativeToggle {
             }
         } catch (_: Exception) {
         }
+    }
+
+    private fun bumpDataRevision(context: Context) {
+        val prefs = context.getSharedPreferences("HomeWidgetPreferences", Context.MODE_PRIVATE)
+        val next = prefs.getInt("juju_data_revision", 0) + 1
+        prefs.edit().putInt("juju_data_revision", next).apply()
     }
 }

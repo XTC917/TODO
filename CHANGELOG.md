@@ -1,5 +1,43 @@
 # Changelog
 
+## v2.4.9
+
+### Added
+- Recurring events: choose **this occurrence only**, **this and future**, or **all** when editing or deleting.
+- Completing/checking off a recurring event affects **only that occurrence**.
+
+### Fixed
+- Deleting **this and future** on a recurring event no longer duplicates many copies on the same day.
+
+## v2.4.8
+
+### Changed
+- Focus widget: rounded corners on the **Open focus** button.
+
+## v2.4.7
+
+### Fixed
+- Todo widget: smoother check-off (brief ✓ state, then list refreshes ~1.4s later).
+- App UI refreshes immediately when toggling todos from the home-screen widget.
+
+### Changed
+- Todo widget checkbox: circle ○ / filled ✓ instead of square boxes.
+- Focus widget: pending count text matches focus duration size.
+
+## v2.4.6
+
+### Added
+- Todo widget **2×2 compact** size: progress + 2 todos, checkbox toggle, and + to add.
+
+## v2.4.5
+
+### Fixed
+- Todo widget checkbox: use a dedicated broadcast receiver so taps toggle completion reliably.
+
+### Changed
+- Focus widget: shows pending todo count at the top; button moved toward the bottom.
+- All widgets: rounder corners (18dp).
+
 ## v2.4.4
 
 ### Added

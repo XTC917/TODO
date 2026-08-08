@@ -1,5 +1,8 @@
 import 'enums.dart';
 
+/// Hidden marker title for deleted single occurrences in a repeat series.
+const kRepeatSkipMarker = '\u{200B}SKIP';
+
 /// Domain model for schedule blocks and todos.
 class Event {
   const Event({
@@ -47,7 +50,23 @@ class Event {
   bool get isNoTimeTodo => isTodo && todoTimeMode == TodoTimeMode.noTime;
   bool get hasReminder => reminderOffsetsSeconds.isNotEmpty;
 
-  /// Appears on the home Timeline (schedules + timed todos with date).
+  /// Stored recurring master row (defines the repeat rule).
+  bool get isRecurring =>
+      repeatType != RepeatType.oneTime && repeatGroupId != null;
+
+  /// Any row in a repeat series, including materialized one-time instances.
+  bool get isRepeatSeriesOccurrence => repeatGroupId != null;
+
+  bool get isRepeatSkip => title == kRepeatSkipMarker;
+
+  String? get seriesRepeatUntil {
+    final value = note;
+    if (value == null || value.isEmpty) return null;
+    final match =
+        RegExp(r'#repeatUntil:(\d{4}-\d{2}-\d{2})').firstMatch(value);
+    return match?.group(1);
+  }
+
   bool get showsInTimeline =>
       hasDate &&
       (isSchedule ||

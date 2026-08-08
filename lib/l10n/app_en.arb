@@ -60,6 +60,12 @@
   "widgetOpenFocus": "Open focus",
   "widgetEmpty": "Nothing here",
   "widgetTodoProgress": "{done}/{total} done",
+  "widgetFocusPending": "{count} pending",
+  "@widgetFocusPending": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
   "settingsWidgets": "Home screen widgets",
   "widgetSetupIntro": "Add JUJU widgets to your Android home screen to see todos, schedule, and focus at a glance.",
   "widgetSetupStep1": "Long-press an empty area on your home screen",
@@ -69,10 +75,12 @@
   "widgetSetupTypesTitle": "Available widgets",
   "widgetSetupTypeTodo": "Today's todos",
   "widgetSetupTypeTodoHint": "Today's todos and progress; tap the box to check off; + to add",
+  "widgetSetupTypeTodoCompact": "Today's todos (2×2)",
+  "widgetSetupTypeTodoCompactHint": "Compact size: progress plus 2 todos; tap the box to toggle",
   "widgetSetupTypeSchedule": "Today's schedule",
   "widgetSetupTypeScheduleHint": "Today's schedule; + to add an event",
   "widgetSetupTypeFocus": "Focus",
-  "widgetSetupTypeFocusHint": "Today's focus time; tap to open the Focus tab",
+  "widgetSetupTypeFocusHint": "Pending todo count and today's focus time; tap to open Focus",
   "widgetSetupToggleHint": "Tip: Tap the box on the left in the todo widget to toggle completion without opening the app.",
   "@widgetTodoProgress": {
     "placeholders": {
@@ -195,6 +203,17 @@
   "saveFailedRetry": "Save failed. Please try again.",
   "confirmDeleteTitle": "Delete",
   "confirmDeleteMessage": "Delete this item?",
+  "repeatScopeEditTitle": "Edit recurring event",
+  "repeatScopeDeleteTitle": "Delete recurring event",
+  "repeatScopeOnlyThis": "This occurrence only",
+  "repeatScopeThisAndFuture": "This and future",
+  "repeatScopeAll": "All occurrences",
+  "repeatScopeEditOnlyThisHint": "Change only this occurrence",
+  "repeatScopeEditFutureHint": "Change this and all future occurrences",
+  "repeatScopeEditAllHint": "Change the entire series",
+  "repeatScopeDeleteOnlyThisHint": "Delete only this occurrence",
+  "repeatScopeDeleteFutureHint": "Delete this and all future occurrences",
+  "repeatScopeDeleteAllHint": "Delete the entire series",
   "addTitle": "Add",
   "editTitle": "Edit",
   "titleLabel": "Title",

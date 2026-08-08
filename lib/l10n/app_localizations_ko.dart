@@ -184,6 +184,11 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String widgetFocusPending(int count) {
+    return '미완료 $count개';
+  }
+
+  @override
   String get settingsWidgets => '홈 화면 위젯';
 
   @override
@@ -212,6 +217,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get widgetSetupTypeTodoHint => '오늘 할 일과 진행률; 왼쪽 상자로 완료 토글; + 로 추가';
 
   @override
+  String get widgetSetupTypeTodoCompact => '오늘 할 일 (2×2)';
+
+  @override
+  String get widgetSetupTypeTodoCompactHint =>
+      '작은 크기: 진행률과 할 일 2개; 상자 탭으로 완료 토글';
+
+  @override
   String get widgetSetupTypeSchedule => '오늘 일정';
 
   @override
@@ -221,7 +233,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get widgetSetupTypeFocus => '집중';
 
   @override
-  String get widgetSetupTypeFocusHint => '오늘 집중 시간; 탭하면 집중 페이지로 이동';
+  String get widgetSetupTypeFocusHint => '미완료 개수와 오늘 집중 시간 표시; 탭하면 집중 페이지로 이동';
 
   @override
   String get widgetSetupToggleHint => '팁: 할 일 위젯 왼쪽 상자를 눌러 앱 없이 완료/취소할 수 있습니다.';
@@ -444,6 +456,39 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get confirmDeleteMessage => '이 항목을 삭제할까요?';
+
+  @override
+  String get repeatScopeEditTitle => '반복 일정 편집';
+
+  @override
+  String get repeatScopeDeleteTitle => '반복 일정 삭제';
+
+  @override
+  String get repeatScopeOnlyThis => '이번만';
+
+  @override
+  String get repeatScopeThisAndFuture => '이번 및 이후';
+
+  @override
+  String get repeatScopeAll => '전체';
+
+  @override
+  String get repeatScopeEditOnlyThisHint => '현재 일정만 수정';
+
+  @override
+  String get repeatScopeEditFutureHint => '이번 및 이후 반복 모두 수정';
+
+  @override
+  String get repeatScopeEditAllHint => '전체 반복 일정 수정';
+
+  @override
+  String get repeatScopeDeleteOnlyThisHint => '현재 일정만 삭제';
+
+  @override
+  String get repeatScopeDeleteFutureHint => '이번 및 이후 반복 모두 삭제';
+
+  @override
+  String get repeatScopeDeleteAllHint => '전체 반복 일정 삭제';
 
   @override
   String get addTitle => '추가';

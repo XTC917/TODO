@@ -8,6 +8,7 @@ import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
 import androidx.glance.currentState
@@ -44,27 +45,36 @@ private fun FocusContent(context: Context, state: HomeWidgetGlanceState) {
         context,
         Uri.parse("jujuschedule://focus"),
     )
+    val pendingLabel = WidgetData.focusPendingLabel(prefs)
 
-    Column(
-        modifier = GlanceModifier
-            .fillMaxSize()
-            .background(WidgetTheme.background)
-            .padding(WidgetTheme.padding),
-        horizontalAlignment = Alignment.CenterHorizontally,
+    Box(
+        modifier = WidgetTheme.surface(),
+        contentAlignment = Alignment.Center,
     ) {
-        Text(text = WidgetData.focusTitle(prefs), style = WidgetTheme.titleStyle)
-        Spacer(GlanceModifier.height(8.dp))
-        Text(text = WidgetData.focusDuration(prefs), style = WidgetTheme.lineStyle)
-        Spacer(GlanceModifier.height(12.dp))
-        Box(
-            modifier = GlanceModifier
-                .fillMaxWidth()
-                .background(accent)
-                .padding(vertical = 10.dp, horizontal = 12.dp)
-                .clickable(onClick = openFocus),
-            contentAlignment = Alignment.Center,
+        Column(
+            modifier = GlanceModifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(text = WidgetData.openFocusLabel(prefs), style = WidgetTheme.buttonStyle)
+            Text(text = WidgetData.focusTitle(prefs), style = WidgetTheme.titleStyle)
+            Spacer(GlanceModifier.height(10.dp))
+            if (pendingLabel.isNotEmpty()) {
+                Text(text = pendingLabel, style = WidgetTheme.subtitleStyle)
+                Spacer(GlanceModifier.height(6.dp))
+            }
+            Text(text = WidgetData.focusDuration(prefs), style = WidgetTheme.subtitleStyle)
+            Spacer(GlanceModifier.defaultWeight())
+            Box(
+                modifier = GlanceModifier
+                    .fillMaxWidth()
+                    .cornerRadius(WidgetTheme.buttonCornerRadius)
+                    .background(accent)
+                    .padding(vertical = 12.dp, horizontal = 12.dp)
+                    .clickable(onClick = openFocus),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(text = WidgetData.openFocusLabel(prefs), style = WidgetTheme.buttonStyle)
+            }
+            Spacer(GlanceModifier.height(4.dp))
         }
     }
 }

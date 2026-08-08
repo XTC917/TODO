@@ -170,6 +170,40 @@ class AppDatabase extends _$AppDatabase {
         .get();
   }
 
+  Future<EventRow?> getEventByRepeatGroupAndDate(
+    String groupId,
+    String date,
+  ) {
+    return (select(events)
+          ..where(
+            (t) => t.repeatGroupId.equals(groupId) & t.date.equals(date),
+          ))
+        .getSingleOrNull();
+  }
+
+  Future<EventRow?> getSeriesTemplateRow(String groupId) async {
+    final rows = await getEventsByRepeatGroup(groupId);
+    if (rows.isEmpty) return null;
+    final masters = rows.where((row) => row.repeatType != 'oneTime').toList()
+      ..sort((a, b) => a.date.compareTo(b.date));
+    if (masters.isEmpty) return null;
+    return masters.first;
+  }
+
+  Future<int> updateEventsByRepeatGroupFromDate(
+    String groupId,
+    String fromDate,
+    EventsCompanion companion,
+  ) {
+    return (update(events)
+          ..where(
+            (t) =>
+                t.repeatGroupId.equals(groupId) &
+                t.date.isBiggerOrEqualValue(fromDate),
+          ))
+        .write(companion);
+  }
+
   Future<int> insertEvent(EventsCompanion companion) {
     return into(events).insert(companion);
   }

@@ -73,6 +73,18 @@ Future<void> reopenDatabase(WidgetRef ref) async {
   await ref.read(eventRepositoryProvider).getAllEvents();
 }
 
+/// Reload Drift after the home-screen widget writes SQLite directly.
+Future<void> reloadDatabaseAfterExternalChange(WidgetRef ref) async {
+  ref.invalidate(appDatabaseProvider);
+  ref.invalidate(eventRepositoryProvider);
+  ref.invalidate(focusRepositoryProvider);
+  ref.invalidate(eventsForDateProvider);
+  ref.invalidate(allTodosProvider);
+  ref.invalidate(allFocusRecordsProvider);
+  ref.invalidate(daySummaryProvider);
+  ref.invalidate(eventDatesInMonthProvider);
+}
+
 final themeModeProvider =
     StateNotifierProvider<ThemeModeController, ThemeMode>((ref) {
   return ThemeModeController(ref.watch(sharedPreferencesProvider));
@@ -348,17 +360,45 @@ class EventActions {
     }
   }
 
-  Future<void> toggleTimeline(int id, bool completed) async {
-    await _ref.read(eventRepositoryProvider).toggleTimelineComplete(
-          id,
+  Future<void> toggleOccurrence(Event occurrence, bool completed) async {
+    if (occurrence.isRepeatSeriesOccurrence) {
+      await toggleTimelineOccurrence(occurrence, completed);
+      return;
+    }
+    if (occurrence.isTodo) {
+      await toggleTodo(occurrence.id, completed);
+    } else {
+      await toggleTimeline(occurrence.id, completed);
+    }
+  }
+
+  Future<void> toggleTimelineOccurrence(Event occurrence, bool completed) async {
+    await _ref.read(eventRepositoryProvider).toggleTimelineForOccurrence(
+          occurrence,
           completed: completed,
         );
     if (completed) {
-      await _cancelReminder(id);
+      await _cancelReminder(occurrence.id);
     } else {
-      final event = await _ref.read(eventRepositoryProvider).getById(id);
-      if (event != null) await _syncReminder(event);
+      await _syncReminder(occurrence);
     }
+  }
+
+  Future<void> toggleTimeline(int id, bool completed) async {
+    final event = await _ref.read(eventRepositoryProvider).getById(id);
+    if (event == null) return;
+    await toggleTimelineOccurrence(event, completed);
+  }
+
+  Future<void> updateWithScope(
+    Event occurrence,
+    Event updated,
+    RepeatScope scope,
+  ) async {
+    final repo = _ref.read(eventRepositoryProvider);
+    final previous = await repo.getById(occurrence.id);
+    await repo.updateWithScope(occurrence, updated, scope);
+    await _syncReminder(updated, previous: previous);
   }
 
   Future<Event> duplicate(int id) async {
@@ -372,9 +412,20 @@ class EventActions {
     await NotificationService.instance.deleteEventReminders(id);
   }
 
-  Future<void> deleteWithScope(Event event, DeleteRepeatScope scope) async {
-    await _ref.read(eventRepositoryProvider).deleteWithScope(event, scope);
-    await NotificationService.instance.deleteEventReminders(event.id);
+  Future<void> deleteWithScope(Event event, RepeatScope scope) async {
+    final repo = _ref.read(eventRepositoryProvider);
+    if (scope == RepeatScope.all && event.repeatGroupId != null) {
+      final rows = await repo.getAllEvents();
+      final ids = rows
+          .where((e) => e.repeatGroupId == event.repeatGroupId)
+          .map((e) => e.id);
+      for (final id in ids) {
+        await NotificationService.instance.deleteEventReminders(id);
+      }
+    } else {
+      await NotificationService.instance.deleteEventReminders(event.id);
+    }
+    await repo.deleteWithScope(event, scope);
   }
 
   Future<void> batchDelete(Set<int> ids) async {

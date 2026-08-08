@@ -20,7 +20,10 @@ import 'home_widget_keys.dart';
 class HomeWidgetSnapshotWriter {
   HomeWidgetSnapshotWriter._();
 
-  static Future<void> syncFromDatabase({SharedPreferences? prefs}) async {
+  static Future<void> syncFromDatabase({
+    SharedPreferences? prefs,
+    bool dropCompletedFromWidget = false,
+  }) async {
     WidgetsFlutterBinding.ensureInitialized();
     final sharedPrefs = prefs ?? await SharedPreferences.getInstance();
     final db = AppDatabase();
@@ -40,19 +43,18 @@ class HomeWidgetSnapshotWriter {
           events.where((e) => e.showsOnHomeDate(dateKey)).toList();
       final undatedPending =
           allTodos.where((e) => !e.hasDate && !e.isCompleted).toList();
-      final seen = <int>{};
-      final todos = <Event>[];
-      for (final event in [...datedToday, ...undatedPending.take(4)]) {
-        if (seen.add(event.id)) todos.add(event);
-      }
-      todos.sort((a, b) {
-        final done =
-            a.isCompleted == b.isCompleted ? 0 : (a.isCompleted ? 1 : -1);
-        if (done != 0) return done;
-        return a.title.compareTo(b.title);
-      });
+      final existingTodosJson =
+          sharedPrefs.getString(HomeWidgetKeys.todosJson);
+      final todos = _buildWidgetTodos(
+        datedToday: datedToday,
+        undatedPending: undatedPending,
+        allTodos: allTodos,
+        existingTodosJson: existingTodosJson,
+        dropCompleted: dropCompletedFromWidget,
+      );
       final todosAll = events.where((e) => e.isTodo).toList();
       final todoCompleted = todosAll.where((e) => e.isTodoDone()).length;
+      final todoPending = allTodos.where((e) => !e.isCompleted).length;
       final focusSeconds =
           records.fold<int>(0, (sum, r) => sum + r.durationSeconds);
 
@@ -117,10 +119,17 @@ class HomeWidgetSnapshotWriter {
         HomeWidgetKeys.labelOpenFocus,
         l10n.widgetOpenFocus,
       );
+      await HomeWidget.saveWidgetData<String>(
+        HomeWidgetKeys.labelFocusPending,
+        l10n.widgetFocusPending(todoPending),
+      );
 
       await Future.wait([
         HomeWidget.updateWidget(
           qualifiedAndroidName: HomeWidgetKeys.androidTodoReceiver,
+        ),
+        HomeWidget.updateWidget(
+          qualifiedAndroidName: HomeWidgetKeys.androidTodoCompactReceiver,
         ),
         HomeWidget.updateWidget(
           qualifiedAndroidName: HomeWidgetKeys.androidScheduleReceiver,
@@ -139,6 +148,48 @@ class HomeWidgetSnapshotWriter {
       (language) => language.name == prefs.getString(_appLanguageKey),
       orElse: () => AppLanguage.system,
     );
+  }
+
+  static List<Event> _buildWidgetTodos({
+    required List<Event> datedToday,
+    required List<Event> undatedPending,
+    required List<Event> allTodos,
+    required String? existingTodosJson,
+    required bool dropCompleted,
+  }) {
+    final byId = <int, Event>{
+      for (final event in [...datedToday, ...allTodos]) event.id: event,
+    };
+    final ordered = <Event>[];
+    final seen = <int>{};
+
+    for (final id in _parseTodoIds(existingTodosJson)) {
+      final event = byId[id];
+      if (event == null) continue;
+      if (dropCompleted && event.isCompleted) continue;
+      if (seen.add(event.id)) ordered.add(event);
+    }
+
+    for (final event in [...datedToday, ...undatedPending]) {
+      if (ordered.length >= 6) break;
+      if (dropCompleted && event.isCompleted) continue;
+      if (seen.add(event.id)) ordered.add(event);
+    }
+
+    return ordered.take(6).toList();
+  }
+
+  static List<int> _parseTodoIds(String? raw) {
+    if (raw == null || raw.isEmpty) return const [];
+    try {
+      final array = jsonDecode(raw) as List<dynamic>;
+      return [
+        for (final item in array)
+          if (item is Map && item['id'] is int) item['id'] as int,
+      ];
+    } catch (_) {
+      return const [];
+    }
   }
 
   static Map<String, Object?> _todoItem(Event event) => {

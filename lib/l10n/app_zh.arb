@@ -60,6 +60,12 @@
   "widgetOpenFocus": "打开专注",
   "widgetEmpty": "暂无内容",
   "widgetTodoProgress": "{done}/{total} 已完成",
+  "widgetFocusPending": "{count} 项待完成",
+  "@widgetFocusPending": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
   "settingsWidgets": "桌面小组件",
   "widgetSetupIntro": "在 Android 主屏幕添加 JUJU 小组件，快速查看待办、日程与专注进度。",
   "widgetSetupStep1": "长按主屏幕空白处",
@@ -69,10 +75,12 @@
   "widgetSetupTypesTitle": "可用小组件",
   "widgetSetupTypeTodo": "今日待办",
   "widgetSetupTypeTodoHint": "显示今日待办与完成进度；点左侧方框勾选；右上角 + 添加待办",
+  "widgetSetupTypeTodoCompact": "今日待办 (2×2)",
+  "widgetSetupTypeTodoCompactHint": "紧凑尺寸，显示完成进度与 2 条待办；同样支持勾选",
   "widgetSetupTypeSchedule": "今日日程",
   "widgetSetupTypeScheduleHint": "显示今日日程；右上角 + 添加日程",
   "widgetSetupTypeFocus": "专注",
-  "widgetSetupTypeFocusHint": "显示今日专注时长，点击进入专注页",
+  "widgetSetupTypeFocusHint": "显示待完成数量与今日专注时长；点击进入专注页",
   "widgetSetupToggleHint": "提示：在待办小组件上点击左侧方框可直接勾选/取消，无需打开 App。",
   "@widgetTodoProgress": {
     "placeholders": {
@@ -144,6 +152,17 @@
   "saveFailedRetry": "保存失败，请稍后重试。",
   "confirmDeleteTitle": "删除",
   "confirmDeleteMessage": "确定删除此任务？",
+  "repeatScopeEditTitle": "编辑重复日程",
+  "repeatScopeDeleteTitle": "删除重复日程",
+  "repeatScopeOnlyThis": "仅此次",
+  "repeatScopeThisAndFuture": "此次及未来",
+  "repeatScopeAll": "全部",
+  "repeatScopeEditOnlyThisHint": "只修改当前这一次",
+  "repeatScopeEditFutureHint": "修改此次及之后所有重复",
+  "repeatScopeEditAllHint": "修改整个重复系列",
+  "repeatScopeDeleteOnlyThisHint": "只删除当前这一次",
+  "repeatScopeDeleteFutureHint": "删除此次及之后所有重复",
+  "repeatScopeDeleteAllHint": "删除整个重复系列",
   "addTitle": "新建",
   "editTitle": "编辑",
   "titleLabel": "标题",

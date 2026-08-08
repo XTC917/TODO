@@ -184,6 +184,11 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String widgetFocusPending(int count) {
+    return '$count 项待完成';
+  }
+
+  @override
   String get settingsWidgets => '桌面小组件';
 
   @override
@@ -211,6 +216,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get widgetSetupTypeTodoHint => '显示今日待办与完成进度；点左侧方框勾选；右上角 + 添加待办';
 
   @override
+  String get widgetSetupTypeTodoCompact => '今日待办 (2×2)';
+
+  @override
+  String get widgetSetupTypeTodoCompactHint => '紧凑尺寸，显示完成进度与 2 条待办；同样支持勾选';
+
+  @override
   String get widgetSetupTypeSchedule => '今日日程';
 
   @override
@@ -220,7 +231,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get widgetSetupTypeFocus => '专注';
 
   @override
-  String get widgetSetupTypeFocusHint => '显示今日专注时长，点击进入专注页';
+  String get widgetSetupTypeFocusHint => '显示待完成数量与今日专注时长；点击进入专注页';
 
   @override
   String get widgetSetupToggleHint => '提示：在待办小组件上点击左侧方框可直接勾选/取消，无需打开 App。';
@@ -441,6 +452,39 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get confirmDeleteMessage => '确定删除此任务？';
+
+  @override
+  String get repeatScopeEditTitle => '编辑重复日程';
+
+  @override
+  String get repeatScopeDeleteTitle => '删除重复日程';
+
+  @override
+  String get repeatScopeOnlyThis => '仅此次';
+
+  @override
+  String get repeatScopeThisAndFuture => '此次及未来';
+
+  @override
+  String get repeatScopeAll => '全部';
+
+  @override
+  String get repeatScopeEditOnlyThisHint => '只修改当前这一次';
+
+  @override
+  String get repeatScopeEditFutureHint => '修改此次及之后所有重复';
+
+  @override
+  String get repeatScopeEditAllHint => '修改整个重复系列';
+
+  @override
+  String get repeatScopeDeleteOnlyThisHint => '只删除当前这一次';
+
+  @override
+  String get repeatScopeDeleteFutureHint => '删除此次及之后所有重复';
+
+  @override
+  String get repeatScopeDeleteAllHint => '删除整个重复系列';
 
   @override
   String get addTitle => '新建';

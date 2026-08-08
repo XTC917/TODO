@@ -34,6 +34,9 @@ object WidgetData {
     fun openFocusLabel(prefs: SharedPreferences): String =
         prefs.getString("juju_label_open_focus", "Open focus") ?: "Open focus"
 
+    fun focusPendingLabel(prefs: SharedPreferences): String =
+        prefs.getString("juju_label_focus_pending", "") ?: ""
+
     fun todos(prefs: SharedPreferences): List<TodoLine> {
         val raw = prefs.getString("juju_todos_json", "[]") ?: "[]"
         return parseTodos(raw)

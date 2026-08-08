@@ -48,6 +48,11 @@ class WidgetSettingsPage extends StatelessWidget {
                 subtitle: l10n.widgetSetupTypeTodoHint,
               ),
               _WidgetTypeTile(
+                icon: Icons.checklist_rtl_rounded,
+                title: l10n.widgetSetupTypeTodoCompact,
+                subtitle: l10n.widgetSetupTypeTodoCompactHint,
+              ),
+              _WidgetTypeTile(
                 icon: Icons.calendar_today_outlined,
                 title: l10n.widgetSetupTypeSchedule,
                 subtitle: l10n.widgetSetupTypeScheduleHint,

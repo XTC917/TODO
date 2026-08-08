@@ -9,7 +9,6 @@ import androidx.glance.GlanceModifier
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.provideContent
-import androidx.glance.background
 import androidx.glance.currentState
 import androidx.glance.layout.Column
 import androidx.glance.layout.Spacer
@@ -43,12 +42,7 @@ private fun ScheduleContent(context: Context, state: HomeWidgetGlanceState) {
         Uri.parse("jujuschedule://calendar"),
     )
 
-    Column(
-        modifier = GlanceModifier
-            .fillMaxSize()
-            .background(WidgetTheme.background)
-            .padding(WidgetTheme.padding),
-    ) {
+    Column(modifier = WidgetTheme.surface()) {
         WidgetHeader(
             context = context,
             title = WidgetData.scheduleTitle(prefs),

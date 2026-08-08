@@ -6,6 +6,7 @@ import '../../core/providers/batch_providers.dart';
 import '../../core/widgets/batch_toolbar.dart';
 import '../../core/widgets/compact_todo_card.dart';
 import '../../core/widgets/event_detail_sheet.dart';
+import '../../core/widgets/repeat_scope_dialog.dart';
 import '../../core/widgets/swipe_event_actions.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/enums.dart';
@@ -58,8 +59,8 @@ class TodoPage extends ConsumerWidget {
                       );
                     }
                   },
-                  onToggleComplete: (id, v) {
-                    ref.read(eventActionsProvider).toggleTodo(id, v);
+                  onToggleComplete: (todo, v) {
+                    ref.read(eventActionsProvider).toggleOccurrence(todo, v);
                   },
                 ),
                 loading: () =>
@@ -100,7 +101,7 @@ class _TodoListBody extends ConsumerWidget {
   final BatchSelection batch;
   final ValueChanged<int> onEnterBatch;
   final ValueChanged<Event> onTap;
-  final void Function(int id, bool completed) onToggleComplete;
+  final void Function(Event todo, bool completed) onToggleComplete;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -129,15 +130,19 @@ class _TodoListBody extends ConsumerWidget {
         enabled: !batch.active,
         onEdit: () => Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => EventFormPage(eventId: todo.id),
+            builder: (_) => EventFormPage(
+              eventId: todo.id,
+              editingOccurrence: todo,
+            ),
           ),
         ),
         onDuplicate: () =>
             ref.read(eventActionsProvider).duplicate(todo.id),
         onDelete: () async {
-          if (!await confirmDeleteEvent(context)) return;
+          final scope = await pickDeleteScope(context, event: todo);
+          if (scope == null) return;
           try {
-            await ref.read(eventActionsProvider).delete(todo.id);
+            await ref.read(eventActionsProvider).deleteWithScope(todo, scope);
           } catch (_) {
             if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
@@ -200,7 +205,7 @@ class _TodoListBody extends ConsumerWidget {
                     selected: batch.selectedIds.contains(todo.id),
                     onTap: () => onTap(todo),
                     onLongPress: () => onEnterBatch(todo.id),
-                    onToggle: (v) => onToggleComplete(todo.id, v),
+                    onToggle: (v) => onToggleComplete(todo, v),
                   ),
                 ),
               ),
@@ -233,7 +238,7 @@ class _TodoListBody extends ConsumerWidget {
                       selected: batch.selectedIds.contains(todo.id),
                       onTap: () => onTap(todo),
                       onLongPress: () => onEnterBatch(todo.id),
-                      onToggle: (v) => onToggleComplete(todo.id, v),
+                      onToggle: (v) => onToggleComplete(todo, v),
                     ),
                   ),
                 ),
@@ -281,7 +286,7 @@ class _TodoListBody extends ConsumerWidget {
                     selected: batch.selectedIds.contains(todo.id),
                     onTap: () => onTap(todo),
                     onLongPress: () => onEnterBatch(todo.id),
-                    onToggle: (v) => onToggleComplete(todo.id, v),
+                    onToggle: (v) => onToggleComplete(todo, v),
                   ),
                 ),
               ),

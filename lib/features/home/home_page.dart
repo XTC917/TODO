@@ -10,6 +10,7 @@ import '../../../core/widgets/compact_todo_card.dart';
 import '../../../core/widgets/date_header.dart';
 import '../../../core/widgets/day_info_bar.dart';
 import '../../../core/widgets/event_detail_sheet.dart';
+import '../../../core/widgets/repeat_scope_dialog.dart';
 import '../../../core/widgets/swipe_event_actions.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../models/event.dart';
@@ -107,7 +108,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                             onToggleComplete: batch.active
                                 ? null
                                 : (e) => _toggleTimelineComplete(e),
-                            onSwipeEdit: (e) => _openForm(eventId: e.id),
+                            onSwipeEdit: (e) => _openForm(eventId: e.id, editingOccurrence: e),
                             onSwipeDuplicate: (e) => ref
                                 .read(eventActionsProvider)
                                 .duplicate(e.id),
@@ -138,7 +139,10 @@ class _HomePageState extends ConsumerState<HomePage> {
                                 child: SwipeEventActions(
                                   event: todo,
                                   enabled: !batch.active,
-                                  onEdit: () => _openForm(eventId: todo.id),
+                                  onEdit: () => _openForm(
+                                        eventId: todo.id,
+                                        editingOccurrence: todo,
+                                      ),
                                   onDuplicate: () => ref
                                       .read(eventActionsProvider)
                                       .duplicate(todo.id),
@@ -154,7 +158,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                                     onLongPress: () => _enterBatch(todo.id),
                                     onToggle: (v) => ref
                                         .read(eventActionsProvider)
-                                        .toggleTodo(todo.id, v),
+                                        .toggleOccurrence(todo, v),
                                   ),
                                 ),
                               );
@@ -215,7 +219,10 @@ class _HomePageState extends ConsumerState<HomePage> {
                                     child: SwipeEventActions(
                                       event: todo,
                                       enabled: !batch.active,
-                                      onEdit: () => _openForm(eventId: todo.id),
+                                      onEdit: () => _openForm(
+                                        eventId: todo.id,
+                                        editingOccurrence: todo,
+                                      ),
                                       onDuplicate: () => ref
                                           .read(eventActionsProvider)
                                           .duplicate(todo.id),
@@ -231,7 +238,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                                         onLongPress: () => _enterBatch(todo.id),
                                         onToggle: (v) => ref
                                             .read(eventActionsProvider)
-                                            .toggleTodo(todo.id, v),
+                                            .toggleOccurrence(todo, v),
                                       ),
                                     ),
                                   );
@@ -290,15 +297,17 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   Future<void> _toggleTimelineComplete(Event event) async {
-    await ref
-        .read(eventActionsProvider)
-        .toggleTimeline(event.id, !event.isCompleted);
+    await ref.read(eventActionsProvider).toggleOccurrence(
+          event,
+          !event.isCompleted,
+        );
   }
 
   Future<void> _deleteEvent(Event event) async {
-    if (!await confirmDeleteEvent(context)) return;
+    final scope = await pickDeleteScope(context, event: event);
+    if (scope == null) return;
     try {
-      await ref.read(eventActionsProvider).delete(event.id);
+      await ref.read(eventActionsProvider).deleteWithScope(event, scope);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -309,11 +318,16 @@ class _HomePageState extends ConsumerState<HomePage> {
     }
   }
 
-  Future<void> _openForm({int? eventId, DateTime? initialDate}) {
+  Future<void> _openForm({
+    int? eventId,
+    Event? editingOccurrence,
+    DateTime? initialDate,
+  }) {
     return Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => EventFormPage(
           eventId: eventId,
+          editingOccurrence: editingOccurrence,
           initialDate: initialDate,
         ),
       ),

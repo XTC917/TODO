@@ -69,6 +69,9 @@ Future<void> _toggleTodoForeground(WidgetRef ref, Uri uri) async {
   final repo = ref.read(eventRepositoryProvider);
   final event = await repo.getById(id);
   if (event == null || !event.isTodo) return;
-  await ref.read(eventActionsProvider).toggleTodo(id, !event.isCompleted);
+  await ref.read(eventActionsProvider).toggleOccurrence(
+        event,
+        !event.isCompleted,
+      );
   await ref.read(homeWidgetSyncProvider).syncNow();
 }

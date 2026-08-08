@@ -18,9 +18,13 @@ class HomeWidgetKeys {
   static const labelTodoProgress = 'juju_label_todo_progress';
   static const labelFocusDuration = 'juju_label_focus_duration';
   static const labelOpenFocus = 'juju_label_open_focus';
+  static const labelFocusPending = 'juju_label_focus_pending';
+  static const dataRevision = 'juju_data_revision';
 
   static const androidTodoReceiver =
       'com.example.soft_schedule.widget.TodoWidgetReceiver';
+  static const androidTodoCompactReceiver =
+      'com.example.soft_schedule.widget.TodoCompactWidgetReceiver';
   static const androidScheduleReceiver =
       'com.example.soft_schedule.widget.ScheduleWidgetReceiver';
   static const androidFocusReceiver =

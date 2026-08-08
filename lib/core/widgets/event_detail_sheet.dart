@@ -8,7 +8,7 @@ import '../../models/reminder_config.dart';
 import '../providers/app_providers.dart';
 import '../utils/date_time_formats.dart';
 import '../utils/event_display.dart';
-import 'swipe_event_actions.dart';
+import 'repeat_scope_dialog.dart';
 
 Future<void> showEventDetailSheet({
   required BuildContext context,
@@ -49,16 +49,19 @@ class _EventDetailSheetState extends ConsumerState<_EventDetailSheet> {
     Navigator.of(context).pop();
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => EventFormPage(eventId: widget.event.id),
+        builder: (_) => EventFormPage(
+          eventId: widget.event.id,
+          editingOccurrence: widget.event,
+        ),
       ),
     );
   }
 
   Future<void> _delete() async {
-    final ok = await confirmDeleteEvent(context);
-    if (!ok || !mounted) return;
+    final scope = await pickDeleteScope(context, event: widget.event);
+    if (scope == null || !mounted) return;
     try {
-      await ref.read(eventActionsProvider).delete(widget.event.id);
+      await ref.read(eventActionsProvider).deleteWithScope(widget.event, scope);
       if (!mounted) return;
       Navigator.of(context).pop();
     } catch (_) {
@@ -205,15 +208,9 @@ class _EventDetailSheetState extends ConsumerState<_EventDetailSheet> {
               onChanged: (v) async {
                 if (v == null) return;
                 setState(() => _completed = v);
-                if (event.isTodo) {
-                  await ref
-                      .read(eventActionsProvider)
-                      .toggleTodo(event.id, v);
-                } else {
-                  await ref
-                      .read(eventActionsProvider)
-                      .toggleTimeline(event.id, v);
-                }
+                await ref
+                    .read(eventActionsProvider)
+                    .toggleOccurrence(event, v);
               },
               title: Text(_completed ? l10n.completedLabel : l10n.markComplete),
               controlAffinity: ListTileControlAffinity.leading,
