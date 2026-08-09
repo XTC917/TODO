@@ -48,6 +48,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsGeneral => 'General';
 
   @override
+  String get settingsFeedback => 'Feedback';
+
+  @override
+  String get settingsFeedbackOpenFailed =>
+      'Couldn\'t open your browser. Please try again.';
+
+  @override
   String get settingsAbout => 'About';
 
   @override
@@ -166,13 +173,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get colorLightness => 'Lightness';
 
   @override
-  String get widgetTodoTitle => 'Today\'s todos';
+  String get widgetTodoTitle => 'JUJU Schedule Todos';
 
   @override
-  String get widgetScheduleTitle => 'Today\'s schedule';
+  String get widgetScheduleTitle => 'JUJU Schedule Calendar';
 
   @override
-  String get widgetFocusTitle => 'Focus today';
+  String get widgetFocusTitle => 'JUJU Schedule Focus';
 
   @override
   String get widgetStartFocus => 'Start focus';

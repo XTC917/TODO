@@ -48,6 +48,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsGeneral => '通用';
 
   @override
+  String get settingsFeedback => '反馈问题';
+
+  @override
+  String get settingsFeedbackOpenFailed => '无法打开浏览器，请稍后重试。';
+
+  @override
   String get settingsAbout => '关于';
 
   @override
@@ -161,13 +167,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get colorLightness => '亮度';
 
   @override
-  String get widgetTodoTitle => '今日待办';
+  String get widgetTodoTitle => 'JUJU Schedule 待办';
 
   @override
-  String get widgetScheduleTitle => '今日日程';
+  String get widgetScheduleTitle => 'JUJU Schedule 日程';
 
   @override
-  String get widgetFocusTitle => '今日专注';
+  String get widgetFocusTitle => 'JUJU Schedule 专注';
 
   @override
   String get widgetStartFocus => '开始专注';
@@ -210,16 +216,17 @@ class AppLocalizationsZh extends AppLocalizations {
   String get widgetSetupTypesTitle => '可用小组件';
 
   @override
-  String get widgetSetupTypeTodo => '今日待办';
+  String get widgetSetupTypeTodo => 'JUJU Schedule 待办';
 
   @override
-  String get widgetSetupTypeTodoHint => '显示今日待办与完成进度；点左侧方框勾选；右上角 + 添加待办';
+  String get widgetSetupTypeTodoHint =>
+      '显示待办列表（长期任务优先，按日期排序）；点左侧圆圈勾选；右上角 + 添加待办';
 
   @override
-  String get widgetSetupTypeTodoCompact => '今日待办 (2×2)';
+  String get widgetSetupTypeTodoCompact => 'JUJU Schedule 待办 (2×2)';
 
   @override
-  String get widgetSetupTypeTodoCompactHint => '紧凑尺寸，显示完成进度与 2 条待办；同样支持勾选';
+  String get widgetSetupTypeTodoCompactHint => '紧凑尺寸，显示 2 条待办；同样支持勾选';
 
   @override
   String get widgetSetupTypeSchedule => '今日日程';

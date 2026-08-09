@@ -48,6 +48,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settingsGeneral => '일반';
 
   @override
+  String get settingsFeedback => '피드백';
+
+  @override
+  String get settingsFeedbackOpenFailed => '브라우저를 열 수 없습니다. 나중에 다시 시도하세요.';
+
+  @override
   String get settingsAbout => '정보';
 
   @override
@@ -161,13 +167,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get colorLightness => '명도';
 
   @override
-  String get widgetTodoTitle => '오늘 할 일';
+  String get widgetTodoTitle => 'JUJU Schedule 할 일';
 
   @override
-  String get widgetScheduleTitle => '오늘 일정';
+  String get widgetScheduleTitle => 'JUJU Schedule 일정';
 
   @override
-  String get widgetFocusTitle => '오늘 집중';
+  String get widgetFocusTitle => 'JUJU Schedule 집중';
 
   @override
   String get widgetStartFocus => '집중 시작';

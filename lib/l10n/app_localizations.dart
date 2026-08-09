@@ -178,6 +178,18 @@ abstract class AppLocalizations {
   /// **'General'**
   String get settingsGeneral;
 
+  /// No description provided for @settingsFeedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Feedback'**
+  String get settingsFeedback;
+
+  /// No description provided for @settingsFeedbackOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open your browser. Please try again.'**
+  String get settingsFeedbackOpenFailed;
+
   /// No description provided for @settingsAbout.
   ///
   /// In en, this message translates to:
@@ -403,19 +415,19 @@ abstract class AppLocalizations {
   /// No description provided for @widgetTodoTitle.
   ///
   /// In en, this message translates to:
-  /// **'Today\'s todos'**
+  /// **'JUJU Schedule Todos'**
   String get widgetTodoTitle;
 
   /// No description provided for @widgetScheduleTitle.
   ///
   /// In en, this message translates to:
-  /// **'Today\'s schedule'**
+  /// **'JUJU Schedule Calendar'**
   String get widgetScheduleTitle;
 
   /// No description provided for @widgetFocusTitle.
   ///
   /// In en, this message translates to:
-  /// **'Focus today'**
+  /// **'JUJU Schedule Focus'**
   String get widgetFocusTitle;
 
   /// No description provided for @widgetStartFocus.

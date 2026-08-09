@@ -1,5 +1,18 @@
 # Changelog
 
+## v2.5.2
+
+### Added
+- Settings → **Feedback**: opens an external form in the system browser.
+- Localized feedback forms — Chinese UI uses the Chinese form; all other languages use the shared English form.
+
+## v2.5.1
+
+### Changed
+- Todo widget: show pending todos across dates — long-term (no date) first, then by nearest date; removed x/x completion line.
+- Schedule widget: show upcoming schedules in chronological order (not limited to today); non-today items include date prefix; hide slots whose end time has already passed.
+- Widget titles prefixed with **JUJU Schedule** (todo, schedule, focus).
+
 ## v2.5.0
 
 ### Fixed

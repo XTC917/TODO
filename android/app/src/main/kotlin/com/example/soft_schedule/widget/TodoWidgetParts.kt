@@ -74,8 +74,6 @@ fun TodoWidgetBody(
 
     val todos = WidgetData.todos(prefs)
 
-    val progress = WidgetData.todoProgress(prefs)
-
     val openIntent = actionStartActivity<MainActivity>(
 
         context,
@@ -111,24 +109,6 @@ fun TodoWidgetBody(
             compact = compact,
 
         )
-
-        if (progress.isNotEmpty()) {
-
-            Text(
-
-                text = progress,
-
-                style = WidgetTheme.subtitleStyle,
-
-                modifier = GlanceModifier
-
-                    .fillMaxWidth()
-
-                    .clickable(onClick = openIntent),
-
-            )
-
-        }
 
         Spacer(GlanceModifier.height(if (compact) 4.dp else 8.dp))
 

@@ -14,6 +14,7 @@ import '../providers/l10n_providers.dart';
 import '../theme/app_colors.dart';
 import '../theme/theme_palette.dart';
 import '../utils/date_time_formats.dart';
+import '../utils/repeat_expander.dart';
 import 'home_widget_keys.dart';
 
 /// Writes widget snapshot data without Riverpod (for background isolate too).
@@ -36,47 +37,33 @@ class HomeWidgetSnapshotWriter {
       final l10n = lookupAppLocalizations(resolveAppLocale(language));
       final palette = ThemePalette.fromPrefs(sharedPrefs);
 
-      final events = await eventRepo.watchByDate(dateKey).first;
       final allTodos = await eventRepo.watchAllTodos().first;
       final records = await focusRepo.watchByDate(dateKey).first;
-      final datedToday =
-          events.where((e) => e.showsOnHomeDate(dateKey)).toList();
-      final undatedPending =
-          allTodos.where((e) => !e.hasDate && !e.isCompleted).toList();
       final existingTodosJson =
           sharedPrefs.getString(HomeWidgetKeys.todosJson);
       final todos = _buildWidgetTodos(
-        datedToday: datedToday,
-        undatedPending: undatedPending,
         allTodos: allTodos,
         existingTodosJson: existingTodosJson,
         dropCompleted: dropCompletedFromWidget,
       );
-      final todosAll = events.where((e) => e.isTodo).toList();
-      final todoCompleted = todosAll.where((e) => e.isTodoDone()).length;
       final todoPending = allTodos.where((e) => !e.isCompleted).length;
       final focusSeconds =
           records.fold<int>(0, (sum, r) => sum + r.durationSeconds);
 
-      final schedules = events.where((e) => e.isSchedule && e.hasDate).toList()
-        ..sort((a, b) => a.timelineSortKey.compareTo(b.timelineSortKey));
+      final allEvents = await eventRepo.getAllEvents();
+      final schedules = _buildWidgetSchedules(
+        allEvents: allEvents,
+        now: DateTime.now(),
+      );
 
       await HomeWidget.saveWidgetData<String>(HomeWidgetKeys.date, dateKey);
-      await HomeWidget.saveWidgetData<int>(
-        HomeWidgetKeys.todoDone,
-        todoCompleted,
-      );
-      await HomeWidget.saveWidgetData<int>(
-        HomeWidgetKeys.todoTotal,
-        todosAll.length,
-      );
       await HomeWidget.saveWidgetData<String>(
         HomeWidgetKeys.todosJson,
         jsonEncode(todos.take(6).map(_todoItem).toList()),
       );
       await HomeWidget.saveWidgetData<String>(
         HomeWidgetKeys.schedulesJson,
-        jsonEncode(schedules.take(6).map(_scheduleItem).toList()),
+        jsonEncode(schedules.take(6).map((e) => _scheduleItem(e, dateKey)).toList()),
       );
       await HomeWidget.saveWidgetData<int>(
         HomeWidgetKeys.focusSeconds,
@@ -106,10 +93,6 @@ class HomeWidgetSnapshotWriter {
       await HomeWidget.saveWidgetData<String>(
         HomeWidgetKeys.labelEmpty,
         l10n.widgetEmpty,
-      );
-      await HomeWidget.saveWidgetData<String>(
-        HomeWidgetKeys.labelTodoProgress,
-        l10n.widgetTodoProgress(todoCompleted, todosAll.length),
       );
       await HomeWidget.saveWidgetData<String>(
         HomeWidgetKeys.labelFocusDuration,
@@ -151,32 +134,87 @@ class HomeWidgetSnapshotWriter {
   }
 
   static List<Event> _buildWidgetTodos({
-    required List<Event> datedToday,
-    required List<Event> undatedPending,
     required List<Event> allTodos,
     required String? existingTodosJson,
     required bool dropCompleted,
   }) {
-    final byId = <int, Event>{
-      for (final event in [...datedToday, ...allTodos]) event.id: event,
-    };
-    final ordered = <Event>[];
-    final seen = <int>{};
+    final pending =
+        allTodos.where((event) => event.isTodo && !event.isCompleted).toList()
+          ..sort(_compareWidgetTodos);
 
-    for (final id in _parseTodoIds(existingTodosJson)) {
-      final event = byId[id];
-      if (event == null) continue;
-      if (dropCompleted && event.isCompleted) continue;
-      if (seen.add(event.id)) ordered.add(event);
+    if (dropCompleted) {
+      final byId = {for (final event in pending) event.id: event};
+      final ordered = <Event>[];
+      final seen = <int>{};
+      for (final id in _parseTodoIds(existingTodosJson)) {
+        final event = byId[id];
+        if (event == null) continue;
+        if (seen.add(event.id)) ordered.add(event);
+      }
+      for (final event in pending) {
+        if (ordered.length >= 6) break;
+        if (seen.add(event.id)) ordered.add(event);
+      }
+      return ordered.take(6).toList();
     }
 
-    for (final event in [...datedToday, ...undatedPending]) {
-      if (ordered.length >= 6) break;
-      if (dropCompleted && event.isCompleted) continue;
-      if (seen.add(event.id)) ordered.add(event);
-    }
+    return pending.take(6).toList();
+  }
 
-    return ordered.take(6).toList();
+  /// Long-term (no date) first, then nearest calendar date ascending.
+  static int _compareWidgetTodos(Event a, Event b) {
+    final aUndated = !a.hasDate;
+    final bUndated = !b.hasDate;
+    if (aUndated != bUndated) {
+      return aUndated ? -1 : 1;
+    }
+    if (aUndated && bUndated) {
+      return a.title.compareTo(b.title);
+    }
+    final byDate = a.date.compareTo(b.date);
+    if (byDate != 0) return byDate;
+    return a.startTime.compareTo(b.startTime);
+  }
+
+  static List<Event> _buildWidgetSchedules({
+    required List<Event> allEvents,
+    required DateTime now,
+  }) {
+    final todayKey = DateTimeFormats.formatDate(now);
+    final start = DateTimeFormats.parseDate(todayKey);
+    final end = start.add(const Duration(days: 365));
+    final expanded = RepeatExpander.expandForRange(allEvents, start, end);
+
+    final schedules = expanded
+        .where(
+          (event) =>
+              event.isSchedule &&
+              event.hasDate &&
+              !event.isCompleted &&
+              _isScheduleUpcoming(event, now),
+        )
+        .toList()
+      ..sort(_compareWidgetSchedules);
+    return schedules.take(6).toList();
+  }
+
+  /// Schedule is shown only while its time slot has not ended yet.
+  static bool _isScheduleUpcoming(Event event, DateTime now) {
+    if (event.endTime.isNotEmpty) {
+      return event.endDateTime.isAfter(now);
+    }
+    if (event.startTime.isNotEmpty) {
+      return event.startDateTime.isAfter(now);
+    }
+    final day = DateTimeFormats.parseDate(event.date);
+    final endOfDay = DateTime(day.year, day.month, day.day, 23, 59, 59);
+    return endOfDay.isAfter(now);
+  }
+
+  static int _compareWidgetSchedules(Event a, Event b) {
+    final byDate = a.date.compareTo(b.date);
+    if (byDate != 0) return byDate;
+    return a.startTime.compareTo(b.startTime);
   }
 
   static List<int> _parseTodoIds(String? raw) {
@@ -192,13 +230,21 @@ class HomeWidgetSnapshotWriter {
     }
   }
 
-  static Map<String, Object?> _todoItem(Event event) => {
-        'id': event.id,
-        'title': event.title,
-        'done': event.isCompleted,
-      };
+  static Map<String, Object?> _todoItem(Event event) {
+    final title = event.hasDate
+        ? '${DateTimeFormats.formatMonthDay(DateTimeFormats.parseDate(event.date))} ${event.title}'
+        : event.title;
+    return {
+      'id': event.id,
+      'title': title,
+      'done': event.isCompleted,
+    };
+  }
 
-  static Map<String, String> _scheduleItem(Event event) {
+  static Map<String, String> _scheduleItem(Event event, String todayKey) {
+    final dateLabel = event.date == todayKey
+        ? ''
+        : '${DateTimeFormats.formatMonthDay(DateTimeFormats.parseDate(event.date))} ';
     final time = event.startTime.isEmpty
         ? ''
         : event.endTime.isEmpty
@@ -207,7 +253,7 @@ class HomeWidgetSnapshotWriter {
     return {
       'id': '${event.id}',
       'title': event.title,
-      'time': time,
+      'time': '$dateLabel$time'.trim(),
     };
   }
 }

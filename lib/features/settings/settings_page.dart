@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/config/feedback_form_url.dart';
 import '../../core/providers/app_providers.dart';
 import '../../core/providers/focus_providers.dart';
+import '../../core/utils/launch_external_url.dart';
 import '../../l10n/app_localizations.dart';
 import 'about_settings_page.dart';
 import 'appearance_settings_page.dart';
@@ -100,6 +102,23 @@ class SettingsPage extends ConsumerWidget {
                       builder: (_) => const GeneralSettingsPage(),
                     ),
                   ),
+                ),
+                SettingsNavTile(
+                  icon: Icons.feedback_outlined,
+                  title: l10n.settingsFeedback,
+                  onTap: () async {
+                    final opened = await launchExternalUrl(
+                      resolveFeedbackFormUrl(ref.read(appLanguageProvider)),
+                    );
+                    if (!context.mounted) return;
+                    if (!opened) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(l10n.settingsFeedbackOpenFailed),
+                        ),
+                      );
+                    }
+                  },
                 ),
                 SettingsNavTile(
                   icon: Icons.info_outline_rounded,
