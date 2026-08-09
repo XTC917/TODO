@@ -104,7 +104,7 @@ fun TodoWidgetBody(
 
             openUri = "jujuschedule://todo",
 
-            addUri = "jujuschedule://todo/add",
+            addUri = "jujuschedule://home/add",
 
             compact = compact,
 
@@ -183,9 +183,34 @@ fun TodoWidgetBody(
 
 
 @Composable
+fun TimelineRow(
+    context: Context,
+    item: WidgetData.TimelineLine,
+    accentHex: String,
+    openIntent: androidx.glance.action.Action,
+    lineStyle: androidx.glance.text.TextStyle = WidgetTheme.lineStyle,
+    doneLineStyle: androidx.glance.text.TextStyle = WidgetTheme.doneLineStyle,
+    checkboxSize: androidx.compose.ui.unit.Dp = 24.dp,
+) {
+    val line = if (item.time.isNotEmpty()) {
+        "${item.time}  ${item.title}"
+    } else {
+        item.title
+    }
+    TodoRow(
+        context = context,
+        item = WidgetData.TodoLine(item.id, line, item.done),
+        accentHex = accentHex,
+        openIntent = openIntent,
+        lineStyle = lineStyle,
+        doneLineStyle = doneLineStyle,
+        checkboxSize = checkboxSize,
+    )
+}
 
+
+@Composable
 fun TodoRow(
-
     context: Context,
 
     item: WidgetData.TodoLine,

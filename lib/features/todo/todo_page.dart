@@ -9,7 +9,6 @@ import '../../core/widgets/event_detail_sheet.dart';
 import '../../core/widgets/repeat_scope_dialog.dart';
 import '../../core/widgets/swipe_event_actions.dart';
 import '../../l10n/app_localizations.dart';
-import '../../models/enums.dart';
 import '../../models/event.dart';
 import '../schedule/event_form_page.dart';
 
@@ -76,12 +75,14 @@ class TodoPage extends ConsumerWidget {
       floatingActionButton: batch.active
           ? null
           : FloatingActionButton(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) =>
-                      const EventFormPage(forceTaskType: TaskType.todo),
-                ),
-              ),
+              onPressed: () {
+                final selected = ref.read(homeSelectedDateProvider);
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => EventFormPage(initialDate: selected),
+                  ),
+                );
+              },
               child: const Icon(Icons.add_rounded),
             ),
     );

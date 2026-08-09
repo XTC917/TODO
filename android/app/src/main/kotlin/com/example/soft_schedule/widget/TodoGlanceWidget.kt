@@ -34,7 +34,7 @@ class TodoCompactGlanceWidget : GlanceAppWidget() {
             TodoWidgetBody(
                 context = context,
                 state = currentState(),
-                maxItems = 2,
+                maxItems = 3,
                 showFooter = false,
                 compact = true,
             )

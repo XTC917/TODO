@@ -415,19 +415,19 @@ abstract class AppLocalizations {
   /// No description provided for @widgetTodoTitle.
   ///
   /// In en, this message translates to:
-  /// **'JUJU Schedule Todos'**
+  /// **'JUJU Todos'**
   String get widgetTodoTitle;
 
   /// No description provided for @widgetScheduleTitle.
   ///
   /// In en, this message translates to:
-  /// **'JUJU Schedule Calendar'**
+  /// **'JUJU Calendar'**
   String get widgetScheduleTitle;
 
   /// No description provided for @widgetFocusTitle.
   ///
   /// In en, this message translates to:
-  /// **'JUJU Schedule Focus'**
+  /// **'JUJU Focus'**
   String get widgetFocusTitle;
 
   /// No description provided for @widgetStartFocus.

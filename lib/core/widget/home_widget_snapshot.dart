@@ -8,6 +8,7 @@ import '../../database/app_database.dart';
 import '../../database/event_repository.dart';
 import '../../database/focus_repository.dart';
 import '../../l10n/app_localizations.dart';
+import '../../models/enums.dart';
 import '../../models/event.dart';
 import '../providers/app_providers.dart';
 import '../providers/l10n_providers.dart';
@@ -51,7 +52,7 @@ class HomeWidgetSnapshotWriter {
           records.fold<int>(0, (sum, r) => sum + r.durationSeconds);
 
       final allEvents = await eventRepo.getAllEvents();
-      final schedules = _buildWidgetSchedules(
+      final timeline = _buildWidgetTimeline(
         allEvents: allEvents,
         now: DateTime.now(),
       );
@@ -63,7 +64,9 @@ class HomeWidgetSnapshotWriter {
       );
       await HomeWidget.saveWidgetData<String>(
         HomeWidgetKeys.schedulesJson,
-        jsonEncode(schedules.take(6).map((e) => _scheduleItem(e, dateKey)).toList()),
+        jsonEncode(
+          timeline.take(6).map((e) => _timelineWidgetItem(e, dateKey)).toList(),
+        ),
       );
       await HomeWidget.saveWidgetData<int>(
         HomeWidgetKeys.focusSeconds,
@@ -176,7 +179,8 @@ class HomeWidgetSnapshotWriter {
     return a.startTime.compareTo(b.startTime);
   }
 
-  static List<Event> _buildWidgetSchedules({
+  /// Timeline entries: schedules + timed todos ([Event.showsInTimeline]).
+  static List<Event> _buildWidgetTimeline({
     required List<Event> allEvents,
     required DateTime now,
   }) {
@@ -185,21 +189,21 @@ class HomeWidgetSnapshotWriter {
     final end = start.add(const Duration(days: 365));
     final expanded = RepeatExpander.expandForRange(allEvents, start, end);
 
-    final schedules = expanded
+    final items = expanded
         .where(
           (event) =>
-              event.isSchedule &&
+              event.showsInTimeline &&
               event.hasDate &&
               !event.isCompleted &&
-              _isScheduleUpcoming(event, now),
+              _isTimelineUpcoming(event, now),
         )
         .toList()
-      ..sort(_compareWidgetSchedules);
-    return schedules.take(6).toList();
+      ..sort(_compareWidgetTimeline);
+    return items.take(6).toList();
   }
 
-  /// Schedule is shown only while its time slot has not ended yet.
-  static bool _isScheduleUpcoming(Event event, DateTime now) {
+  /// Shown only while the slot has not ended yet.
+  static bool _isTimelineUpcoming(Event event, DateTime now) {
     if (event.endTime.isNotEmpty) {
       return event.endDateTime.isAfter(now);
     }
@@ -211,10 +215,10 @@ class HomeWidgetSnapshotWriter {
     return endOfDay.isAfter(now);
   }
 
-  static int _compareWidgetSchedules(Event a, Event b) {
+  static int _compareWidgetTimeline(Event a, Event b) {
     final byDate = a.date.compareTo(b.date);
     if (byDate != 0) return byDate;
-    return a.startTime.compareTo(b.startTime);
+    return a.timelineSortKey.compareTo(b.timelineSortKey);
   }
 
   static List<int> _parseTodoIds(String? raw) {
@@ -230,30 +234,58 @@ class HomeWidgetSnapshotWriter {
     }
   }
 
+  static String _widgetTimeLabel(Event event) {
+    if (event.isNoTimeTodo) return '';
+    if (event.isSchedule || event.todoTimeMode == TodoTimeMode.timeBlock) {
+      if (event.startTime.isEmpty) return '';
+      if (event.endTime.isEmpty) return event.startTime;
+      return '${event.startTime}-${event.endTime}';
+    }
+    if (event.todoTimeMode == TodoTimeMode.deadline &&
+        event.endTime.isNotEmpty) {
+      return event.endTime;
+    }
+    return '';
+  }
+
   static Map<String, Object?> _todoItem(Event event) {
-    final title = event.hasDate
-        ? '${DateTimeFormats.formatMonthDay(DateTimeFormats.parseDate(event.date))} ${event.title}'
-        : event.title;
+    final meta = <String>[];
+    if (event.hasDate) {
+      meta.add(
+        DateTimeFormats.formatMonthDay(
+          DateTimeFormats.parseDate(event.date),
+        ),
+      );
+    }
+    final time = _widgetTimeLabel(event);
+    if (time.isNotEmpty) meta.add(time);
+    final prefix = meta.isEmpty ? '' : '${meta.join(' ')} ';
     return {
       'id': event.id,
-      'title': title,
+      'title': '$prefix${event.title}',
       'done': event.isCompleted,
     };
   }
 
-  static Map<String, String> _scheduleItem(Event event, String todayKey) {
-    final dateLabel = event.date == todayKey
-        ? ''
-        : '${DateTimeFormats.formatMonthDay(DateTimeFormats.parseDate(event.date))} ';
-    final time = event.startTime.isEmpty
-        ? ''
-        : event.endTime.isEmpty
-            ? event.startTime
-            : '${event.startTime}-${event.endTime}';
+  static Map<String, Object?> _timelineWidgetItem(
+    Event event,
+    String todayKey,
+  ) {
+    final parts = <String>[];
+    if (event.date != todayKey) {
+      parts.add(
+        DateTimeFormats.formatMonthDay(
+          DateTimeFormats.parseDate(event.date),
+        ),
+      );
+    }
+    final time = _widgetTimeLabel(event);
+    if (time.isNotEmpty) parts.add(time);
     return {
-      'id': '${event.id}',
+      'id': event.id,
       'title': event.title,
-      'time': '$dateLabel$time'.trim(),
+      'time': parts.join(' '),
+      'done': event.isCompleted,
     };
   }
 }

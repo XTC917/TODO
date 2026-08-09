@@ -1,5 +1,16 @@
 # Changelog
 
+## v2.5.4
+
+### Changed
+- Timeline widget: shows all upcoming timeline items (schedules + timed todos), with completion checkbox.
+- Todo widget: list rows include date and time; compact 2×2 shows 3 items and + button layout fixed; widget titles shortened to **JUJU 待办 / JUJU 日程** (no "Schedule").
+- All **+** entry points (FAB, widgets) open the same default add-task form as Home (Todo/Schedule picker).
+- Add-task form: title and note fields have a ✓ button to dismiss the keyboard before picking date/time.
+- Quick Add **Edit** opens the same add-task form with parsed fields prefilled (type not locked).
+- Quick Add deadline parsing: phrases like **截止6点** / **6点前完成** map to todo + deadline mode with correct end time; **下午三点截止** → 15:00 (supports **的** between period and time).
+- Quick Add **Edit** returns to the existing add-task form with prefilled fields (no stacked form pages).
+
 ## v2.5.3
 
 ### Added

@@ -167,13 +167,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get colorLightness => '亮度';
 
   @override
-  String get widgetTodoTitle => 'JUJU Schedule 待办';
+  String get widgetTodoTitle => 'JUJU 待办';
 
   @override
-  String get widgetScheduleTitle => 'JUJU Schedule 日程';
+  String get widgetScheduleTitle => 'JUJU 日程';
 
   @override
-  String get widgetFocusTitle => 'JUJU Schedule 专注';
+  String get widgetFocusTitle => 'JUJU 专注';
 
   @override
   String get widgetStartFocus => '开始专注';

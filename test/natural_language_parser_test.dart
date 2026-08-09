@@ -126,6 +126,71 @@ void main() {
     });
   });
 
+  group('Todo with deadline time', () {
+    test('明天截止6点交报告', () {
+      final r = parse('明天截止6点交报告');
+      expect(r.title, '交报告');
+      expect(DateTimeFormats.formatDate(r.date!), '2026-08-10');
+      expect(r.startTime, isNull);
+      expect(r.endTime, const TimeOfDay(hour: 6, minute: 0));
+      expect(r.taskType, TaskType.todo);
+      expect(r.todoTimeMode, TodoTimeMode.deadline);
+    });
+
+    test('明天下午6点前完成报告', () {
+      final r = parse('明天下午6点前完成报告');
+      expect(r.title, '报告');
+      expect(DateTimeFormats.formatDate(r.date!), '2026-08-10');
+      expect(r.startTime, isNull);
+      expect(r.endTime, const TimeOfDay(hour: 18, minute: 0));
+      expect(r.taskType, TaskType.todo);
+      expect(r.todoTimeMode, TodoTimeMode.deadline);
+    });
+
+    test('今晚8点前把报告改完', () {
+      final r = parse('今晚8点前把报告改完');
+      expect(r.title, '把报告改完');
+      expect(DateTimeFormats.formatDate(r.date!), '2026-08-09');
+      expect(r.endTime, const TimeOfDay(hour: 20, minute: 0));
+      expect(r.taskType, TaskType.todo);
+      expect(r.todoTimeMode, TodoTimeMode.deadline);
+    });
+
+    test('添加待办：明天截止18:00交作业', () {
+      final r = parse('添加待办：明天截止18:00交作业');
+      expect(r.taskType, TaskType.todo);
+      expect(r.endTime, const TimeOfDay(hour: 18, minute: 0));
+      expect(r.todoTimeMode, TodoTimeMode.deadline);
+      expect(r.title, '交作业');
+    });
+
+    test('下午三点截止', () {
+      final r = parse('下午三点截止');
+      expect(r.endTime, const TimeOfDay(hour: 15, minute: 0));
+      expect(r.startTime, isNull);
+      expect(r.taskType, TaskType.todo);
+      expect(r.todoTimeMode, TodoTimeMode.deadline);
+    });
+
+    test('明天下午三点截止', () {
+      final r = parse('明天下午三点截止');
+      expect(r.endTime, const TimeOfDay(hour: 15, minute: 0));
+      expect(r.todoTimeMode, TodoTimeMode.deadline);
+    });
+
+    test('下午的三点截止', () {
+      final r = parse('下午的三点截止');
+      expect(r.endTime, const TimeOfDay(hour: 15, minute: 0));
+      expect(r.todoTimeMode, TodoTimeMode.deadline);
+    });
+
+    test('下午3:00截止', () {
+      final r = parse('下午3:00截止');
+      expect(r.endTime, const TimeOfDay(hour: 15, minute: 0));
+      expect(r.todoTimeMode, TodoTimeMode.deadline);
+    });
+  });
+
   group('Explicit task type', () {
     test('添加一个日程 -> Schedule', () {
       final r = parse('添加一个日程，明天下午三点开会');

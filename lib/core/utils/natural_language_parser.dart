@@ -33,26 +33,37 @@ class ChineseNaturalLanguageParser {
 
     final normalized = _normalize(raw);
     final removals = <_Span>[];
+    final eveningContext = normalized.contains('今晚') || normalized.contains('今夜');
 
     final explicitType = _extractExplicitTaskType(normalized, removals);
     final date = _extractDate(normalized, ref, removals);
     final range = _extractTimeRange(normalized, removals);
-    final single = range == null ? _extractSingleTime(normalized, removals) : null;
+    final single = range == null
+        ? _extractSingleTime(normalized, removals, eveningContext: eveningContext)
+        : null;
 
-    final startTime = range?.start ?? single;
-    final endTime = range?.end;
+    var startTime = range?.start ?? single;
+    var endTime = range?.end;
     final isDeadline = _hasDeadlineHint(normalized, removals);
 
+    if (isDeadline && startTime != null && endTime == null) {
+      endTime = startTime;
+      startTime = null;
+    }
+
     final taskType = explicitType ??
-        ((startTime != null || endTime != null)
-            ? TaskType.schedule
-            : TaskType.todo);
+        (isDeadline
+            ? TaskType.todo
+            : ((startTime != null || endTime != null)
+                ? TaskType.schedule
+                : TaskType.todo));
 
     final todoTimeMode = _resolveTodoTimeMode(
       taskType: taskType,
       hasDate: date != null,
       isDeadline: isDeadline,
-      hasSpecificTime: startTime != null,
+      hasDeadlineTime: endTime != null,
+      hasBlockTime: startTime != null,
     );
 
     final reminderOffsets = _extractReminders(
@@ -241,12 +252,14 @@ class ChineseNaturalLanguageParser {
     required TaskType taskType,
     required bool hasDate,
     required bool isDeadline,
-    required bool hasSpecificTime,
+    required bool hasDeadlineTime,
+    required bool hasBlockTime,
   }) {
     if (taskType == TaskType.schedule) return TodoTimeMode.timeBlock;
+    if (isDeadline && hasDeadlineTime) return TodoTimeMode.deadline;
     if (!hasDate) return TodoTimeMode.noTime;
-    if (hasSpecificTime) return TodoTimeMode.timeBlock;
-    if (isDeadline) return TodoTimeMode.deadline;
+    if (isDeadline || hasDeadlineTime) return TodoTimeMode.deadline;
+    if (hasBlockTime) return TodoTimeMode.timeBlock;
     return TodoTimeMode.deadline;
   }
 
@@ -274,7 +287,18 @@ class ChineseNaturalLanguageParser {
   }
 
   bool _hasDeadlineHint(String text, List<_Span> removals) {
-    const patterns = ['截止时间', '截至', '截止', 'deadline', '之前要', '前要完成', '前完成'];
+    const patterns = [
+      '截止时间',
+      '截至时间',
+      '截至',
+      '截止',
+      'deadline',
+      '之前要',
+      '前要完成',
+      '前完成',
+      '最晚',
+      '不晚于',
+    ];
     for (final p in patterns) {
       final i = text.indexOf(p);
       if (i >= 0) {
@@ -282,11 +306,18 @@ class ChineseNaturalLanguageParser {
         return true;
       }
     }
-    final before = RegExp(r'(\d{1,2}[:：点时]\d{0,2}\s*之前)');
-    final m = before.firstMatch(text);
-    if (m != null) {
-      removals.add(_Span(m.start, m.end));
-      return true;
+
+    final regexes = [
+      RegExp(r'(\d{1,2}[:：点时]\d{0,2}\s*之前)'),
+      RegExp(r'(\d{1,2}[:：点时]\d{0,2}\s*前)(?!面)'),
+      RegExp(r'前(?:要)?(?:完成|交|交稿|提交|做完|写好|弄好)'),
+    ];
+    for (final pattern in regexes) {
+      final m = pattern.firstMatch(text);
+      if (m != null) {
+        removals.add(_Span(m.start, m.end));
+        return true;
+      }
     }
     return false;
   }
@@ -436,12 +467,16 @@ class ChineseNaturalLanguageParser {
     return 0;
   }
 
-  TimeOfDay? _extractSingleTime(String text, List<_Span> removals) {
+  TimeOfDay? _extractSingleTime(
+    String text,
+    List<_Span> removals, {
+    bool eveningContext = false,
+  }) {
     const numPat = r'(\d{1,2}|[一二三四五六七八九十两]+)';
     final candidates = <(Match, TimeOfDay)>[];
 
     for (final m in RegExp(
-      '(上午|下午|晚上|中午|凌晨)\\s*$numPat(?:[:：点时]$numPat)?\\s*(?:点|点半)?',
+      '(上午|下午|晚上|中午|凌晨)\\s*的?\\s*$numPat(?:[:：点时]$numPat)?\\s*(?:点|点半)?',
     ).allMatches(text)) {
       final hour = _parseNumberToken(m.group(2)!);
       if (hour == null) continue;
@@ -455,7 +490,13 @@ class ChineseNaturalLanguageParser {
       final hour = int.tryParse(m.group(1)!);
       final minute = int.tryParse(m.group(2)!);
       if (hour == null || minute == null) continue;
-      final time = _toTimeOfDay(hour, minute, null, isRange: false);
+      final time = _toTimeOfDay(
+        hour,
+        minute,
+        null,
+        isRange: false,
+        eveningContext: eveningContext,
+      );
       if (time != null) candidates.add((m, time));
     }
 
@@ -464,15 +505,22 @@ class ChineseNaturalLanguageParser {
       final hour = _parseNumberToken(m.group(1)!);
       if (hour == null) continue;
       final minute = _parseMinuteToken(m.group(2), m.group(0)!, isStart: true);
-      final time = _toTimeOfDay(hour, minute, null, isRange: false);
+      final time = _toTimeOfDay(
+        hour,
+        minute,
+        null,
+        isRange: false,
+        eveningContext: eveningContext,
+      );
       if (time != null) candidates.add((m, time));
     }
 
     if (candidates.isEmpty) return null;
 
     candidates.sort((a, b) {
-      final len = (b.$1.end - b.$1.start).compareTo(a.$1.end - a.$1.start);
-      if (len != 0) return len;
+      final scoreA = _timeMatchScore(text, a.$1);
+      final scoreB = _timeMatchScore(text, b.$1);
+      if (scoreA != scoreB) return scoreB.compareTo(scoreA);
       return a.$1.start.compareTo(b.$1.start);
     });
 
@@ -481,11 +529,21 @@ class ChineseNaturalLanguageParser {
     return best.$2;
   }
 
+  int _timeMatchScore(String text, Match match) {
+    var score = match.end - match.start;
+    final segment = text.substring(match.start, match.end);
+    if (RegExp(r'(上午|下午|晚上|中午|凌晨)').hasMatch(segment)) {
+      score += 100;
+    }
+    return score;
+  }
+
   TimeOfDay? _toTimeOfDay(
     int hour,
     int minute,
     String? period, {
     required bool isRange,
+    bool eveningContext = false,
   }) {
     if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
 
@@ -507,7 +565,9 @@ class ChineseNaturalLanguageParser {
         if (hour == 12) hour = 12;
         break;
       case null:
-        if (isRange && hour >= 1 && hour <= 11) hour += 12;
+        if ((isRange || eveningContext) && hour >= 1 && hour <= 11) {
+          hour += 12;
+        }
         break;
     }
 

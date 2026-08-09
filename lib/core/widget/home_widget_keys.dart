@@ -40,6 +40,7 @@ class HomeWidgetUris {
   static const todo = '$scheme://todo';
   static const calendar = '$scheme://calendar';
   static const focus = '$scheme://focus';
-  static const todoAdd = '$scheme://todo/add';
-  static const calendarAdd = '$scheme://calendar/add';
+  static const homeAdd = '$scheme://home/add';
+  static const todoAdd = homeAdd;
+  static const calendarAdd = homeAdd;
 }

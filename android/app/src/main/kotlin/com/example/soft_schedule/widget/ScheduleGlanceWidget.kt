@@ -12,10 +12,8 @@ import androidx.glance.appwidget.provideContent
 import androidx.glance.currentState
 import androidx.glance.layout.Column
 import androidx.glance.layout.Spacer
-import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
-import androidx.glance.layout.padding
 import androidx.glance.text.Text
 import com.example.soft_schedule.MainActivity
 import es.antonborri.home_widget.HomeWidgetGlanceState
@@ -36,18 +34,18 @@ class ScheduleGlanceWidget : GlanceAppWidget() {
 @Composable
 private fun ScheduleContent(context: Context, state: HomeWidgetGlanceState) {
     val prefs = state.preferences
-    val items = WidgetData.schedules(prefs)
+    val items = WidgetData.timeline(prefs)
     val openIntent = actionStartActivity<MainActivity>(
         context,
-        Uri.parse("jujuschedule://calendar"),
+        Uri.parse("jujuschedule://home"),
     )
 
     Column(modifier = WidgetTheme.surface()) {
         WidgetHeader(
             context = context,
             title = WidgetData.scheduleTitle(prefs),
-            openUri = "jujuschedule://calendar",
-            addUri = "jujuschedule://calendar/add",
+            openUri = "jujuschedule://home",
+            addUri = "jujuschedule://home/add",
         )
         Spacer(GlanceModifier.height(8.dp))
         if (items.isEmpty()) {
@@ -59,18 +57,12 @@ private fun ScheduleContent(context: Context, state: HomeWidgetGlanceState) {
                     .clickable(onClick = openIntent),
             )
         } else {
-            items.take(4).forEach { item ->
-                val line = if (item.time.isNotEmpty()) {
-                    "${item.time}  ${item.title}"
-                } else {
-                    item.title
-                }
-                Text(
-                    text = line,
-                    style = WidgetTheme.lineStyle,
-                    modifier = GlanceModifier
-                        .fillMaxWidth()
-                        .clickable(onClick = openIntent),
+            items.take(4).filter { it.id > 0 }.forEach { item ->
+                TimelineRow(
+                    context = context,
+                    item = item,
+                    accentHex = WidgetData.accentColorHex(prefs),
+                    openIntent = openIntent,
                 )
                 Spacer(GlanceModifier.height(4.dp))
             }

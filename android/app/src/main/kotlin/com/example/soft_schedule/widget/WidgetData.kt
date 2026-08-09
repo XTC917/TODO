@@ -5,7 +5,12 @@ import org.json.JSONArray
 
 object WidgetData {
     data class TodoLine(val id: Int, val title: String, val done: Boolean)
-    data class ScheduleLine(val title: String, val time: String)
+    data class TimelineLine(
+        val id: Int,
+        val title: String,
+        val time: String,
+        val done: Boolean,
+    )
 
     fun accentColorHex(prefs: SharedPreferences): String =
         prefs.getString("juju_accent_hex", "E8A0A0") ?: "E8A0A0"
@@ -42,9 +47,9 @@ object WidgetData {
         return parseTodos(raw)
     }
 
-    fun schedules(prefs: SharedPreferences): List<ScheduleLine> {
+    fun timeline(prefs: SharedPreferences): List<TimelineLine> {
         val raw = prefs.getString("juju_schedules_json", "[]") ?: "[]"
-        return parseSchedules(raw)
+        return parseTimeline(raw)
     }
 
     private fun parseTodos(raw: String): List<TodoLine> {
@@ -67,16 +72,18 @@ object WidgetData {
         }
     }
 
-    private fun parseSchedules(raw: String): List<ScheduleLine> {
+    private fun parseTimeline(raw: String): List<TimelineLine> {
         return try {
             val array = JSONArray(raw)
             buildList {
                 for (i in 0 until array.length()) {
                     val obj = array.getJSONObject(i)
                     add(
-                        ScheduleLine(
+                        TimelineLine(
+                            id = obj.optInt("id", 0),
                             title = obj.optString("title", ""),
                             time = obj.optString("time", ""),
+                            done = obj.optBoolean("done", false),
                         ),
                     )
                 }

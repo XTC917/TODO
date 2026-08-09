@@ -167,13 +167,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get colorLightness => '명도';
 
   @override
-  String get widgetTodoTitle => 'JUJU Schedule 할 일';
+  String get widgetTodoTitle => 'JUJU 할 일';
 
   @override
-  String get widgetScheduleTitle => 'JUJU Schedule 일정';
+  String get widgetScheduleTitle => 'JUJU 일정';
 
   @override
-  String get widgetFocusTitle => 'JUJU Schedule 집중';
+  String get widgetFocusTitle => 'JUJU 집중';
 
   @override
   String get widgetStartFocus => '집중 시작';

@@ -38,20 +38,28 @@ class EnglishNaturalLanguageParser {
     final range = _extractTimeRange(normalized, removals);
     final single = range == null ? _extractSingleTime(normalized, removals) : null;
 
-    final startTime = range?.start ?? single;
-    final endTime = range?.end;
+    var startTime = range?.start ?? single;
+    var endTime = range?.end;
     final isDeadline = _hasDeadlineHint(normalized, removals);
 
+    if (isDeadline && startTime != null && endTime == null) {
+      endTime = startTime;
+      startTime = null;
+    }
+
     final taskType = explicitType ??
-        ((startTime != null || endTime != null)
-            ? TaskType.schedule
-            : TaskType.todo);
+        (isDeadline
+            ? TaskType.todo
+            : ((startTime != null || endTime != null)
+                ? TaskType.schedule
+                : TaskType.todo));
 
     final todoTimeMode = _resolveTodoTimeMode(
       taskType: taskType,
       hasDate: date != null,
       isDeadline: isDeadline,
-      hasSpecificTime: startTime != null,
+      hasDeadlineTime: endTime != null,
+      hasBlockTime: startTime != null,
     );
 
     final reminderOffsets = _extractReminders(
@@ -101,12 +109,13 @@ class EnglishNaturalLanguageParser {
     required TaskType taskType,
     required bool hasDate,
     required bool isDeadline,
-    required bool hasSpecificTime,
+    required bool hasDeadlineTime,
+    required bool hasBlockTime,
   }) {
     if (taskType == TaskType.schedule) return TodoTimeMode.timeBlock;
     if (!hasDate) return TodoTimeMode.noTime;
-    if (hasSpecificTime) return TodoTimeMode.timeBlock;
-    if (isDeadline) return TodoTimeMode.deadline;
+    if (isDeadline || hasDeadlineTime) return TodoTimeMode.deadline;
+    if (hasBlockTime) return TodoTimeMode.timeBlock;
     return TodoTimeMode.deadline;
   }
 
@@ -146,12 +155,30 @@ class EnglishNaturalLanguageParser {
   }
 
   bool _hasDeadlineHint(String text, List<_Span> removals) {
-    const patterns = ['deadline', 'due by', 'due on'];
+    const patterns = [
+      'deadline',
+      'due by',
+      'due on',
+      'due at',
+      'no later than',
+    ];
     final lower = text.toLowerCase();
     for (final p in patterns) {
       final i = lower.indexOf(p);
       if (i >= 0) {
         removals.add(_Span(i, i + p.length));
+        return true;
+      }
+    }
+
+    final regexes = [
+      RegExp(r'\bby\b', caseSensitive: false),
+      RegExp(r'\bdue\b', caseSensitive: false),
+    ];
+    for (final pattern in regexes) {
+      final m = pattern.firstMatch(lower);
+      if (m != null) {
+        removals.add(_Span(m.start, m.end));
         return true;
       }
     }

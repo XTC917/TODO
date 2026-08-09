@@ -1,14 +1,15 @@
 package com.example.soft_schedule.widget
 
-import android.content.ContentValues
 import android.content.Context
+import android.content.SharedPreferences
+import android.content.ContentValues
 import android.database.sqlite.SQLiteDatabase
 import org.json.JSONArray
 import java.io.File
 
 object WidgetNativeToggle {
 
-    fun toggleTodo(context: Context, eventId: Int): Boolean {
+    fun toggleEvent(context: Context, eventId: Int): Boolean {
         val dbFile = File(context.applicationInfo.dataDir, "app_flutter/soft_schedule.sqlite")
         if (!dbFile.exists()) return false
 
@@ -16,11 +17,10 @@ object WidgetNativeToggle {
             SQLiteDatabase.openDatabase(dbFile.path, null, SQLiteDatabase.OPEN_READWRITE)
         try {
             db.rawQuery(
-                "SELECT is_completed, task_type FROM events WHERE id = ?",
+                "SELECT is_completed FROM events WHERE id = ?",
                 arrayOf(eventId.toString()),
             ).use { cursor ->
                 if (!cursor.moveToFirst()) return false
-                if (cursor.getString(1) != "todo") return false
                 val wasDone = cursor.getInt(0) != 0
                 val nowDone = !wasDone
                 val nowMs = System.currentTimeMillis()
@@ -40,7 +40,7 @@ object WidgetNativeToggle {
                     arrayOf(eventId.toString()),
                 )
                 if (updated <= 0) return false
-                flipTodoInWidgetPrefs(context, eventId, nowDone)
+                flipDoneInWidgetPrefs(context, eventId, nowDone)
                 bumpDataRevision(context)
                 return true
             }
@@ -49,9 +49,22 @@ object WidgetNativeToggle {
         }
     }
 
-    private fun flipTodoInWidgetPrefs(context: Context, eventId: Int, done: Boolean) {
+    /** @deprecated Use [toggleEvent] — kept for call-site clarity. */
+    fun toggleTodo(context: Context, eventId: Int): Boolean = toggleEvent(context, eventId)
+
+    private fun flipDoneInWidgetPrefs(context: Context, eventId: Int, done: Boolean) {
         val prefs = context.getSharedPreferences("HomeWidgetPreferences", Context.MODE_PRIVATE)
-        val raw = prefs.getString("juju_todos_json", "[]") ?: "[]"
+        flipJsonDone(prefs, "juju_todos_json", eventId, done)
+        flipJsonDone(prefs, "juju_schedules_json", eventId, done)
+    }
+
+    private fun flipJsonDone(
+        prefs: SharedPreferences,
+        key: String,
+        eventId: Int,
+        done: Boolean,
+    ) {
+        val raw = prefs.getString(key, "[]") ?: "[]"
         try {
             val array = JSONArray(raw)
             var changed = false
@@ -64,7 +77,7 @@ object WidgetNativeToggle {
                 }
             }
             if (changed) {
-                prefs.edit().putString("juju_todos_json", array.toString()).apply()
+                prefs.edit().putString(key, array.toString()).apply()
             }
         } catch (_: Exception) {
         }

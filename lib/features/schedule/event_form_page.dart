@@ -13,6 +13,8 @@ import '../../models/enums.dart';
 import '../../models/event.dart';
 import '../../models/reminder_config.dart';
 
+import '../../core/utils/parsed_task.dart';
+import '../../core/utils/quick_add_form_bridge.dart';
 import '../../core/utils/quick_add_parser.dart';
 import 'quick_add_page.dart';
 
@@ -25,6 +27,8 @@ class EventFormPage extends ConsumerStatefulWidget {
     this.initialTitle,
     this.initialStartTime,
     this.initialEndTime,
+    this.initialTaskType,
+    this.initialTodoTimeMode,
     this.forceTaskType,
     this.forceTodoTimeMode,
     this.initialReminderOffsetsSeconds,
@@ -37,6 +41,8 @@ class EventFormPage extends ConsumerStatefulWidget {
   final String? initialTitle;
   final TimeOfDay? initialStartTime;
   final TimeOfDay? initialEndTime;
+  final TaskType? initialTaskType;
+  final TodoTimeMode? initialTodoTimeMode;
   final TaskType? forceTaskType;
   final TodoTimeMode? forceTodoTimeMode;
   final List<int>? initialReminderOffsetsSeconds;
@@ -51,6 +57,8 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _noteController = TextEditingController();
+  final _titleFocus = FocusNode();
+  final _noteFocus = FocusNode();
 
   late DateTime _date;
   late TimeOfDay _start;
@@ -73,8 +81,11 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
     final endMinutes = _start.hour * 60 + _start.minute + 60;
     _end = TimeOfDay(hour: (endMinutes ~/ 60) % 24, minute: endMinutes % 60);
     _deadline = const TimeOfDay(hour: 18, minute: 0);
-    _taskType = widget.forceTaskType ?? TaskType.todo;
-    _todoTimeMode = widget.forceTodoTimeMode ?? TodoTimeMode.timeBlock;
+    _taskType =
+        widget.forceTaskType ?? widget.initialTaskType ?? TaskType.todo;
+    _todoTimeMode = widget.forceTodoTimeMode ??
+        widget.initialTodoTimeMode ??
+        TodoTimeMode.timeBlock;
     _repeatType = RepeatType.oneTime;
     _reminderOffsetsSeconds = const [];
 
@@ -92,9 +103,13 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
         final endMin = startMin + 60;
         _end = TimeOfDay(hour: (endMin ~/ 60) % 24, minute: endMin % 60);
       }
-      if (widget.initialStartTime != null &&
-          widget.forceTodoTimeMode == TodoTimeMode.deadline) {
-        _deadline = widget.initialEndTime ?? widget.initialStartTime!;
+      if (widget.forceTodoTimeMode == TodoTimeMode.deadline ||
+          widget.initialTodoTimeMode == TodoTimeMode.deadline) {
+        if (widget.initialEndTime != null) {
+          _deadline = widget.initialEndTime!;
+        } else if (widget.initialStartTime != null) {
+          _deadline = widget.initialStartTime!;
+        }
       }
       if (widget.initialReminderOffsetsSeconds != null &&
           widget.initialReminderOffsetsSeconds!.isNotEmpty) {
@@ -156,9 +171,73 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
 
   @override
   void dispose() {
+    _titleFocus.dispose();
+    _noteFocus.dispose();
     _titleController.dispose();
     _noteController.dispose();
     super.dispose();
+  }
+
+  void _dismissKeyboard() {
+    FocusManager.instance.primaryFocus?.unfocus();
+  }
+
+  void _applyQuickAddPrefill(ParsedTask parsed) {
+    final prefill = QuickAddPrefill.fromParsed(
+      parsed: parsed,
+      fallbackDate: _date,
+    );
+    setState(() {
+      _titleController.text = prefill.title;
+      if (prefill.date != null) {
+        _date = DateTimeFormats.dateOnly(prefill.date!);
+      }
+      if (widget.forceTaskType == null) {
+        _taskType = prefill.taskType;
+      }
+      if (widget.forceTodoTimeMode == null) {
+        _todoTimeMode = prefill.todoTimeMode;
+      }
+      if (prefill.startTime != null) {
+        _start = prefill.startTime!;
+      }
+      if (prefill.endTime != null) {
+        _end = prefill.endTime!;
+      } else if (prefill.startTime != null) {
+        final startMin = _start.hour * 60 + _start.minute;
+        final endMin = startMin + 60;
+        _end = TimeOfDay(hour: (endMin ~/ 60) % 24, minute: endMin % 60);
+      }
+      if (prefill.deadline != null) {
+        _deadline = prefill.deadline!;
+      }
+      _reminderOffsetsSeconds = prefill.reminderOffsetsSeconds;
+    });
+  }
+
+  Future<void> _openQuickAdd() async {
+    if (resolveQuickAddParserLanguage(ref.read(appLanguageProvider)) == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context).quickAddUnsupportedLanguage),
+        ),
+      );
+      return;
+    }
+
+    final result = await Navigator.of(context).push<Object?>(
+      MaterialPageRoute(
+        builder: (_) => QuickAddPage(
+          initialDate: _date,
+          forceTaskType: widget.forceTaskType,
+        ),
+      ),
+    );
+    if (!mounted || result == null) return;
+    if (result is ParsedTask) {
+      _applyQuickAddPrefill(result);
+    }
   }
 
   bool get _showStartEnd =>
@@ -226,23 +305,7 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
     return [
       if (!widget.isEditing) ...[
         OutlinedButton.icon(
-          onPressed: () {
-            if (resolveQuickAddParserLanguage(ref.read(appLanguageProvider)) ==
-                null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(l10n.quickAddUnsupportedLanguage)),
-              );
-              return;
-            }
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => QuickAddPage(
-                  initialDate: _date,
-                  forceTaskType: widget.forceTaskType,
-                ),
-              ),
-            );
-          },
+          onPressed: _openQuickAdd,
           icon: const Icon(Icons.bolt_outlined),
           label: Text(l10n.quickAddTitle),
           style: OutlinedButton.styleFrom(
@@ -254,10 +317,18 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
       ],
       TextFormField(
         controller: _titleController,
+        focusNode: _titleFocus,
         maxLength: kMaxEventTitleLength,
+        textInputAction: TextInputAction.next,
+        onFieldSubmitted: (_) => _noteFocus.requestFocus(),
         decoration: InputDecoration(
           labelText: l10n.titleLabel,
           counterText: '',
+          suffixIcon: IconButton(
+            tooltip: MaterialLocalizations.of(context).okButtonLabel,
+            icon: const Icon(Icons.check_rounded, size: 20),
+            onPressed: _dismissKeyboard,
+          ),
         ),
         autovalidateMode: AutovalidateMode.onUserInteraction,
         validator: (v) {
@@ -354,12 +425,20 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
       ],
       TextFormField(
         controller: _noteController,
+        focusNode: _noteFocus,
         minLines: 1,
         maxLines: 5,
         maxLength: kMaxEventNoteLength,
+        textInputAction: TextInputAction.done,
+        onFieldSubmitted: (_) => _dismissKeyboard(),
         decoration: InputDecoration(
           labelText: l10n.noteLabel,
           alignLabelWithHint: true,
+          suffixIcon: IconButton(
+            tooltip: MaterialLocalizations.of(context).okButtonLabel,
+            icon: const Icon(Icons.check_rounded, size: 20),
+            onPressed: _dismissKeyboard,
+          ),
         ),
         autovalidateMode: AutovalidateMode.onUserInteraction,
         validator: (v) {
@@ -436,6 +515,7 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
   }
 
   Future<void> _pickReminder() async {
+    _dismissKeyboard();
     final picked = await showReminderPickerSheet(
       context: context,
       currentOffsetsSeconds: _reminderOffsetsSeconds,
@@ -445,6 +525,7 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
   }
 
   Future<void> _pickDate() async {
+    _dismissKeyboard();
     final picked = await showDatePicker(
       context: context,
       initialDate: _date,
@@ -455,6 +536,7 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
   }
 
   Future<void> _pickTime({required bool isStart}) async {
+    _dismissKeyboard();
     final picked = await showTimePicker(
       context: context,
       initialTime: isStart ? _start : _end,
@@ -474,6 +556,7 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
   }
 
   Future<void> _pickDeadline() async {
+    _dismissKeyboard();
     final picked = await showTimePicker(
       context: context,
       initialTime: _deadline,
@@ -633,7 +716,10 @@ class _PickerTile extends StatelessWidget {
       color: Theme.of(context).inputDecorationTheme.fillColor,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
-        onTap: onTap,
+        onTap: () {
+          FocusManager.instance.primaryFocus?.unfocus();
+          onTap();
+        },
         borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),

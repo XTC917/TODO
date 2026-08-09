@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/providers/app_providers.dart';
 import '../../core/utils/date_time_formats.dart';
-import '../../core/utils/quick_add_form_bridge.dart';
 import '../../core/utils/parsed_task.dart';
 import '../../core/utils/parsed_task_draft.dart';
+import '../../core/utils/quick_add_form_bridge.dart';
 import '../../core/utils/quick_add_parser.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/reminder_config.dart';
@@ -102,29 +102,18 @@ class _QuickAddPageState extends ConsumerState<QuickAddPage> {
     }
   }
 
-  void _openFormForParsed(ParsedTask parsed, TaskType taskType) {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => QuickAddFormBridge.formPageForTypeSwitch(
-          parsed: parsed,
-          targetType: taskType,
-          fallbackDate: widget.initialDate,
-          lockedForceTaskType: widget.forceTaskType,
-        ),
-      ),
-    );
+  void _openEditor() {
+    final parsed = _parsed;
+    if (parsed == null) return;
+    Navigator.of(context).pop(parsed);
   }
 
   void _switchTaskType(TaskType newType) {
     final parsed = _parsed;
     if (parsed == null || newType == parsed.taskType) return;
-    _openFormForParsed(parsed, newType);
-  }
-
-  void _openEditor() {
-    final parsed = _parsed;
-    if (parsed == null) return;
-    _openFormForParsed(parsed, widget.forceTaskType ?? parsed.taskType);
+    setState(() {
+      _parsed = QuickAddFormBridge.parsedForTaskType(parsed, newType);
+    });
   }
 
   @override
@@ -302,7 +291,15 @@ class _PreviewStep extends StatelessWidget {
                             l10n,
                           ),
                         ),
-                      if (parsed.startTime != null && parsed.endTime == null)
+                      if ((parsed.todoTimeMode == TodoTimeMode.deadline ||
+                              (parsed.endTime != null &&
+                                  parsed.startTime == null)) &&
+                          parsed.endTime != null)
+                        _PreviewRow(
+                          icon: Icons.schedule_outlined,
+                          text: _formatClock(parsed.endTime!),
+                        )
+                      else if (parsed.startTime != null && parsed.endTime == null)
                         _PreviewRow(
                           icon: Icons.schedule_outlined,
                           text: _formatClock(parsed.startTime!),

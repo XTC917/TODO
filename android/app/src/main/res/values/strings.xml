@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="widget_todo_label">JUJU Schedule 待办</string>
+    <string name="widget_todo_label">JUJU 待办</string>
     <string name="widget_todo_description">待办列表，长期任务优先、按日期排序</string>
-    <string name="widget_todo_compact_label">JUJU Schedule 待办 (2×2)</string>
-    <string name="widget_todo_compact_description">紧凑待办，显示 2 条待办</string>
-    <string name="widget_schedule_label">JUJU Schedule 日程</string>
-    <string name="widget_schedule_description">今日日程安排</string>
-    <string name="widget_focus_label">JUJU Schedule 专注</string>
+    <string name="widget_todo_compact_label">JUJU 待办 (2×2)</string>
+    <string name="widget_todo_compact_description">紧凑待办，显示 3 条待办</string>
+    <string name="widget_schedule_label">JUJU 日程</string>
+    <string name="widget_schedule_description">日程与有时间的待办</string>
+    <string name="widget_focus_label">JUJU 专注</string>
     <string name="widget_focus_description">今日专注时长，一键开始专注</string>
 </resources>

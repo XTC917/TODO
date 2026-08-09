@@ -45,24 +45,28 @@ fun WidgetHeader(
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
-            .padding(bottom = 4.dp),
+            .padding(
+                end = if (compact) 4.dp else 0.dp,
+                bottom = 4.dp,
+            ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = title,
             style = if (compact) WidgetTheme.compactTitleStyle else WidgetTheme.titleStyle,
-            modifier = GlanceModifier.clickable(onClick = openAction),
+            modifier = GlanceModifier
+                .defaultWeight()
+                .clickable(onClick = openAction),
         )
-        Spacer(GlanceModifier.defaultWeight())
         Text(
             text = "+",
             style = TextStyle(
                 color = accent,
-                fontSize = 22.sp,
+                fontSize = if (compact) 20.sp else 22.sp,
                 fontWeight = FontWeight.Bold,
             ),
             modifier = GlanceModifier
-                .padding(start = 8.dp)
+                .padding(start = 4.dp, end = if (compact) 2.dp else 0.dp)
                 .clickable(onClick = addAction),
         )
     }

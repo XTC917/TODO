@@ -20,13 +20,16 @@ class TodoToggleReceiver : BroadcastReceiver() {
         CoroutineScope(SupervisorJob() + Dispatchers.Default).launch {
             try {
                 val appContext = context.applicationContext
-                if (WidgetNativeToggle.toggleTodo(appContext, eventId)) {
+                if (WidgetNativeToggle.toggleEvent(appContext, eventId)) {
                     val manager = GlanceAppWidgetManager(appContext)
                     manager.getGlanceIds(TodoGlanceWidget::class.java).forEach { glanceId ->
                         TodoGlanceWidget().update(appContext, glanceId)
                     }
                     manager.getGlanceIds(TodoCompactGlanceWidget::class.java).forEach { glanceId ->
                         TodoCompactGlanceWidget().update(appContext, glanceId)
+                    }
+                    manager.getGlanceIds(ScheduleGlanceWidget::class.java).forEach { glanceId ->
+                        ScheduleGlanceWidget().update(appContext, glanceId)
                     }
                     manager.getGlanceIds(FocusGlanceWidget::class.java).forEach { glanceId ->
                         FocusGlanceWidget().update(appContext, glanceId)

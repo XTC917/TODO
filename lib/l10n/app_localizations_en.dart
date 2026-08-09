@@ -173,13 +173,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get colorLightness => 'Lightness';
 
   @override
-  String get widgetTodoTitle => 'JUJU Schedule Todos';
+  String get widgetTodoTitle => 'JUJU Todos';
 
   @override
-  String get widgetScheduleTitle => 'JUJU Schedule Calendar';
+  String get widgetScheduleTitle => 'JUJU Calendar';
 
   @override
-  String get widgetFocusTitle => 'JUJU Schedule Focus';
+  String get widgetFocusTitle => 'JUJU Focus';
 
   @override
   String get widgetStartFocus => 'Start focus';
