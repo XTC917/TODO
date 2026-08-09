@@ -13,22 +13,33 @@ import '../../models/enums.dart';
 import '../../models/event.dart';
 import '../../models/reminder_config.dart';
 
+import '../../core/utils/quick_add_parser.dart';
+import 'quick_add_page.dart';
+
 class EventFormPage extends ConsumerStatefulWidget {
   const EventFormPage({
     super.key,
     this.eventId,
     this.editingOccurrence,
     this.initialDate,
+    this.initialTitle,
+    this.initialStartTime,
+    this.initialEndTime,
     this.forceTaskType,
     this.forceTodoTimeMode,
+    this.initialReminderOffsetsSeconds,
   });
 
   final int? eventId;
   /// The occurrence shown in the list (date may differ from stored row).
   final Event? editingOccurrence;
   final DateTime? initialDate;
+  final String? initialTitle;
+  final TimeOfDay? initialStartTime;
+  final TimeOfDay? initialEndTime;
   final TaskType? forceTaskType;
   final TodoTimeMode? forceTodoTimeMode;
+  final List<int>? initialReminderOffsetsSeconds;
 
   bool get isEditing => eventId != null;
 
@@ -66,6 +77,30 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
     _todoTimeMode = widget.forceTodoTimeMode ?? TodoTimeMode.timeBlock;
     _repeatType = RepeatType.oneTime;
     _reminderOffsetsSeconds = const [];
+
+    if (!widget.isEditing) {
+      if (widget.initialTitle != null && widget.initialTitle!.isNotEmpty) {
+        _titleController.text = widget.initialTitle!;
+      }
+      if (widget.initialStartTime != null) {
+        _start = widget.initialStartTime!;
+      }
+      if (widget.initialEndTime != null) {
+        _end = widget.initialEndTime!;
+      } else if (widget.initialStartTime != null) {
+        final startMin = _start.hour * 60 + _start.minute;
+        final endMin = startMin + 60;
+        _end = TimeOfDay(hour: (endMin ~/ 60) % 24, minute: endMin % 60);
+      }
+      if (widget.initialStartTime != null &&
+          widget.forceTodoTimeMode == TodoTimeMode.deadline) {
+        _deadline = widget.initialEndTime ?? widget.initialStartTime!;
+      }
+      if (widget.initialReminderOffsetsSeconds != null &&
+          widget.initialReminderOffsetsSeconds!.isNotEmpty) {
+        _reminderOffsetsSeconds = widget.initialReminderOffsetsSeconds!;
+      }
+    }
 
     if (widget.isEditing) {
       Future.microtask(_loadExisting);
@@ -189,6 +224,34 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
   List<Widget> _formFields(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return [
+      if (!widget.isEditing) ...[
+        OutlinedButton.icon(
+          onPressed: () {
+            if (resolveQuickAddParserLanguage(ref.read(appLanguageProvider)) ==
+                null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(l10n.quickAddUnsupportedLanguage)),
+              );
+              return;
+            }
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => QuickAddPage(
+                  initialDate: _date,
+                  forceTaskType: widget.forceTaskType,
+                ),
+              ),
+            );
+          },
+          icon: const Icon(Icons.bolt_outlined),
+          label: Text(l10n.quickAddTitle),
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size.fromHeight(44),
+            alignment: Alignment.centerLeft,
+          ),
+        ),
+        const SizedBox(height: 12),
+      ],
       TextFormField(
         controller: _titleController,
         maxLength: kMaxEventTitleLength,

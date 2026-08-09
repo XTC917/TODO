@@ -1,5 +1,13 @@
 # Changelog
 
+## v2.5.3
+
+### Added
+- **Quick Add**: type a sentence (e.g. “明天下午3点和导师开会”) to parse title, date, time, and type locally — no AI, no network. Preview before save; edit opens the existing create form.
+- Quick Add also parses **reminder offsets** from phrases like “提前五分钟” / “提前半小时和一小时通知我”, passed into existing `reminderOffsetsSeconds` and notification scheduling.
+- Quick Add supports **Chinese and English** natural-language input based on the current app language; other UI languages show an unsupported notice.
+- Quick Add recognizes explicit **Schedule / Todo** intent (e.g. 创建日程 / add a todo); preview lets you switch type before confirm — switching opens the existing add-task form with preserved fields.
+
 ## v2.5.2
 
 ### Added

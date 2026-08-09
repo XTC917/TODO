@@ -1012,6 +1012,54 @@ abstract class AppLocalizations {
   /// **'Add'**
   String get addTitle;
 
+  /// No description provided for @quickAddTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Add'**
+  String get quickAddTitle;
+
+  /// No description provided for @quickAddHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Try: Meeting tomorrow at 3 pm, remind me 30 minutes before.'**
+  String get quickAddHint;
+
+  /// No description provided for @quickAddUnsupportedLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Natural language input is currently supported in Chinese and English only.'**
+  String get quickAddUnsupportedLanguage;
+
+  /// No description provided for @quickAddNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get quickAddNext;
+
+  /// No description provided for @quickAddParseResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Parsed result'**
+  String get quickAddParseResult;
+
+  /// No description provided for @quickAddConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get quickAddConfirm;
+
+  /// No description provided for @quickAddEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get quickAddEdit;
+
+  /// No description provided for @quickAddEmptyInput.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a task description.'**
+  String get quickAddEmptyInput;
+
   /// No description provided for @editTitle.
   ///
   /// In en, this message translates to:

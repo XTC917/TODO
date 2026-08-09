@@ -497,6 +497,30 @@ class AppLocalizationsZh extends AppLocalizations {
   String get addTitle => '新建';
 
   @override
+  String get quickAddTitle => '快速添加';
+
+  @override
+  String get quickAddHint => '试试输入：明天下午三点开会，提前半小时提醒我';
+
+  @override
+  String get quickAddUnsupportedLanguage => '暂不支持当前语言的快速创建，请使用中文或 English。';
+
+  @override
+  String get quickAddNext => '下一步';
+
+  @override
+  String get quickAddParseResult => '解析结果';
+
+  @override
+  String get quickAddConfirm => '确认添加';
+
+  @override
+  String get quickAddEdit => '编辑';
+
+  @override
+  String get quickAddEmptyInput => '请输入任务描述。';
+
+  @override
   String get editTitle => '编辑';
 
   @override

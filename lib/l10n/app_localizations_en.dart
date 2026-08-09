@@ -514,6 +514,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addTitle => 'Add';
 
   @override
+  String get quickAddTitle => 'Quick Add';
+
+  @override
+  String get quickAddHint =>
+      'Try: Meeting tomorrow at 3 pm, remind me 30 minutes before.';
+
+  @override
+  String get quickAddUnsupportedLanguage =>
+      'Natural language input is currently supported in Chinese and English only.';
+
+  @override
+  String get quickAddNext => 'Next';
+
+  @override
+  String get quickAddParseResult => 'Parsed result';
+
+  @override
+  String get quickAddConfirm => 'Confirm';
+
+  @override
+  String get quickAddEdit => 'Edit';
+
+  @override
+  String get quickAddEmptyInput => 'Please enter a task description.';
+
+  @override
   String get editTitle => 'Edit';
 
   @override

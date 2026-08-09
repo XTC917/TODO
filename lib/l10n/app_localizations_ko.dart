@@ -500,6 +500,32 @@ class AppLocalizationsKo extends AppLocalizations {
   String get addTitle => '추가';
 
   @override
+  String get quickAddTitle => '빠른 추가';
+
+  @override
+  String get quickAddHint =>
+      'Try: Meeting tomorrow at 3 pm, remind me 30 minutes before.';
+
+  @override
+  String get quickAddUnsupportedLanguage =>
+      'Natural language input is currently supported in Chinese and English only.';
+
+  @override
+  String get quickAddNext => '다음';
+
+  @override
+  String get quickAddParseResult => '분석 결과';
+
+  @override
+  String get quickAddConfirm => '추가 확인';
+
+  @override
+  String get quickAddEdit => '편집';
+
+  @override
+  String get quickAddEmptyInput => '할 일 설명을 입력하세요.';
+
+  @override
   String get editTitle => '편집';
 
   @override
