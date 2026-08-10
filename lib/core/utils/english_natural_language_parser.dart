@@ -32,11 +32,19 @@ class EnglishNaturalLanguageParser {
 
     final normalized = _normalize(raw);
     final removals = <_Span>[];
+    final lower = normalized.toLowerCase();
+    final eveningContext = lower.contains('tonight');
 
     final explicitType = _extractExplicitTaskType(normalized, removals);
     final date = _extractDate(normalized, ref, removals);
     final range = _extractTimeRange(normalized, removals);
-    final single = range == null ? _extractSingleTime(normalized, removals) : null;
+    final single = range == null
+        ? _extractSingleTime(
+            normalized,
+            removals,
+            eveningContext: eveningContext,
+          )
+        : null;
 
     var startTime = range?.start ?? single;
     var endTime = range?.end;
@@ -113,6 +121,7 @@ class EnglishNaturalLanguageParser {
     required bool hasBlockTime,
   }) {
     if (taskType == TaskType.schedule) return TodoTimeMode.timeBlock;
+    if (isDeadline && hasDeadlineTime) return TodoTimeMode.deadline;
     if (!hasDate) return TodoTimeMode.noTime;
     if (isDeadline || hasDeadlineTime) return TodoTimeMode.deadline;
     if (hasBlockTime) return TodoTimeMode.timeBlock;
@@ -336,7 +345,11 @@ class EnglishNaturalLanguageParser {
     return _TimeRange(start: start, end: end);
   }
 
-  TimeOfDay? _extractSingleTime(String text, List<_Span> removals) {
+  TimeOfDay? _extractSingleTime(
+    String text,
+    List<_Span> removals, {
+    bool eveningContext = false,
+  }) {
     final candidates = <(Match, TimeOfDay)>[];
 
     for (final m in RegExp(
@@ -354,21 +367,49 @@ class EnglishNaturalLanguageParser {
     for (final m in RegExp(r'\b(\d{1,2}):(\d{2})\b').allMatches(text)) {
       final hour = int.parse(m.group(1)!);
       final minute = int.parse(m.group(2)!);
-      final time = _clockTime(hour: hour, minute: minute);
+      final time = _clockTime(
+        hour: hour,
+        minute: minute,
+        fallbackMeridiem: eveningContext ? 'pm' : null,
+      );
+      if (time != null) candidates.add((m, time));
+    }
+
+    for (final m in RegExp(
+      r'\b(?:at\s+)?(\d{1,2})\s*(?:o''?clock\b)?(?!\s*(?:am|pm)\b)',
+      caseSensitive: false,
+    ).allMatches(text)) {
+      if (RegExp(r'\d:\d').hasMatch(m.group(0)!)) continue;
+      final hour = int.parse(m.group(1)!);
+      final time = _clockTime(
+        hour: hour,
+        minute: 0,
+        fallbackMeridiem: eveningContext ? 'pm' : null,
+      );
       if (time != null) candidates.add((m, time));
     }
 
     if (candidates.isEmpty) return null;
 
     candidates.sort((a, b) {
-      final len = (b.$1.end - b.$1.start).compareTo(a.$1.end - a.$1.start);
-      if (len != 0) return len;
+      final scoreA = _timeMatchScore(text, a.$1);
+      final scoreB = _timeMatchScore(text, b.$1);
+      if (scoreA != scoreB) return scoreB.compareTo(scoreA);
       return a.$1.start.compareTo(b.$1.start);
     });
 
     final best = candidates.first;
     removals.add(_Span(best.$1.start, best.$1.end));
     return best.$2;
+  }
+
+  int _timeMatchScore(String text, Match match) {
+    var score = match.end - match.start;
+    final segment = text.substring(match.start, match.end).toLowerCase();
+    if (segment.contains('am') || segment.contains('pm')) {
+      score += 100;
+    }
+    return score;
   }
 
   TimeOfDay? _clockTime({

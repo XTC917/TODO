@@ -77,6 +77,31 @@ void main() {
       );
       expect(r.reminderOffsetsSeconds, [1800]);
     });
+
+    test('due by 3 pm -> todo deadline 15:00', () {
+      final r = parser.parse('Finish report due by 3 pm', reference: ref);
+      expect(r.taskType, TaskType.todo);
+      expect(r.todoTimeMode, TodoTimeMode.deadline);
+      expect(r.endTime, const TimeOfDay(hour: 15, minute: 0));
+      expect(r.startTime, isNull);
+    });
+
+    test('tomorrow due by 3 pm', () {
+      final r = parser.parse(
+        'Submit homework tomorrow due by 3 pm',
+        reference: ref,
+      );
+      expect(DateTimeFormats.formatDate(r.date!), '2026-08-10');
+      expect(r.endTime, const TimeOfDay(hour: 15, minute: 0));
+      expect(r.todoTimeMode, TodoTimeMode.deadline);
+    });
+
+    test('finish by 8 tonight', () {
+      final r = parser.parse('Finish report by 8 tonight', reference: ref);
+      expect(r.endTime, const TimeOfDay(hour: 20, minute: 0));
+      expect(r.todoTimeMode, TodoTimeMode.deadline);
+      expect(r.taskType, TaskType.todo);
+    });
   });
 
   group('Explicit task type', () {

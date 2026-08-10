@@ -1,4 +1,4 @@
-package com.example.soft_schedule
+package com.juju.schedule
 
 import android.content.ComponentName
 import android.content.Context
@@ -10,7 +10,7 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
 object ReminderNativeBridge {
-    private const val CHANNEL = "com.example.soft_schedule/reminder_native"
+    private const val CHANNEL = "com.juju.schedule/reminder_native"
 
     fun register(engine: FlutterEngine, context: Context) {
         MethodChannel(engine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler {

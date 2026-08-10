@@ -1,5 +1,26 @@
 # Changelog
 
+## v2.6.0
+
+### Changed
+- Unified localized **app display name**: English `JUJU Schedule`, 简体中文 `JUJU日常`, 한국어 `JUJU 일정` (in-app l10n, About, Android launcher).
+- Android **application ID / package name** → `com.juju.schedule` (all locales).
+- Database export embeds appearance & focus-preset settings inside the `.sqlite` file (single-file backup on Android); import restores them automatically. Legacy `.settings.json` sidecar still supported on desktop.
+
+## v2.5.5
+
+### Changed
+- New todo **deadline** default time is **23:59** (was 18:00).
+- Focus custom duration picker: minutes **0–60** (every minute, was 5-minute steps).
+- Focus end: in-app summary dialog + **vibration**; **notification** when pomodoro completes in background.
+- **Normal / Strict** focus modes (text toggle above pomodoro/stopwatch, left-aligned; preference remembered):
+  - **Strict**: leaving the app during an active session triggers reminders every 10s (max 5); after 1 minute away the session ends with **0 min** recorded (marked incomplete in history).
+- Focus records show **普通/严格** (normal/strict) enforcement type.
+- Focus page layout: duration presets (max **9**) below task picker; **+ Add custom duration** as text under chips; records link at bottom; page scrolls when content overflows.
+- Focus session **persists** across background/kill (wall-clock timer); strict-mode reminders use **scheduled notifications** when app is backgrounded.
+- Settings → Notifications: **autostart** prompt on all Android devices (same pattern as battery optimization).
+- Normal/Strict toggle hidden while a focus session is active.
+
 ## v2.5.4
 
 ### Changed
@@ -8,7 +29,7 @@
 - All **+** entry points (FAB, widgets) open the same default add-task form as Home (Todo/Schedule picker).
 - Add-task form: title and note fields have a ✓ button to dismiss the keyboard before picking date/time.
 - Quick Add **Edit** opens the same add-task form with parsed fields prefilled (type not locked).
-- Quick Add deadline parsing: phrases like **截止6点** / **6点前完成** map to todo + deadline mode with correct end time; **下午三点截止** → 15:00 (supports **的** between period and time).
+- Quick Add deadline parsing: phrases like **截止6点** / **6点前完成** map to todo + deadline mode with correct end time; **下午三点截止** → 15:00 (supports **的** between period and time). English **due by 3 pm** / **by 8 tonight** aligned to the same rules.
 - Quick Add **Edit** returns to the existing add-task form with prefilled fields (no stacked form pages).
 
 ## v2.5.3

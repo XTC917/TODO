@@ -47,6 +47,8 @@ class FocusRecords extends Table {
   IntColumn get plannedDurationSeconds => integer().nullable()();
   BoolColumn get completed =>
       boolean().withDefault(const Constant(true))();
+  TextColumn get enforcementMode =>
+      text().withDefault(const Constant('normal'))();
   DateTimeColumn get createdAt => dateTime()();
 }
 
@@ -57,7 +59,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -102,6 +104,11 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(focusRecords, focusRecords.taskTitle);
             await m.addColumn(focusRecords, focusRecords.plannedDurationSeconds);
             await m.addColumn(focusRecords, focusRecords.completed);
+          }
+          if (from < 7) {
+            await customStatement(
+              "ALTER TABLE focus_records ADD COLUMN enforcement_mode TEXT NOT NULL DEFAULT 'normal'",
+            );
           }
         },
       );

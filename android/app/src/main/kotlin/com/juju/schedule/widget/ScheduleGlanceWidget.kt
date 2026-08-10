@@ -1,4 +1,4 @@
-package com.example.soft_schedule.widget
+package com.juju.schedule.widget
 
 import android.content.Context
 import android.net.Uri
@@ -15,7 +15,7 @@ import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.text.Text
-import com.example.soft_schedule.MainActivity
+import com.juju.schedule.MainActivity
 import es.antonborri.home_widget.HomeWidgetGlanceState
 import es.antonborri.home_widget.HomeWidgetGlanceStateDefinition
 import es.antonborri.home_widget.actionStartActivity

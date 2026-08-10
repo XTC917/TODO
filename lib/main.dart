@@ -9,6 +9,7 @@ import 'app.dart';
 import 'core/providers/app_providers.dart';
 import 'core/providers/l10n_providers.dart';
 import 'core/services/initial_data_seeder.dart';
+import 'core/services/focus_notification_service.dart';
 import 'core/services/notification_service.dart';
 import 'core/widget/home_widget_sync.dart';
 import 'l10n/app_localizations.dart';
@@ -79,6 +80,7 @@ Future<void> main() async {
 
   try {
     await NotificationService.instance.initialize();
+    await FocusNotificationService.instance.initialize();
   } catch (e, st) {
     debugPrint('Notification init failed (app will continue): $e\n$st');
   }

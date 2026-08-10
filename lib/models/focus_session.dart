@@ -14,6 +14,7 @@ class FocusRuntimeSession {
     this.linkedTaskTitle,
     this.state = FocusTimerState.idle,
     this.completedNaturally = false,
+    this.enforcementMode = FocusEnforcementMode.normal,
   });
 
   final FocusMode mode;
@@ -25,6 +26,7 @@ class FocusRuntimeSession {
   final String? linkedTaskTitle;
   final FocusTimerState state;
   final bool completedNaturally;
+  final FocusEnforcementMode enforcementMode;
 
   bool get isActive =>
       state == FocusTimerState.running || state == FocusTimerState.paused;
@@ -57,6 +59,7 @@ class FocusRuntimeSession {
     bool clearLinkedTaskTitle = false,
     FocusTimerState? state,
     bool? completedNaturally,
+    FocusEnforcementMode? enforcementMode,
   }) {
     return FocusRuntimeSession(
       mode: mode ?? this.mode,
@@ -75,6 +78,7 @@ class FocusRuntimeSession {
           : (linkedTaskTitle ?? this.linkedTaskTitle),
       state: state ?? this.state,
       completedNaturally: completedNaturally ?? this.completedNaturally,
+      enforcementMode: enforcementMode ?? this.enforcementMode,
     );
   }
 }
@@ -90,6 +94,8 @@ class FocusCompletionResult {
     this.plannedDurationSeconds,
     this.linkedEventId,
     this.linkedTaskTitle,
+    this.enforcementMode = FocusEnforcementMode.normal,
+    this.strictFailed = false,
   });
 
   final FocusMode mode;
@@ -100,6 +106,8 @@ class FocusCompletionResult {
   final int? plannedDurationSeconds;
   final int? linkedEventId;
   final String? linkedTaskTitle;
+  final FocusEnforcementMode enforcementMode;
+  final bool strictFailed;
 }
 
 enum FocusDurationDisplayMode { hour, minute }

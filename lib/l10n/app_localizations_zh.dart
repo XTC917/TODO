@@ -9,7 +9,7 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
-  String get appTitle => 'JUJU Schedule';
+  String get appTitle => 'JUJU日常';
 
   @override
   String get navHome => '首页';
@@ -113,7 +113,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsPrivacyPolicy => '隐私政策';
 
   @override
-  String get initialTimelineWelcomeTitle => '👋 欢迎使用 JUJU Schedule';
+  String get initialTimelineWelcomeTitle => '👋 欢迎使用 JUJU日常';
 
   @override
   String get initialTimelineAddTitle => '➕ 点击右下角新增任务';
@@ -207,7 +207,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get widgetSetupStep2 => '选择「小部件 / 窗口小工具 / Widgets」';
 
   @override
-  String get widgetSetupStep3 => '找到 JUJU Schedule';
+  String get widgetSetupStep3 => '找到 JUJU日常';
 
   @override
   String get widgetSetupStep4 => '选择待办、日程或专注小组件并添加';
@@ -216,14 +216,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get widgetSetupTypesTitle => '可用小组件';
 
   @override
-  String get widgetSetupTypeTodo => 'JUJU Schedule 待办';
+  String get widgetSetupTypeTodo => 'JUJU日常 待办';
 
   @override
   String get widgetSetupTypeTodoHint =>
       '显示待办列表（长期任务优先，按日期排序）；点左侧圆圈勾选；右上角 + 添加待办';
 
   @override
-  String get widgetSetupTypeTodoCompact => 'JUJU Schedule 待办 (2×2)';
+  String get widgetSetupTypeTodoCompact => 'JUJU日常 待办 (2×2)';
 
   @override
   String get widgetSetupTypeTodoCompactHint => '紧凑尺寸，显示 2 条待办；同样支持勾选';
@@ -283,7 +283,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get autostartPermissionNotConfigured => '自启动未确认';
 
   @override
-  String get autostartPermissionHint => '小米/红米手机需开启自启动，否则划掉后台后提醒可能无法触发。';
+  String get autostartPermissionHint =>
+      '划掉后台后，提醒与专注计时可能无法正常工作。小米/红米请开启自启动；其他机型请在应用详情中允许后台运行。';
 
   @override
   String get requestAutostartPermission => '前往开启自启动';
@@ -831,6 +832,17 @@ class AppLocalizationsZh extends AppLocalizations {
   String get focusAddPreset => '添加';
 
   @override
+  String get focusAddCustomDuration => '+ 添加自定义时长';
+
+  @override
+  String get focusPresetsShowLess => '收起';
+
+  @override
+  String focusPresetsMaxReached(int max) {
+    return '最多添加 $max 个自定义时长';
+  }
+
+  @override
   String get focusTapToToggleDisplay => '点击切换显示方式';
 
   @override
@@ -898,6 +910,27 @@ class AppLocalizationsZh extends AppLocalizations {
   String focusDurationMinutesOnly(int minutes) {
     return '$minutes 分钟';
   }
+
+  @override
+  String get focusEnforcementNormal => '普通';
+
+  @override
+  String get focusEnforcementStrict => '严格';
+
+  @override
+  String get focusStrictReminderTitle => '专注中';
+
+  @override
+  String get focusStrictReminderBody => '正在专注中，请专心哦~';
+
+  @override
+  String get focusEndNotificationBody => '专注时间到啦，休息一下吧';
+
+  @override
+  String get focusStrictFailedTitle => '专注已中断';
+
+  @override
+  String get focusRecordStrictFailed => '严格 · 未完成';
 
   @override
   String get statsTitle => '统计';

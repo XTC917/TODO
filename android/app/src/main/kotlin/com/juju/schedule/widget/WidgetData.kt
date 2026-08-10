@@ -1,4 +1,4 @@
-package com.example.soft_schedule.widget
+package com.juju.schedule.widget
 
 import android.content.SharedPreferences
 import org.json.JSONArray

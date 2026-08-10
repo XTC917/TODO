@@ -46,6 +46,7 @@ class FocusRepository {
         taskTitle: Value(result.linkedTaskTitle),
         plannedDurationSeconds: Value(result.plannedDurationSeconds),
         completed: Value(result.completed),
+        enforcementMode: Value(result.enforcementMode.storage),
         createdAt: DateTime.now(),
       ),
     );
@@ -154,6 +155,7 @@ class FocusRepository {
       taskTitle: row.taskTitle,
       plannedDurationSeconds: row.plannedDurationSeconds,
       completed: row.completed,
+      enforcementMode: FocusEnforcementModeX.fromStorage(row.enforcementMode),
       createdAt: row.createdAt,
     );
   }

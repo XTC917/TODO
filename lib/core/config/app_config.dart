@@ -2,6 +2,7 @@
 class AppConfig {
   AppConfig._();
 
+  /// English fallback when [AppLocalizations] is unavailable.
   static const appName = 'JUJU Schedule';
   static const testNotificationBody = 'This is a test notification.';
   static const githubUrl = '';

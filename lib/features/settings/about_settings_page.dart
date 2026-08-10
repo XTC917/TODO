@@ -23,7 +23,7 @@ class AboutSettingsPage extends ConsumerWidget {
           ListTile(
             leading: const Icon(Icons.apps_rounded, size: 22),
             title: Text(l10n.settingsAppName),
-            subtitle: Text(AppConfig.appName),
+            subtitle: Text(l10n.appTitle),
           ),
           ListTile(
             leading: const Icon(Icons.new_releases_outlined, size: 22),
@@ -52,7 +52,7 @@ class AboutSettingsPage extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right, size: 20),
             onTap: () => showLicensePage(
               context: context,
-              applicationName: AppConfig.appName,
+              applicationName: l10n.appTitle,
               applicationVersion: appVersion,
             ),
           ),
@@ -70,7 +70,7 @@ class AboutSettingsPage extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right, size: 20),
             onTap: () => showAboutDialog(
               context: context,
-              applicationName: AppConfig.appName,
+              applicationName: l10n.appTitle,
               applicationVersion: appVersion,
               applicationLegalese: l10n.aboutLegalese,
             ),

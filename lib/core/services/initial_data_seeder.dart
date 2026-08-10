@@ -22,6 +22,8 @@ const _legacyWelcomeFragments = [
   'Welcome to JUJU Schedule',
   '欢迎使用 JUJU Schedule',
   'JUJU Schedule에 오신',
+  '欢迎使用 JUJU日常',
+  'JUJU 일정에 오신',
 ];
 
 List<EventDraft> buildInitialDrafts(AppLocalizations l10n) {

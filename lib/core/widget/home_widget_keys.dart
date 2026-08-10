@@ -22,13 +22,13 @@ class HomeWidgetKeys {
   static const dataRevision = 'juju_data_revision';
 
   static const androidTodoReceiver =
-      'com.example.soft_schedule.widget.TodoWidgetReceiver';
+      'com.juju.schedule.widget.TodoWidgetReceiver';
   static const androidTodoCompactReceiver =
-      'com.example.soft_schedule.widget.TodoCompactWidgetReceiver';
+      'com.juju.schedule.widget.TodoCompactWidgetReceiver';
   static const androidScheduleReceiver =
-      'com.example.soft_schedule.widget.ScheduleWidgetReceiver';
+      'com.juju.schedule.widget.ScheduleWidgetReceiver';
   static const androidFocusReceiver =
-      'com.example.soft_schedule.widget.FocusWidgetReceiver';
+      'com.juju.schedule.widget.FocusWidgetReceiver';
 }
 
 /// Deep-link URIs opened when a widget is tapped.

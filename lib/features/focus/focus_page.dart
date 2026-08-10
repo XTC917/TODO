@@ -1,10 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../../core/l10n/enum_labels.dart';
 import '../../../core/providers/app_providers.dart';
 import '../../../core/providers/focus_providers.dart';
+import '../../../core/services/focus_notification_service.dart';
+import '../../../core/services/focus_preset_service.dart';
 import '../../../core/services/focus_timer_service.dart';
 import '../../../core/utils/focus_display.dart';
 import '../../../l10n/app_localizations.dart';
@@ -39,6 +44,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _handleLaunch();
       _syncIdleConfig();
+      unawaited(_syncEndNotification());
     });
   }
 
@@ -59,8 +65,83 @@ class _FocusPageState extends ConsumerState<FocusPage>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      ref.read(focusTimerProvider.notifier).refreshDisplay();
+      unawaited(_onAppForeground());
+      return;
     }
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      unawaited(_onAppBackground());
+    }
+  }
+
+  Future<void> _onAppBackground() async {
+    if (!mounted) return;
+    final session = ref.read(focusTimerProvider).session;
+    if (!session.isActive || session.state != FocusTimerState.running) return;
+
+    if (session.enforcementMode == FocusEnforcementMode.strict) {
+      final now = DateTime.now();
+      await ref.read(focusSessionStoreProvider).setStrictBackgroundedAt(now);
+      if (!mounted) return;
+      final l10n = AppLocalizations.of(context);
+      await FocusNotificationService.instance.scheduleStrictBackgroundReminders(
+        backgroundedAt: now,
+        reminderTitle: l10n.focusStrictReminderTitle,
+        reminderBody: l10n.focusStrictReminderBody,
+        failTitle: l10n.focusStrictFailedTitle,
+        failBody: l10n.focusStrictReminderBody,
+      );
+    }
+  }
+
+  Future<void> _onAppForeground() async {
+    await FocusNotificationService.instance.cancelStrictReminders();
+    final store = ref.read(focusSessionStoreProvider);
+    final bgAt = store.strictBackgroundedAt();
+    await store.clearStrictBackgroundedAt();
+
+    if (bgAt != null && mounted) {
+      final session = ref.read(focusTimerProvider).session;
+      if (session.isActive &&
+          session.enforcementMode == FocusEnforcementMode.strict &&
+          session.state == FocusTimerState.running &&
+          DateTime.now().difference(bgAt).inSeconds >= 60) {
+        final result = ref.read(focusTimerProvider.notifier).failStrictSession();
+        await FocusNotificationService.instance.cancelAll();
+        if (result != null && mounted) {
+          await _handleCompletion(result);
+        }
+        return;
+      }
+    }
+
+    if (!mounted) return;
+    ref.read(focusTimerProvider.notifier).refreshDisplay();
+    await _syncEndNotification();
+  }
+
+  Future<void> _syncEndNotification() async {
+    if (!mounted) return;
+    final session = ref.read(focusTimerProvider).session;
+    final l10n = AppLocalizations.of(context);
+    if (!session.isActive ||
+        session.mode != FocusMode.pomodoro ||
+        session.state != FocusTimerState.running ||
+        session.targetSeconds == null) {
+      await FocusNotificationService.instance.cancelEndNotification();
+      return;
+    }
+    final remaining = ref.read(focusTimerServiceProvider).remainingSeconds();
+    if (remaining == null || remaining <= 0) {
+      await FocusNotificationService.instance.cancelEndNotification();
+      return;
+    }
+    await FocusNotificationService.instance.schedulePomodoroEnd(
+      endAt: DateTime.now().add(Duration(seconds: remaining)),
+      title: l10n.focusCompletedTitle,
+      body: l10n.focusEndNotificationBody,
+    );
   }
 
   void _syncIdleConfig() {
@@ -70,6 +151,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
           targetSeconds: _mode == FocusMode.pomodoro
               ? ref.read(selectedCountdownSecondsProvider)
               : null,
+          enforcementMode: ref.read(focusEnforcementModeProvider),
         );
   }
 
@@ -91,6 +173,9 @@ class _FocusPageState extends ConsumerState<FocusPage>
 
   Future<void> _handleCompletion(FocusCompletionResult result) async {
     _exitImmersive();
+    await FocusNotificationService.instance.cancelAll();
+    HapticFeedback.heavyImpact();
+
     await ref.read(focusActionsProvider).saveCompletion(result);
     if (!mounted) return;
     ref.read(focusTimerProvider.notifier).clearCompletion();
@@ -113,8 +198,10 @@ class _FocusPageState extends ConsumerState<FocusPage>
           targetSeconds: targetSeconds,
           linkedEventId: eventId,
           linkedTaskTitle: taskTitle,
+          enforcementMode: ref.read(focusEnforcementModeProvider),
         );
     _syncWakelock();
+    unawaited(_syncEndNotification());
   }
 
   Future<void> _pickTask() async {
@@ -158,16 +245,103 @@ class _FocusPageState extends ConsumerState<FocusPage>
 
   Future<void> _onEndPressed() async {
     _exitImmersive();
+    await FocusNotificationService.instance.cancelAll();
     final result = ref.read(focusTimerProvider.notifier).stop();
     if (result != null) {
       await _handleCompletion(result);
     }
   }
 
+  Future<void> _setEnforcementMode(FocusEnforcementMode mode) async {
+    await ref.read(focusEnforcementModeProvider.notifier).setMode(mode);
+    ref.read(focusTimerProvider.notifier).updateEnforcementMode(mode);
+    _syncIdleConfig();
+  }
+
+  Widget _buildEnforcementToggle({
+    required AppLocalizations l10n,
+    required ThemeData theme,
+    required Color muted,
+  }) {
+    final mode = ref.watch(focusEnforcementModeProvider);
+    final primary = theme.colorScheme.primary;
+
+    TextStyle labelStyle(FocusEnforcementMode value) {
+      final selected = mode == value;
+      return theme.textTheme.bodySmall!.copyWith(
+        fontSize: 13,
+        fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+        color: selected ? primary : muted.withValues(alpha: 0.85),
+        decoration: selected ? TextDecoration.underline : TextDecoration.none,
+        decorationColor: primary,
+      );
+    }
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          InkWell(
+            onTap: () => unawaited(
+              _setEnforcementMode(FocusEnforcementMode.normal),
+            ),
+            borderRadius: BorderRadius.circular(4),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+              child: Text(
+                l10n.focusEnforcementNormal,
+                style: labelStyle(FocusEnforcementMode.normal),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: Text(
+              '/',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: muted.withValues(alpha: 0.45),
+              ),
+            ),
+          ),
+          InkWell(
+            onTap: () => unawaited(
+              _setEnforcementMode(FocusEnforcementMode.strict),
+            ),
+            borderRadius: BorderRadius.circular(4),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+              child: Text(
+                l10n.focusEnforcementStrict,
+                style: labelStyle(FocusEnforcementMode.strict),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _addCustomPreset() async {
+    final presets = ref.read(focusPresetsProvider);
+    if (presets.length >= kMaxFocusPresets) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).focusPresetsMaxReached(kMaxFocusPresets))),
+      );
+      return;
+    }
     final seconds = await showFocusCustomDurationSheet(context: context);
     if (seconds == null || !mounted) return;
-    await ref.read(focusPresetsProvider.notifier).addPreset(seconds);
+    final added =
+        await ref.read(focusPresetsProvider.notifier).addPreset(seconds);
+    if (!mounted) return;
+    if (!added) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).focusPresetsMaxReached(kMaxFocusPresets))),
+      );
+      return;
+    }
     ref.read(selectedCountdownSecondsProvider.notifier).state = seconds;
     setState(() => _deleteMode = false);
   }
@@ -285,12 +459,48 @@ class _FocusPageState extends ConsumerState<FocusPage>
     );
   }
 
+  Widget _buildPresetChip({
+    required int seconds,
+    required AppLocalizations l10n,
+    required FocusDurationDisplayMode displayMode,
+    required int selectedSeconds,
+  }) {
+    return _PresetChip(
+      label: FocusDisplayFormatter.formatChipLabel(
+        l10n,
+        seconds,
+        displayMode,
+      ),
+      selected: selectedSeconds == seconds,
+      deleteMode: _deleteMode,
+      onDelete: () async {
+        await ref.read(focusPresetsProvider.notifier).removePreset(seconds);
+        final updated = ref.read(focusPresetsProvider);
+        if (updated.isEmpty) return;
+        if (selectedSeconds == seconds) {
+          ref.read(selectedCountdownSecondsProvider.notifier).state =
+              updated.first;
+          _syncIdleConfig();
+        }
+      },
+      onTap: () {
+        ref.read(selectedCountdownSecondsProvider.notifier).state = seconds;
+        _syncIdleConfig();
+      },
+      onLongPress: () => setState(() => _deleteMode = true),
+    );
+  }
+
   Widget _buildPresetsSection({
     required AppLocalizations l10n,
+    required ThemeData theme,
     required FocusDurationDisplayMode displayMode,
     required List<int> presets,
     required int selectedSeconds,
   }) {
+    final atMax = presets.length >= kMaxFocusPresets;
+    final primary = theme.colorScheme.primary;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -308,40 +518,33 @@ class _FocusPageState extends ConsumerState<FocusPage>
           runSpacing: 8,
           children: [
             for (final seconds in presets)
-              _PresetChip(
-                label: FocusDisplayFormatter.formatChipLabel(
-                  l10n,
-                  seconds,
-                  displayMode,
-                ),
-                selected: selectedSeconds == seconds,
-                deleteMode: _deleteMode,
-                onDelete: () async {
-                  await ref
-                      .read(focusPresetsProvider.notifier)
-                      .removePreset(seconds);
-                  final updated = ref.read(focusPresetsProvider);
-                  if (updated.isEmpty) return;
-                  if (selectedSeconds == seconds) {
-                    ref.read(selectedCountdownSecondsProvider.notifier).state =
-                        updated.first;
-                    _syncIdleConfig();
-                  }
-                },
-                onTap: () {
-                  ref.read(selectedCountdownSecondsProvider.notifier).state =
-                      seconds;
-                  _syncIdleConfig();
-                },
-                onLongPress: () => setState(() => _deleteMode = true),
+              _buildPresetChip(
+                seconds: seconds,
+                l10n: l10n,
+                displayMode: displayMode,
+                selectedSeconds: selectedSeconds,
               ),
-            ActionChip(
-              avatar: const Icon(Icons.add, size: 18),
-              label: Text(l10n.focusAddPreset),
-              onPressed: _deleteMode ? null : _addCustomPreset,
-            ),
           ],
         ),
+        if (!atMax && !_deleteMode) ...[
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.center,
+            child: InkWell(
+              onTap: _addCustomPreset,
+              borderRadius: BorderRadius.circular(6),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                child: Text(
+                  l10n.focusAddCustomDuration,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: primary.withValues(alpha: 0.9),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -367,29 +570,37 @@ class _FocusPageState extends ConsumerState<FocusPage>
     return Column(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (!session.isActive) ...[
+          _buildEnforcementToggle(l10n: l10n, theme: theme, muted: muted),
+          SizedBox(height: gapS),
+        ],
         if (showModeSwitch)
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: SegmentedButton<FocusMode>(
-              segments: [
-                ButtonSegment(
-                  value: FocusMode.pomodoro,
-                  label: Text(focusModeLabel(l10n, FocusMode.pomodoro)),
-                ),
-                ButtonSegment(
-                  value: FocusMode.stopwatch,
-                  label: Text(focusModeLabel(l10n, FocusMode.stopwatch)),
-                ),
-              ],
-              selected: {_mode},
-              onSelectionChanged: (s) {
-                setState(() {
-                  _mode = s.first;
-                  _deleteMode = false;
-                });
-                _syncIdleConfig();
-              },
+          Align(
+            alignment: Alignment.center,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: SegmentedButton<FocusMode>(
+                segments: [
+                  ButtonSegment(
+                    value: FocusMode.pomodoro,
+                    label: Text(focusModeLabel(l10n, FocusMode.pomodoro)),
+                  ),
+                  ButtonSegment(
+                    value: FocusMode.stopwatch,
+                    label: Text(focusModeLabel(l10n, FocusMode.stopwatch)),
+                  ),
+                ],
+                selected: {_mode},
+                onSelectionChanged: (s) {
+                  setState(() {
+                    _mode = s.first;
+                    _deleteMode = false;
+                  });
+                  _syncIdleConfig();
+                },
+              ),
             ),
           ),
         if (showModeSwitch) SizedBox(height: gapL),
@@ -442,15 +653,34 @@ class _FocusPageState extends ConsumerState<FocusPage>
           session: session,
           compact: isLandscape,
           onStart: _onStartPressed,
-          onPause: () => ref.read(focusTimerProvider.notifier).pause(),
-          onResume: () => ref.read(focusTimerProvider.notifier).resume(),
+          onPause: () {
+            ref.read(focusTimerProvider.notifier).pause();
+            unawaited(FocusNotificationService.instance.cancelEndNotification());
+          },
+          onResume: () {
+            ref.read(focusTimerProvider.notifier).resume();
+            unawaited(_syncEndNotification());
+          },
           onEnd: _onEndPressed,
           l10n: l10n,
         ),
+        if (showTaskLink) ...[
+          SizedBox(height: gapM),
+          Align(
+            alignment: Alignment.center,
+            child: _buildTaskLink(
+              l10n: l10n,
+              theme: theme,
+              muted: muted,
+              taskTitle: taskTitle,
+            ),
+          ),
+        ],
         if (showPresets) ...[
           SizedBox(height: gapM),
           _buildPresetsSection(
             l10n: l10n,
+            theme: theme,
             displayMode: displayMode,
             presets: presets,
             selectedSeconds: selectedSeconds,
@@ -458,14 +688,10 @@ class _FocusPageState extends ConsumerState<FocusPage>
         ],
         if (showTaskLink) ...[
           SizedBox(height: gapM),
-          _buildTaskLink(
-            l10n: l10n,
-            theme: theme,
-            muted: muted,
-            taskTitle: taskTitle,
+          Align(
+            alignment: Alignment.center,
+            child: _buildRecordsLink(l10n: l10n, theme: theme, muted: muted),
           ),
-          SizedBox(height: gapS),
-          _buildRecordsLink(l10n: l10n, theme: theme, muted: muted),
         ],
       ],
     );
@@ -526,6 +752,15 @@ class _FocusPageState extends ConsumerState<FocusPage>
                 final gapM = isLandscape ? (isActive ? 10.0 : 14.0) : 24.0;
                 final gapS = isLandscape ? 6.0 : 12.0;
                 final hPad = isLandscape ? 20.0 : 28.0;
+                // Shift the whole block down so clock + start sit near screen center
+                // (Center aligns the full column, which is taller below the controls).
+                final verticalShift = isLandscape
+                    ? 0.0
+                    : (isActive
+                        ? constraints.maxHeight * 0.025
+                        : (showPresets
+                            ? constraints.maxHeight * 0.09
+                            : constraints.maxHeight * 0.05));
 
                 final mainColumn = _buildMainColumn(
                   theme: theme,
@@ -556,14 +791,17 @@ class _FocusPageState extends ConsumerState<FocusPage>
                         Expanded(
                           flex: 12,
                           child: Center(
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: ConstrainedBox(
-                                constraints: BoxConstraints(
-                                  maxHeight: constraints.maxHeight,
-                                  maxWidth: constraints.maxWidth * 0.5,
+                            child: Transform.translate(
+                              offset: Offset(0, verticalShift),
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: ConstrainedBox(
+                                  constraints: BoxConstraints(
+                                    maxHeight: constraints.maxHeight,
+                                    maxWidth: constraints.maxWidth * 0.5,
+                                  ),
+                                  child: mainColumn,
                                 ),
-                                child: mainColumn,
                               ),
                             ),
                           ),
@@ -572,26 +810,29 @@ class _FocusPageState extends ConsumerState<FocusPage>
                         Expanded(
                           flex: 10,
                           child: SingleChildScrollView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.only(bottom: 16),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                if (showPresets) ...[
-                                  _buildPresetsSection(
-                                    l10n: l10n,
-                                    displayMode: displayMode,
-                                    presets: presets,
-                                    selectedSeconds: selectedSeconds,
-                                  ),
-                                  SizedBox(height: gapM),
-                                ],
                                 _buildTaskLink(
                                   l10n: l10n,
                                   theme: theme,
                                   muted: muted,
                                   taskTitle: taskTitle,
                                 ),
-                                SizedBox(height: gapS),
+                                if (showPresets) ...[
+                                  SizedBox(height: gapM),
+                                  _buildPresetsSection(
+                                    l10n: l10n,
+                                    theme: theme,
+                                    displayMode: displayMode,
+                                    presets: presets,
+                                    selectedSeconds: selectedSeconds,
+                                  ),
+                                ],
+                                SizedBox(height: gapM),
                                 _buildRecordsLink(
                                   l10n: l10n,
                                   theme: theme,
@@ -605,18 +846,18 @@ class _FocusPageState extends ConsumerState<FocusPage>
                     ),
                   );
                 } else {
-                  body = Center(
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: hPad),
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxWidth: constraints.maxWidth - hPad * 2,
-                            maxHeight: constraints.maxHeight - 8,
-                          ),
-                          child: mainColumn,
-                        ),
+                  body = SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: EdgeInsets.fromLTRB(hPad, 12, hPad, 24),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight - 36,
+                        maxWidth: constraints.maxWidth - hPad * 2,
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [mainColumn],
                       ),
                     ),
                   );

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'core/config/app_config.dart';
 import 'core/navigation/app_navigator.dart';
 import 'core/providers/l10n_providers.dart';
 import 'core/providers/app_providers.dart';
@@ -35,7 +34,7 @@ class SoftScheduleApp extends ConsumerWidget {
     return MaterialApp(
       key: ValueKey('app-$language'),
       navigatorKey: rootNavigatorKey,
-      title: AppConfig.appName,
+      onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       debugShowCheckedModeBanner: false,
       themeMode: themeMode,
       theme: AppTheme.light(palette),

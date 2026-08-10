@@ -1,4 +1,4 @@
-package com.example.soft_schedule.widget
+package com.juju.schedule.widget
 
 
 
@@ -46,7 +46,7 @@ import androidx.glance.text.Text
 
 import androidx.glance.unit.ColorProvider
 
-import com.example.soft_schedule.MainActivity
+import com.juju.schedule.MainActivity
 
 import es.antonborri.home_widget.HomeWidgetGlanceState
 

@@ -103,7 +103,7 @@
   "settingsAutostartPermission": "Autostart",
   "autostartPermissionGranted": "Autostart enabled",
   "autostartPermissionNotConfigured": "Autostart not confirmed",
-  "autostartPermissionHint": "On Xiaomi/Redmi devices, enable autostart or reminders may stop after swiping the app away.",
+  "autostartPermissionHint": "After swiping the app away, reminders and focus timers may stop. On Xiaomi/Redmi enable autostart; on other devices allow unrestricted background activity in app settings.",
   "requestAutostartPermission": "Enable autostart",
   "exactAlarmPermissionHint": "Reminders need exact alarm permission to fire on time. Tap below to open system settings.",
   "requestExactAlarmPermission": "Allow exact alarms",
@@ -388,6 +388,15 @@
   "focusHoursLabel": "Hours",
   "focusMinutesFieldLabel": "Minutes",
   "focusAddPreset": "Add",
+  "focusAddCustomDuration": "+ Add custom duration",
+  "@focusPresetsShowMore": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "focusPresetsShowLess": "Show less",
+  "focusPresetsMaxReached": "Up to {max} custom durations",
+  "@focusPresetsMaxReached": {
+    "placeholders": { "max": { "type": "int" } }
+  },
   "focusTapToToggleDisplay": "Tap to switch display",
   "focusDoneDelete": "Done",
   "focusCurrentTask": "Select task",
@@ -418,6 +427,13 @@
     "placeholders": { "hours": { "type": "int" } }
   },
   "focusDurationMinutesOnly": "{minutes} min",
+  "focusEnforcementNormal": "Normal",
+  "focusEnforcementStrict": "Strict",
+  "focusStrictReminderTitle": "Focus in progress",
+  "focusStrictReminderBody": "You are in a focus session — stay with it!",
+  "focusEndNotificationBody": "Focus session complete. Time for a break.",
+  "focusStrictFailedTitle": "Focus interrupted",
+  "focusRecordStrictFailed": "Strict · incomplete",
   "@focusDurationMinutesOnly": {
     "placeholders": { "minutes": { "type": "int" } }
   },

@@ -295,7 +295,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get autostartPermissionHint =>
-      'On Xiaomi/Redmi devices, enable autostart or reminders may stop after swiping the app away.';
+      'After swiping the app away, reminders and focus timers may stop. On Xiaomi/Redmi enable autostart; on other devices allow unrestricted background activity in app settings.';
 
   @override
   String get requestAutostartPermission => 'Enable autostart';
@@ -850,6 +850,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get focusAddPreset => 'Add';
 
   @override
+  String get focusAddCustomDuration => '+ Add custom duration';
+
+  @override
+  String get focusPresetsShowLess => 'Show less';
+
+  @override
+  String focusPresetsMaxReached(int max) {
+    return 'Up to $max custom durations';
+  }
+
+  @override
   String get focusTapToToggleDisplay => 'Tap to switch display';
 
   @override
@@ -917,6 +928,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String focusDurationMinutesOnly(int minutes) {
     return '$minutes min';
   }
+
+  @override
+  String get focusEnforcementNormal => 'Normal';
+
+  @override
+  String get focusEnforcementStrict => 'Strict';
+
+  @override
+  String get focusStrictReminderTitle => 'Focus in progress';
+
+  @override
+  String get focusStrictReminderBody =>
+      'You are in a focus session — stay with it!';
+
+  @override
+  String get focusEndNotificationBody =>
+      'Focus session complete. Time for a break.';
+
+  @override
+  String get focusStrictFailedTitle => 'Focus interrupted';
+
+  @override
+  String get focusRecordStrictFailed => 'Strict · incomplete';
 
   @override
   String get statsTitle => 'Statistics';

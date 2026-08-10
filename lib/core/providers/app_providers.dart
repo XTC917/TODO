@@ -57,7 +57,10 @@ final allFocusRecordsProvider = StreamProvider<List<FocusRecord>>((ref) {
 });
 
 final databaseBackupProvider = Provider<DatabaseBackupService>((ref) {
-  return DatabaseBackupService(ref.watch(appDatabaseProvider));
+  return DatabaseBackupService(
+    ref.watch(appDatabaseProvider),
+    ref.watch(sharedPreferencesProvider),
+  );
 });
 
 Future<void> reopenDatabase(WidgetRef ref) async {
@@ -455,11 +458,11 @@ class FocusActions {
   final Ref _ref;
 
   Future<FocusRecord?> saveCompletion(FocusCompletionResult result) async {
-    if (result.elapsedSeconds <= 0) return null;
+    if (result.elapsedSeconds <= 0 && !result.strictFailed) return null;
 
     await _ref.read(focusRepositoryProvider).saveCompletion(result);
 
-    if (result.linkedEventId != null) {
+    if (result.linkedEventId != null && result.elapsedSeconds > 0) {
       await _ref.read(eventRepositoryProvider).addFocusedSeconds(
             result.linkedEventId!,
             result.elapsedSeconds,
@@ -477,6 +480,7 @@ class FocusActions {
       taskTitle: result.linkedTaskTitle,
       plannedDurationSeconds: result.plannedDurationSeconds,
       completed: result.completed,
+      enforcementMode: result.enforcementMode,
       createdAt: DateTime.now(),
     );
   }

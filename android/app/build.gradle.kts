@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.soft_schedule"
+    namespace = "com.juju.schedule"
     compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
@@ -21,7 +21,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.soft_schedule"
+        applicationId = "com.juju.schedule"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
@@ -56,4 +56,22 @@ flutter {
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
     implementation("androidx.glance:glance-appwidget:1.1.1")
+}
+
+// Flutter copies release output as app-release.apk; also emit a branded copy.
+tasks.register("copyBrandedReleaseApk") {
+    doLast {
+        val flutterApkDir = layout.buildDirectory.dir("outputs/flutter-apk").get().asFile
+        val from = flutterApkDir.resolve("app-release.apk")
+        val to = flutterApkDir.resolve("JUJUSchedule-v${flutter.versionName}.apk")
+        if (from.exists()) {
+            from.copyTo(to, overwrite = true)
+        }
+    }
+}
+
+afterEvaluate {
+    tasks.matching { it.name == "assembleRelease" }.configureEach {
+        finalizedBy("copyBrandedReleaseApk")
+    }
 }

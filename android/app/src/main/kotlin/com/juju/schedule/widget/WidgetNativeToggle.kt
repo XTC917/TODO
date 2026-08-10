@@ -1,4 +1,4 @@
-package com.example.soft_schedule.widget
+package com.juju.schedule.widget
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -49,7 +49,7 @@ object WidgetNativeToggle {
         }
     }
 
-    /** @deprecated Use [toggleEvent] â€” kept for call-site clarity. */
+    /** @deprecated Use [toggleEvent] â€?kept for call-site clarity. */
     fun toggleTodo(context: Context, eventId: Int): Boolean = toggleEvent(context, eventId)
 
     private fun flipDoneInWidgetPrefs(context: Context, eventId: Int, done: Boolean) {

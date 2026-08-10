@@ -31,7 +31,11 @@ Future<void> showFocusSummaryDialog({
           horizontal: size.width < 600 ? 24 : size.width * 0.15,
           vertical: 24,
         ),
-        title: Text(l10n.focusCompletedTitle),
+        title: Text(
+          result.strictFailed
+              ? l10n.focusStrictFailedTitle
+              : l10n.focusCompletedTitle,
+        ),
         content: SizedBox(
           width: size.width < 600 ? double.maxFinite : 360,
           child: SingleChildScrollView(

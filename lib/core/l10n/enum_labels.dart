@@ -16,3 +16,13 @@ String focusModeLabel(AppLocalizations l10n, FocusMode mode) {
     FocusMode.stopwatch => l10n.focusStopwatch,
   };
 }
+
+String focusEnforcementLabel(
+  AppLocalizations l10n,
+  FocusEnforcementMode mode,
+) {
+  return switch (mode) {
+    FocusEnforcementMode.normal => l10n.focusEnforcementNormal,
+    FocusEnforcementMode.strict => l10n.focusEnforcementStrict,
+  };
+}

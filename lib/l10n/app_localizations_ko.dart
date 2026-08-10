@@ -9,7 +9,7 @@ class AppLocalizationsKo extends AppLocalizations {
   AppLocalizationsKo([String locale = 'ko']) : super(locale);
 
   @override
-  String get appTitle => 'JUJU Schedule';
+  String get appTitle => 'JUJU 일정';
 
   @override
   String get navHome => '홈';
@@ -113,7 +113,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settingsPrivacyPolicy => '개인정보 처리방침';
 
   @override
-  String get initialTimelineWelcomeTitle => '👋 JUJU Schedule에 오신 것을 환영합니다';
+  String get initialTimelineWelcomeTitle => '👋 JUJU 일정에 오신 것을 환영합니다';
 
   @override
   String get initialTimelineAddTitle => '➕ 오른쪽 하단 + 를 눌러 작업 추가';
@@ -208,7 +208,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get widgetSetupStep2 => '「위젯 / Widgets」 메뉴 선택';
 
   @override
-  String get widgetSetupStep3 => 'JUJU Schedule 찾기';
+  String get widgetSetupStep3 => 'JUJU 일정 찾기';
 
   @override
   String get widgetSetupStep4 => '할 일, 일정, 집중 위젯 중 하나 추가';
@@ -285,7 +285,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get autostartPermissionHint =>
-      '샤오미/레드미 기기에서는 자동 시작을 켜야 앱을 종료한 뒤에도 알림이 울립니다.';
+      '앱을 종료하면 알림과 집중 타이머가 멈출 수 있습니다. 샤오미/레드미는 자동 시작을 켜고, 다른 기기는 앱 설정에서 백그라운드 실행을 허용하세요.';
 
   @override
   String get requestAutostartPermission => '자동 시작 설정 열기';
@@ -836,6 +836,17 @@ class AppLocalizationsKo extends AppLocalizations {
   String get focusAddPreset => '추가';
 
   @override
+  String get focusAddCustomDuration => '+ 사용자 지정 시간 추가';
+
+  @override
+  String get focusPresetsShowLess => '접기';
+
+  @override
+  String focusPresetsMaxReached(int max) {
+    return '사용자 지정 시간은 최대 $max개까지';
+  }
+
+  @override
   String get focusTapToToggleDisplay => '탭하여 표시 전환';
 
   @override
@@ -903,6 +914,27 @@ class AppLocalizationsKo extends AppLocalizations {
   String focusDurationMinutesOnly(int minutes) {
     return '$minutes분';
   }
+
+  @override
+  String get focusEnforcementNormal => '일반';
+
+  @override
+  String get focusEnforcementStrict => '엄격';
+
+  @override
+  String get focusStrictReminderTitle => '집중 중';
+
+  @override
+  String get focusStrictReminderBody => '집중 중입니다. 계속 집중해 주세요!';
+
+  @override
+  String get focusEndNotificationBody => '집중 시간이 끝났습니다. 잠시 쉬어 가세요.';
+
+  @override
+  String get focusStrictFailedTitle => '집중 중단';
+
+  @override
+  String get focusRecordStrictFailed => '엄격 · 미완료';
 
   @override
   String get statsTitle => '통계';

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="app_name">JUJU Schedule</string>
     <string name="widget_todo_label">JUJU 待办</string>
     <string name="widget_todo_description">待办列表，长期任务优先、按日期排序</string>
     <string name="widget_todo_compact_label">JUJU 待办 (2×2)</string>

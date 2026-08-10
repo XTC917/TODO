@@ -80,7 +80,7 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
     _start = TimeOfDay(hour: now.hour, minute: (now.minute ~/ 5) * 5);
     final endMinutes = _start.hour * 60 + _start.minute + 60;
     _end = TimeOfDay(hour: (endMinutes ~/ 60) % 24, minute: endMinutes % 60);
-    _deadline = const TimeOfDay(hour: 18, minute: 0);
+    _deadline = const TimeOfDay(hour: 23, minute: 59);
     _taskType =
         widget.forceTaskType ?? widget.initialTaskType ?? TaskType.todo;
     _todoTimeMode = widget.forceTodoTimeMode ??

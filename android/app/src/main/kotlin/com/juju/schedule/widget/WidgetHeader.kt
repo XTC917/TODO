@@ -1,4 +1,4 @@
-package com.example.soft_schedule.widget
+package com.juju.schedule.widget
 
 import android.content.Context
 import android.net.Uri
@@ -16,7 +16,7 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
-import com.example.soft_schedule.MainActivity
+import com.juju.schedule.MainActivity
 import es.antonborri.home_widget.actionStartActivity
 
 @Composable

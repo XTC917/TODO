@@ -6,6 +6,7 @@ import '../../models/enums.dart';
 import '../../models/event.dart';
 import '../../models/focus_session.dart';
 import '../services/focus_preset_service.dart';
+import '../services/focus_session_store.dart';
 import '../services/focus_timer_service.dart';
 import 'app_providers.dart';
 
@@ -22,9 +23,13 @@ class FocusTimerTick {
 }
 
 class FocusTimerNotifier extends StateNotifier<FocusTimerTick> {
-  FocusTimerNotifier(this._service) : super(_initialTick(_service));
+  FocusTimerNotifier(this._service, this._store)
+      : super(_initialTick(_service)) {
+    unawaited(_restoreIfNeeded());
+  }
 
   final FocusTimerService _service;
+  final FocusSessionStore _store;
   Timer? _uiTimer;
 
   static FocusTimerTick _initialTick(FocusTimerService service) {
@@ -36,13 +41,51 @@ class FocusTimerNotifier extends StateNotifier<FocusTimerTick> {
       session: _service.session,
       completion: completion,
     );
+    unawaited(_persist());
+  }
+
+  Future<void> _persist() async {
+    await _store.save(_service.session);
+  }
+
+  Future<void> _restoreIfNeeded() async {
+    final saved = _store.loadSession();
+    if (saved == null || !saved.isActive) return;
+
+    _service.restoreSession(saved);
+
+    final bgAt = _store.strictBackgroundedAt();
+    if (bgAt != null &&
+        saved.enforcementMode == FocusEnforcementMode.strict &&
+        saved.state == FocusTimerState.running &&
+        DateTime.now().difference(bgAt).inSeconds >= 60) {
+      await _store.clearStrictBackgroundedAt();
+      final result = _service.stopStrictFailure(DateTime.now());
+      await _store.clearSession();
+      _emit(completion: result);
+      return;
+    }
+
+    if (saved.state == FocusTimerState.running) {
+      final completion = _service.tick(DateTime.now());
+      if (completion != null) {
+        await _store.clearSession();
+        _emit(completion: completion);
+        return;
+      }
+      _startUiTimer();
+    }
+    _emit();
   }
 
   void _startUiTimer() {
     _uiTimer?.cancel();
     _uiTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       final completion = _service.tick(DateTime.now());
-      if (completion != null) _stopUiTimer();
+      if (completion != null) {
+        _stopUiTimer();
+        unawaited(_store.clearSession());
+      }
       _emit(completion: completion);
     });
   }
@@ -66,9 +109,14 @@ class FocusTimerNotifier extends StateNotifier<FocusTimerTick> {
   void configureIdle({
     required FocusMode mode,
     int? targetSeconds,
+    FocusEnforcementMode enforcementMode = FocusEnforcementMode.normal,
   }) {
     if (_service.session.isActive) return;
-    _service.configureIdle(mode: mode, targetSeconds: targetSeconds);
+    _service.configureIdle(
+      mode: mode,
+      targetSeconds: targetSeconds,
+      enforcementMode: enforcementMode,
+    );
     _emit();
   }
 
@@ -77,6 +125,7 @@ class FocusTimerNotifier extends StateNotifier<FocusTimerTick> {
     int? targetSeconds,
     int? linkedEventId,
     String? linkedTaskTitle,
+    FocusEnforcementMode enforcementMode = FocusEnforcementMode.normal,
   }) {
     _service.start(
       mode: mode,
@@ -84,6 +133,7 @@ class FocusTimerNotifier extends StateNotifier<FocusTimerTick> {
       targetSeconds: targetSeconds,
       linkedEventId: linkedEventId,
       linkedTaskTitle: linkedTaskTitle,
+      enforcementMode: enforcementMode,
     );
     _startUiTimer();
     _emit();
@@ -106,9 +156,23 @@ class FocusTimerNotifier extends StateNotifier<FocusTimerTick> {
     _emit();
   }
 
+  void updateEnforcementMode(FocusEnforcementMode mode) {
+    _service.updateEnforcementMode(mode);
+    _emit();
+  }
+
+  FocusCompletionResult? failStrictSession() {
+    _stopUiTimer();
+    final result = _service.stopStrictFailure(DateTime.now());
+    unawaited(_store.clearSession());
+    _emit();
+    return result;
+  }
+
   FocusCompletionResult? stop({bool completed = false}) {
     _stopUiTimer();
     final result = _service.stop(DateTime.now(), completed: completed);
+    unawaited(_store.clearSession());
     _emit();
     return result;
   }
@@ -128,9 +192,16 @@ final focusTimerServiceProvider = Provider<FocusTimerService>((ref) {
   return FocusTimerService();
 });
 
+final focusSessionStoreProvider = Provider<FocusSessionStore>((ref) {
+  return FocusSessionStore(ref.watch(sharedPreferencesProvider));
+});
+
 final focusTimerProvider =
     StateNotifierProvider<FocusTimerNotifier, FocusTimerTick>((ref) {
-  return FocusTimerNotifier(ref.watch(focusTimerServiceProvider));
+  return FocusTimerNotifier(
+    ref.watch(focusTimerServiceProvider),
+    ref.watch(focusSessionStoreProvider),
+  );
 });
 
 final focusLaunchProvider = StateProvider<FocusLaunchConfig?>((ref) => null);
@@ -148,9 +219,10 @@ class FocusPresetsController extends StateNotifier<List<int>> {
 
   final FocusPresetService _service;
 
-  Future<void> addPreset(int seconds) async {
-    await _service.addPreset(seconds);
+  Future<bool> addPreset(int seconds) async {
+    final added = await _service.addPreset(seconds);
     state = _service.loadPresets();
+    return added;
   }
 
   Future<void> removePreset(int seconds) async {
@@ -231,6 +303,25 @@ class FocusKeepAwakeController extends StateNotifier<bool> {
 final focusKeepAwakeProvider =
     StateNotifierProvider<FocusKeepAwakeController, bool>((ref) {
   return FocusKeepAwakeController(ref.watch(focusPresetServiceProvider));
+});
+
+class FocusEnforcementModeController
+    extends StateNotifier<FocusEnforcementMode> {
+  FocusEnforcementModeController(this._service)
+      : super(_service.loadEnforcementMode());
+
+  final FocusPresetService _service;
+
+  Future<void> setMode(FocusEnforcementMode mode) async {
+    state = mode;
+    await _service.saveEnforcementMode(mode);
+  }
+}
+
+final focusEnforcementModeProvider =
+    StateNotifierProvider<FocusEnforcementModeController, FocusEnforcementMode>(
+        (ref) {
+  return FocusEnforcementModeController(ref.watch(focusPresetServiceProvider));
 });
 
 final selectedCountdownSecondsProvider = StateProvider<int>((ref) {

@@ -637,7 +637,7 @@ abstract class AppLocalizations {
   /// No description provided for @autostartPermissionHint.
   ///
   /// In en, this message translates to:
-  /// **'On Xiaomi/Redmi devices, enable autostart or reminders may stop after swiping the app away.'**
+  /// **'After swiping the app away, reminders and focus timers may stop. On Xiaomi/Redmi enable autostart; on other devices allow unrestricted background activity in app settings.'**
   String get autostartPermissionHint;
 
   /// No description provided for @requestAutostartPermission.
@@ -1612,6 +1612,24 @@ abstract class AppLocalizations {
   /// **'Add'**
   String get focusAddPreset;
 
+  /// No description provided for @focusAddCustomDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'+ Add custom duration'**
+  String get focusAddCustomDuration;
+
+  /// No description provided for @focusPresetsShowLess.
+  ///
+  /// In en, this message translates to:
+  /// **'Show less'**
+  String get focusPresetsShowLess;
+
+  /// No description provided for @focusPresetsMaxReached.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to {max} custom durations'**
+  String focusPresetsMaxReached(int max);
+
   /// No description provided for @focusTapToToggleDisplay.
   ///
   /// In en, this message translates to:
@@ -1737,6 +1755,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{minutes} min'**
   String focusDurationMinutesOnly(int minutes);
+
+  /// No description provided for @focusEnforcementNormal.
+  ///
+  /// In en, this message translates to:
+  /// **'Normal'**
+  String get focusEnforcementNormal;
+
+  /// No description provided for @focusEnforcementStrict.
+  ///
+  /// In en, this message translates to:
+  /// **'Strict'**
+  String get focusEnforcementStrict;
+
+  /// No description provided for @focusStrictReminderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus in progress'**
+  String get focusStrictReminderTitle;
+
+  /// No description provided for @focusStrictReminderBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You are in a focus session — stay with it!'**
+  String get focusStrictReminderBody;
+
+  /// No description provided for @focusEndNotificationBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus session complete. Time for a break.'**
+  String get focusEndNotificationBody;
+
+  /// No description provided for @focusStrictFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus interrupted'**
+  String get focusStrictFailedTitle;
+
+  /// No description provided for @focusRecordStrictFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Strict · incomplete'**
+  String get focusRecordStrictFailed;
 
   /// No description provided for @statsTitle.
   ///

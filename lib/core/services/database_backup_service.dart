@@ -4,13 +4,23 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../database/app_database.dart';
+import 'app_settings_backup_service.dart';
+
+class PickedDatabaseBackup {
+  const PickedDatabaseBackup({required this.bytes, this.sqlitePath});
+
+  final List<int> bytes;
+  final String? sqlitePath;
+}
 
 class DatabaseBackupService {
-  DatabaseBackupService(this._db);
+  DatabaseBackupService(this._db, this._prefs);
 
   final AppDatabase _db;
+  final SharedPreferences _prefs;
 
   /// SQLite magic header: "SQLite format 3\0"
   static final Uint8List sqliteMagicHeader = Uint8List.fromList(
@@ -59,7 +69,10 @@ class DatabaseBackupService {
     final source = await _db.databaseFile();
     if (!await source.exists()) throw StateError('Database file not found.');
 
-    final bytes = await source.readAsBytes();
+    final settings = AppSettingsBackupService(_prefs);
+    final bytes = Uint8List.fromList(
+      await settings.embedSettingsInDatabaseCopy(source),
+    );
     final stamp = DateTime.now()
         .toIso8601String()
         .replaceAll(':', '-')
@@ -80,11 +93,17 @@ class DatabaseBackupService {
     if (!await out.exists() || await out.length() == 0) {
       await out.writeAsBytes(bytes, flush: true);
     }
+    // Sidecar is best-effort on desktop; Android SAF cannot write a sibling file.
+    try {
+      await settings.writeSidecar(savedPath);
+    } catch (_) {
+      // Embedded settings in the sqlite file are the primary backup channel.
+    }
     return savedPath;
   }
 
   /// Returns backup bytes when a file was picked, otherwise `null`.
-  Future<List<int>?> pickDatabaseBytes() async {
+  Future<PickedDatabaseBackup?> pickDatabaseBackup() async {
     final result = await FilePicker.platform.pickFiles(
       dialogTitle: 'Import Database',
       type: FileType.any,
@@ -105,6 +124,6 @@ class DatabaseBackupService {
 
     // Reject invalid files before the caller closes/replaces the live database.
     ensureSqliteDatabaseBytes(resolved);
-    return resolved;
+    return PickedDatabaseBackup(bytes: resolved, sqlitePath: picked.path);
   }
 }

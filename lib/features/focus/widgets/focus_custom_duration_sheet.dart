@@ -29,7 +29,7 @@ class _FocusCustomDurationSheet extends StatefulWidget {
 }
 
 class _FocusCustomDurationSheetState extends State<_FocusCustomDurationSheet> {
-  static const _minuteSteps = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
+  static final _minuteSteps = List<int>.generate(61, (i) => i);
 
   late FixedExtentScrollController _hourController;
   late FixedExtentScrollController _minuteController;
@@ -42,7 +42,7 @@ class _FocusCustomDurationSheetState extends State<_FocusCustomDurationSheet> {
     final h = widget.initialSeconds ~/ 3600;
     final m = (widget.initialSeconds % 3600) ~/ 60;
     _hourIndex = h.clamp(0, 23);
-    _minuteIndex = _nearestMinuteIndex(m);
+    _minuteIndex = m.clamp(0, 60);
     _hourController = FixedExtentScrollController(initialItem: _hourIndex);
     _minuteController = FixedExtentScrollController(initialItem: _minuteIndex);
   }
@@ -52,19 +52,6 @@ class _FocusCustomDurationSheetState extends State<_FocusCustomDurationSheet> {
     _hourController.dispose();
     _minuteController.dispose();
     super.dispose();
-  }
-
-  int _nearestMinuteIndex(int minutes) {
-    var best = 0;
-    var diff = 999;
-    for (var i = 0; i < _minuteSteps.length; i++) {
-      final d = (minutes - _minuteSteps[i]).abs();
-      if (d < diff) {
-        diff = d;
-        best = i;
-      }
-    }
-    return best;
   }
 
   int get _totalSeconds =>

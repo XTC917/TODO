@@ -11,7 +11,7 @@ const autostartConfiguredKey = 'autostart_configured';
 class ReminderNative {
   ReminderNative._();
 
-  static const _channel = MethodChannel('com.example.soft_schedule/reminder_native');
+  static const _channel = MethodChannel('com.juju.schedule/reminder_native');
 
   static Future<bool> needsAutostartGuide() async {
     if (!Platform.isAndroid) return false;
@@ -30,7 +30,7 @@ class ReminderNative {
   }
 
   static Future<bool> isAutostartConfigured(SharedPreferences prefs) async {
-    if (!await needsAutostartGuide()) return true;
+    if (!Platform.isAndroid) return true;
     return prefs.getBool(autostartConfiguredKey) ?? false;
   }
 

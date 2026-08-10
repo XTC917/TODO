@@ -10,6 +10,9 @@ enum RepeatType { oneTime, daily, weekly, monthly }
 
 enum FocusMode { pomodoro, stopwatch }
 
+/// Normal: no leave-app enforcement. Strict: background reminders + auto-fail.
+enum FocusEnforcementMode { normal, strict }
+
 enum RepeatScope { onlyThis, thisAndFuture, all }
 
 @Deprecated('Use RepeatScope')
@@ -66,6 +69,16 @@ extension FocusModeX on FocusMode {
 
   static FocusMode fromStorage(String value) =>
       FocusMode.values.firstWhere((e) => e.name == value, orElse: () => FocusMode.pomodoro);
+}
+
+extension FocusEnforcementModeX on FocusEnforcementMode {
+  String get storage => name;
+
+  static FocusEnforcementMode fromStorage(String value) =>
+      FocusEnforcementMode.values.firstWhere(
+        (e) => e.name == value,
+        orElse: () => FocusEnforcementMode.normal,
+      );
 }
 
 /// Accent palette for Material 3 theming.

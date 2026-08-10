@@ -1,4 +1,4 @@
-package com.example.soft_schedule.widget
+package com.juju.schedule.widget
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp

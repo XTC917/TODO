@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/providers/app_providers.dart';
+import '../../core/providers/focus_providers.dart';
+import '../../core/services/app_settings_backup_service.dart';
 import '../../core/services/database_backup_service.dart';
 import '../../core/services/notification_service.dart';
 import '../../l10n/app_localizations.dart';
@@ -73,11 +75,11 @@ class GeneralSettingsPage extends ConsumerWidget {
     if (confirmed != true) return;
 
     final backup = ref.read(databaseBackupProvider);
-    List<int> bytes;
+    PickedDatabaseBackup picked;
     try {
-      final picked = await backup.pickDatabaseBytes();
-      if (picked == null) return;
-      bytes = picked;
+      final result = await backup.pickDatabaseBackup();
+      if (result == null) return;
+      picked = result;
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -90,7 +92,25 @@ class GeneralSettingsPage extends ConsumerWidget {
       final db = ref.read(appDatabaseProvider);
       await db.close();
       ref.invalidate(appDatabaseProvider);
-      await DatabaseBackupService.replaceDatabaseFile(bytes);
+      await DatabaseBackupService.replaceDatabaseFile(picked.bytes);
+      final prefs = ref.read(sharedPreferencesProvider);
+      final dbFile = await DatabaseBackupService.databaseFilePath();
+      var settingsImported = await AppSettingsBackupService.tryImportEmbedded(
+        prefs,
+        dbFile,
+      );
+      if (!settingsImported && picked.sqlitePath != null) {
+        settingsImported = await AppSettingsBackupService.tryImportSidecar(
+          prefs,
+          picked.sqlitePath!,
+        );
+      }
+      if (settingsImported) {
+        ref.invalidate(themeModeProvider);
+        ref.invalidate(themePaletteProvider);
+        ref.invalidate(appLanguageProvider);
+        ref.invalidate(focusPresetsProvider);
+      }
       await reopenDatabase(ref);
     } catch (e) {
       if (!context.mounted) return;

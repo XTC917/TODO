@@ -61,10 +61,17 @@ if (-not $SkipBuild) {
     }
 }
 
-$apk = Join-Path $ProjectRoot "build\app\outputs\flutter-apk\app-release.apk"
-if (-not (Test-Path $apk)) {
-    throw "APK not found: $apk"
+$apkDir = Join-Path $ProjectRoot "build\app\outputs\flutter-apk"
+$apk = Get-ChildItem $apkDir -Filter "JUJUSchedule-v*.apk" -ErrorAction SilentlyContinue |
+    Sort-Object LastWriteTime -Descending |
+    Select-Object -First 1
+if ($null -eq $apk) {
+    $apk = Get-Item (Join-Path $apkDir "app-release.apk") -ErrorAction SilentlyContinue
 }
+if ($null -eq $apk) {
+    throw "APK not found under: $apkDir"
+}
+$apk = $apk.FullName
 
 Write-Host ""
 Write-Host "Installing to phone..."

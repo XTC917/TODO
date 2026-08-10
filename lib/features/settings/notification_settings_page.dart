@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:app_settings/app_settings.dart';
 import 'package:flutter/material.dart';
@@ -23,17 +24,13 @@ class _NotificationSettingsPageState
     extends ConsumerState<NotificationSettingsPage>
     with WidgetsBindingObserver {
   bool _awaitingAutostartReturn = false;
-  bool? _needsAutostartGuide;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        ref.invalidate(notificationPermissionProvider);
-        _loadAutostartGuide();
-      }
+      if (mounted) ref.invalidate(notificationPermissionProvider);
     });
   }
 
@@ -41,11 +38,6 @@ class _NotificationSettingsPageState
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
-  }
-
-  Future<void> _loadAutostartGuide() async {
-    final needs = await ReminderNative.needsAutostartGuide();
-    if (mounted) setState(() => _needsAutostartGuide = needs);
   }
 
   @override
@@ -87,7 +79,7 @@ class _NotificationSettingsPageState
           permissionAsync.when(
             data: (granted) => _PermissionSection(
               granted: granted,
-              needsAutostartGuide: _needsAutostartGuide ?? false,
+              showAutostartOnAndroid: Platform.isAndroid,
               autostartConfiguredFuture:
                   ReminderNative.isAutostartConfigured(prefs),
               onOpenNotificationSettings: () =>
@@ -152,7 +144,7 @@ class _NotificationSettingsPageState
 class _PermissionSection extends StatelessWidget {
   const _PermissionSection({
     required this.granted,
-    required this.needsAutostartGuide,
+    required this.showAutostartOnAndroid,
     required this.autostartConfiguredFuture,
     required this.onOpenNotificationSettings,
     required this.onRequestExactAlarm,
@@ -161,7 +153,7 @@ class _PermissionSection extends StatelessWidget {
   });
 
   final bool granted;
-  final bool needsAutostartGuide;
+  final bool showAutostartOnAndroid;
   final Future<bool> autostartConfiguredFuture;
   final VoidCallback onOpenNotificationSettings;
   final VoidCallback onRequestExactAlarm;
@@ -196,54 +188,6 @@ class _PermissionSection extends StatelessWidget {
               child: Text(l10n.openNotificationSettings),
             ),
           ),
-        if (needsAutostartGuide) ...[
-          FutureBuilder<bool>(
-            future: autostartConfiguredFuture,
-            builder: (context, snapshot) {
-              final configured = snapshot.data ?? false;
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  ListTile(
-                    leading: const Icon(Icons.rocket_launch_outlined, size: 22),
-                    title: Text(l10n.settingsAutostartPermission),
-                    subtitle: Text(
-                      configured
-                          ? l10n.autostartPermissionGranted
-                          : l10n.autostartPermissionNotConfigured,
-                    ),
-                    trailing: configured
-                        ? Icon(
-                            Icons.check_circle_outline,
-                            color: theme.colorScheme.primary,
-                          )
-                        : null,
-                  ),
-                  if (!configured)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Text(
-                            l10n.autostartPermissionHint,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.error,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          OutlinedButton(
-                            onPressed: onOpenAutostartSettings,
-                            child: Text(l10n.requestAutostartPermission),
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
-              );
-            },
-          ),
-        ],
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
           child: Text(
@@ -305,6 +249,39 @@ class _PermissionSection extends StatelessWidget {
               );
             },
           ),
+          if (showAutostartOnAndroid)
+            FutureBuilder<bool>(
+              future: autostartConfiguredFuture,
+              builder: (context, snapshot) {
+                if (snapshot.data == true) return const SizedBox.shrink();
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading:
+                            const Icon(Icons.rocket_launch_outlined, size: 22),
+                        title: Text(l10n.settingsAutostartPermission),
+                        subtitle: Text(l10n.autostartPermissionNotConfigured),
+                      ),
+                      Text(
+                        l10n.autostartPermissionHint,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.error,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      OutlinedButton(
+                        onPressed: onOpenAutostartSettings,
+                        child: Text(l10n.requestAutostartPermission),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
           FutureBuilder<int>(
             future: NotificationService.instance.pendingCount(),
             builder: (context, snapshot) {

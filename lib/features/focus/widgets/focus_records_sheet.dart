@@ -184,6 +184,13 @@ class _FocusRecordTile extends StatelessWidget {
                   focusModeLabel(l10n, record.mode),
                   style: theme.textTheme.labelSmall?.copyWith(color: muted),
                 ),
+                const SizedBox(width: 8),
+                Text(
+                  record.durationSeconds <= 0 && !record.completed
+                      ? l10n.focusRecordStrictFailed
+                      : focusEnforcementLabel(l10n, record.enforcementMode),
+                  style: theme.textTheme.labelSmall?.copyWith(color: muted),
+                ),
               ],
             ),
           ],

@@ -212,6 +212,7 @@ class FocusRecord {
     this.taskTitle,
     this.plannedDurationSeconds,
     this.completed = true,
+    this.enforcementMode = FocusEnforcementMode.normal,
     required this.createdAt,
   });
 
@@ -225,6 +226,7 @@ class FocusRecord {
   final String? taskTitle;
   final int? plannedDurationSeconds;
   final bool completed;
+  final FocusEnforcementMode enforcementMode;
   final DateTime createdAt;
 
   FocusRecord copyWith({
@@ -248,6 +250,7 @@ class FocusRecord {
       taskTitle: clearTaskTitle ? null : (taskTitle ?? this.taskTitle),
       plannedDurationSeconds: plannedDurationSeconds,
       completed: completed,
+      enforcementMode: enforcementMode,
       createdAt: createdAt,
     );
   }
