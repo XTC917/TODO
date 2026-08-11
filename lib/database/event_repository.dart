@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 
 import '../core/utils/date_time_formats.dart';
 import '../core/utils/event_constants.dart';
+import '../core/utils/repeat_occurrence_utils.dart';
 import '../core/utils/repeat_expander.dart';
 import '../core/utils/repeat_until_storage.dart';
 import '../database/app_database.dart';
@@ -228,6 +229,11 @@ class EventRepository {
     return (await getById(newId))!;
   }
 
+  Future<Event?> getSeriesTemplate(String groupId) async {
+    final row = await _seriesMasterRow(groupId);
+    return row != null ? _toDomain(row) : null;
+  }
+
   Future<void> delete(int id) => _db.deleteEvent(id);
 
   Future<void> batchDelete(Set<int> ids) async {
@@ -320,6 +326,28 @@ class EventRepository {
 
     if (concrete != null && concrete.title != kRepeatSkipMarker) {
       if (master != null && concrete.id == master.id) {
+        final rows = await _db.getEventsByRepeatGroup(groupId);
+        final existingOverrides = rows
+            .where(
+              (row) =>
+                  row.date == dateKey &&
+                  row.id != master.id &&
+                  row.title != kRepeatSkipMarker &&
+                  row.repeatType == RepeatType.oneTime.storage,
+            )
+            .toList();
+        if (existingOverrides.isNotEmpty) {
+          final existingOverride = existingOverrides.first;
+          await update(
+            updated.copyWith(
+              id: existingOverride.id,
+              date: dateKey,
+              repeatType: RepeatType.oneTime,
+              repeatGroupId: groupId,
+            ),
+          );
+          return;
+        }
         await _insertOccurrenceRow(
           template: updated.copyWith(
             id: master.id,
@@ -517,7 +545,7 @@ class EventRepository {
   }
 
   /// Removes bulk materialized copies left by older versions. Keeps skips,
-  /// completed days, and edited single occurrences.
+  /// completed days, and user-edited single occurrences (e.g. custom reminders).
   Future<void> _compactRedundantInstances(String groupId) async {
     final master = await _seriesMasterRow(groupId);
     if (master == null) return;
@@ -525,9 +553,12 @@ class EventRepository {
     final rows = await _db.getEventsByRepeatGroup(groupId);
     for (final row in rows) {
       if (row.id == master.id || row.title == kRepeatSkipMarker) continue;
-      if (row.repeatType != RepeatType.oneTime.storage) continue;
-      if (row.isCompleted) continue;
-      if (row.title != master.title) continue;
+      if (!RepeatOccurrenceUtils.isRedundantMaterializedCopy(
+        master: master,
+        row: row,
+      )) {
+        continue;
+      }
       await delete(row.id);
     }
   }

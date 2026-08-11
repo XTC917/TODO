@@ -5,6 +5,7 @@
 ### Fixed
 - Recurring schedules: completing one occurrence no longer grays out all future virtual instances (each day keeps its own completion state).
 - Recurring series end date (`repeatUntil`) is stored in the database instead of being appended to the user-visible note.
+- Recurring **only this occurrence** edits (e.g. custom reminder) persist after restarting the app; edit form still shows the series repeat rule (weekly/daily) instead of “one-time”.
 
 ## v2.6.0
 

@@ -135,6 +135,13 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
       return;
     }
     final display = widget.editingOccurrence ?? event;
+    RepeatType repeatType = event.repeatType;
+    if (display.repeatGroupId != null) {
+      final template = await ref
+          .read(eventRepositoryProvider)
+          .getSeriesTemplate(display.repeatGroupId!);
+      repeatType = template?.repeatType ?? event.repeatType;
+    }
     setState(() {
       _existing = event;
       _occurrence = display;
@@ -152,8 +159,8 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
       }
       _taskType = event.taskType;
       _todoTimeMode = event.todoTimeMode;
-      _repeatType = event.repeatType;
-      _reminderOffsetsSeconds = event.reminderOffsetsSeconds;
+      _repeatType = repeatType;
+      _reminderOffsetsSeconds = display.reminderOffsetsSeconds;
       _initialized = true;
     });
   }

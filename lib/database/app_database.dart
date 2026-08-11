@@ -5,6 +5,8 @@ import 'package:drift/native.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import '../models/event.dart';
+
 part 'app_database.g.dart';
 
 @DataClassName('EventRow')
@@ -213,12 +215,28 @@ class AppDatabase extends _$AppDatabase {
   Future<EventRow?> getEventByRepeatGroupAndDate(
     String groupId,
     String date,
-  ) {
-    return (select(events)
+  ) async {
+    final rows = await (select(events)
           ..where(
             (t) => t.repeatGroupId.equals(groupId) & t.date.equals(date),
           ))
-        .getSingleOrNull();
+        .get();
+    return _pickConcreteOccurrenceRow(rows);
+  }
+
+  static EventRow? _pickConcreteOccurrenceRow(List<EventRow> rows) {
+    if (rows.isEmpty) return null;
+    if (rows.length == 1) return rows.single;
+
+    final nonSkip =
+        rows.where((row) => row.title != kRepeatSkipMarker).toList();
+    if (nonSkip.isEmpty) return rows.first;
+
+    final overrides =
+        nonSkip.where((row) => row.repeatType == 'oneTime').toList();
+    if (overrides.isNotEmpty) return overrides.first;
+
+    return nonSkip.first;
   }
 
   Future<EventRow?> getSeriesTemplateRow(String groupId) async {
