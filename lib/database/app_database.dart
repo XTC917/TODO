@@ -25,6 +25,7 @@ class Events extends Table {
   TextColumn get repeatType =>
       text().withDefault(const Constant('oneTime'))();
   TextColumn get repeatGroupId => text().nullable()();
+  TextColumn get repeatUntil => text().nullable()();
   IntColumn get reminderOffsetSeconds => integer().nullable()();
   TextColumn get reminderOffsetsJson => text().nullable()();
   IntColumn get focusedSeconds =>
@@ -59,7 +60,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -110,8 +111,40 @@ class AppDatabase extends _$AppDatabase {
               "ALTER TABLE focus_records ADD COLUMN enforcement_mode TEXT NOT NULL DEFAULT 'normal'",
             );
           }
+          if (from < 8) {
+            await m.addColumn(events, events.repeatUntil);
+            final rows = await select(events).get();
+            for (final row in rows) {
+              final parsed = _parseRepeatUntilFromNote(row.note);
+              if (parsed == null) continue;
+              final cleaned = _stripRepeatUntilFromNote(row.note);
+              await (update(events)..where((t) => t.id.equals(row.id))).write(
+                EventsCompanion(
+                  repeatUntil: Value(parsed),
+                  note: cleaned == null
+                      ? const Value.absent()
+                      : Value(cleaned),
+                ),
+              );
+            }
+          }
         },
       );
+
+  static String? _parseRepeatUntilFromNote(String? note) {
+    if (note == null || note.isEmpty) return null;
+    final match =
+        RegExp(r'#repeatUntil:(\d{4}-\d{2}-\d{2})').firstMatch(note);
+    return match?.group(1);
+  }
+
+  static String? _stripRepeatUntilFromNote(String? note) {
+    if (note == null) return null;
+    final cleaned = note
+        .replaceAll(RegExp(r'\n?#repeatUntil:\d{4}-\d{2}-\d{2}'), '')
+        .trim();
+    return cleaned.isEmpty ? null : cleaned;
+  }
 
   Future<List<EventRow>> getAllEvents() => select(events).get();
 

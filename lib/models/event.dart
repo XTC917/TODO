@@ -1,4 +1,5 @@
 import 'enums.dart';
+import '../core/utils/repeat_until_storage.dart';
 
 /// Hidden marker title for deleted single occurrences in a repeat series.
 const kRepeatSkipMarker = '\u{200B}SKIP';
@@ -18,6 +19,7 @@ class Event {
     required this.isCompleted,
     required this.repeatType,
     this.repeatGroupId,
+    this.repeatUntil,
     this.reminderOffsetsSeconds = const [],
     required this.focusedSeconds,
     this.completedAt,
@@ -37,6 +39,8 @@ class Event {
   final bool isCompleted;
   final RepeatType repeatType;
   final String? repeatGroupId;
+  /// Last date (YYYY-MM-DD) this recurring series occurs, inclusive.
+  final String? repeatUntil;
   /// Seconds before [reminderAnchorDateTime] to fire. Empty = no reminder.
   final List<int> reminderOffsetsSeconds;
   final int focusedSeconds;
@@ -60,12 +64,14 @@ class Event {
   bool get isRepeatSkip => title == kRepeatSkipMarker;
 
   String? get seriesRepeatUntil {
-    final value = note;
-    if (value == null || value.isEmpty) return null;
-    final match =
-        RegExp(r'#repeatUntil:(\d{4}-\d{2}-\d{2})').firstMatch(value);
-    return match?.group(1);
+    if (repeatUntil != null && repeatUntil!.isNotEmpty) {
+      return repeatUntil;
+    }
+    return RepeatUntilStorage.parseFromNote(note);
   }
+
+  /// Note text shown in the UI (never includes internal repeat-until markers).
+  String? get userNote => RepeatUntilStorage.userNote(note, repeatUntil: repeatUntil);
 
   bool get showsInTimeline =>
       hasDate &&
@@ -140,6 +146,8 @@ class Event {
     RepeatType? repeatType,
     String? repeatGroupId,
     bool clearRepeatGroupId = false,
+    String? repeatUntil,
+    bool clearRepeatUntil = false,
     List<int>? reminderOffsetsSeconds,
     bool clearReminderOffsets = false,
     int? focusedSeconds,
@@ -161,6 +169,7 @@ class Event {
       isCompleted: isCompleted ?? this.isCompleted,
       repeatType: repeatType ?? this.repeatType,
       repeatGroupId: clearRepeatGroupId ? null : (repeatGroupId ?? this.repeatGroupId),
+      repeatUntil: clearRepeatUntil ? null : (repeatUntil ?? this.repeatUntil),
       reminderOffsetsSeconds: clearReminderOffsets
           ? const []
           : (reminderOffsetsSeconds ?? this.reminderOffsetsSeconds),

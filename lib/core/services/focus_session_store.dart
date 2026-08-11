@@ -7,6 +7,10 @@ import '../../models/focus_session.dart';
 
 const activeFocusSessionKey = 'active_focus_session_v1';
 const focusStrictBackgroundedAtKey = 'focus_strict_backgrounded_at';
+const focusStrictFailDeadlineKey = 'focus_strict_fail_deadline';
+
+/// How long a strict session may stay backgrounded before it fails.
+const strictFocusBackgroundGrace = Duration(seconds: 60);
 
 /// Persists an in-progress focus session across process death.
 class FocusSessionStore {
@@ -36,7 +40,7 @@ class FocusSessionStore {
 
   Future<void> clearSession() async {
     await _prefs.remove(activeFocusSessionKey);
-    await clearStrictBackgroundedAt();
+    await clearStrictBackgroundTracking();
   }
 
   DateTime? strictBackgroundedAt() {
@@ -45,16 +49,35 @@ class FocusSessionStore {
     return DateTime.tryParse(raw);
   }
 
-  Future<void> setStrictBackgroundedAt(DateTime? at) async {
-    if (at == null) {
-      await clearStrictBackgroundedAt();
-      return;
-    }
-    await _prefs.setString(focusStrictBackgroundedAtKey, at.toIso8601String());
+  DateTime? strictFailDeadline() {
+    final raw = _prefs.getString(focusStrictFailDeadlineKey);
+    if (raw == null) return null;
+    return DateTime.tryParse(raw);
   }
 
-  Future<void> clearStrictBackgroundedAt() async {
+  bool isStrictFailDue([DateTime? now]) {
+    final deadline = strictFailDeadline();
+    if (deadline == null) return false;
+    final clock = now ?? DateTime.now();
+    return !clock.isBefore(deadline);
+  }
+
+  Future<void> setStrictBackgroundTracking(DateTime backgroundedAt) async {
+    await _prefs.setString(
+      focusStrictBackgroundedAtKey,
+      backgroundedAt.toIso8601String(),
+    );
+    await _prefs.setString(
+      focusStrictFailDeadlineKey,
+      backgroundedAt
+          .add(strictFocusBackgroundGrace)
+          .toIso8601String(),
+    );
+  }
+
+  Future<void> clearStrictBackgroundTracking() async {
     await _prefs.remove(focusStrictBackgroundedAtKey);
+    await _prefs.remove(focusStrictFailDeadlineKey);
   }
 
   Map<String, dynamic> _encode(FocusRuntimeSession session) {

@@ -54,17 +54,17 @@ class FocusTimerNotifier extends StateNotifier<FocusTimerTick> {
 
     _service.restoreSession(saved);
 
-    final bgAt = _store.strictBackgroundedAt();
-    if (bgAt != null &&
+    if (_store.isStrictFailDue() &&
         saved.enforcementMode == FocusEnforcementMode.strict &&
-        saved.state == FocusTimerState.running &&
-        DateTime.now().difference(bgAt).inSeconds >= 60) {
-      await _store.clearStrictBackgroundedAt();
+        saved.state == FocusTimerState.running) {
+      await _store.clearStrictBackgroundTracking();
       final result = _service.stopStrictFailure(DateTime.now());
       await _store.clearSession();
       _emit(completion: result);
       return;
     }
+
+    await _store.clearStrictBackgroundTracking();
 
     if (saved.state == FocusTimerState.running) {
       final completion = _service.tick(DateTime.now());
@@ -81,6 +81,14 @@ class FocusTimerNotifier extends StateNotifier<FocusTimerTick> {
   void _startUiTimer() {
     _uiTimer?.cancel();
     _uiTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (_store.isStrictFailDue()) {
+        final strictFail = failStrictSessionIfDue();
+        if (strictFail != null) {
+          _stopUiTimer();
+          _emit(completion: strictFail);
+          return;
+        }
+      }
       final completion = _service.tick(DateTime.now());
       if (completion != null) {
         _stopUiTimer();
@@ -167,6 +175,20 @@ class FocusTimerNotifier extends StateNotifier<FocusTimerTick> {
     unawaited(_store.clearSession());
     _emit();
     return result;
+  }
+
+  /// Ends the session when strict-mode background grace has expired.
+  FocusCompletionResult? failStrictSessionIfDue() {
+    if (!_store.isStrictFailDue()) return null;
+    final session = _service.session;
+    if (!session.isActive ||
+        session.enforcementMode != FocusEnforcementMode.strict ||
+        session.state != FocusTimerState.running) {
+      unawaited(_store.clearStrictBackgroundTracking());
+      return null;
+    }
+    unawaited(_store.clearStrictBackgroundTracking());
+    return failStrictSession();
   }
 
   FocusCompletionResult? stop({bool completed = false}) {

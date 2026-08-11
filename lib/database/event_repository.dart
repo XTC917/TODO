@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 import '../core/utils/date_time_formats.dart';
 import '../core/utils/event_constants.dart';
 import '../core/utils/repeat_expander.dart';
+import '../core/utils/repeat_until_storage.dart';
 import '../database/app_database.dart';
 import '../models/enums.dart';
 import '../models/event.dart';
@@ -216,7 +217,7 @@ class EventRepository {
         date: event.date,
         startTime: event.startTime,
         endTime: event.endTime,
-        note: event.note,
+        note: event.userNote,
         color: event.color,
         taskType: event.taskType,
         todoTimeMode: event.todoTimeMode,
@@ -386,7 +387,7 @@ class EventRepository {
       await update(
         template.copyWith(
           repeatType: updated.repeatType,
-          note: _noteWithRepeatUntil(template.note, _dayBefore(fromDate)),
+          repeatUntil: _dayBefore(fromDate),
         ),
       );
     }
@@ -415,7 +416,7 @@ class EventRepository {
     if (template.date.compareTo(fromDate) < 0) {
       await update(
         template.copyWith(
-          note: _noteWithRepeatUntil(template.note, _dayBefore(fromDate)),
+          repeatUntil: _dayBefore(fromDate),
         ),
       );
     }
@@ -433,14 +434,6 @@ class EventRepository {
       if (row.repeatType == RepeatType.oneTime.storage) continue;
       await update(_toDomain(row).copyWith(repeatType: RepeatType.oneTime));
     }
-  }
-
-  String _noteWithRepeatUntil(String? note, String until) {
-    final base = (note ?? '')
-        .replaceAll(RegExp(r'\n#repeatUntil:\d{4}-\d{2}-\d{2}'), '')
-        .trim();
-    if (base.isEmpty) return '#repeatUntil:$until';
-    return '$base\n#repeatUntil:$until';
   }
 
   Future<Event?> _seriesTemplate(String groupId, {int? fallbackId}) async {
@@ -466,7 +459,7 @@ class EventRepository {
         date: dateKey,
         startTime: template.startTime,
         endTime: template.endTime,
-        note: Value(_nullableNote(template.note)),
+        note: Value(_nullableNote(template.userNote)),
         color: template.color,
         taskType: Value(template.taskType.storage),
         todoTimeMode: Value(template.todoTimeMode.storage),
@@ -553,19 +546,22 @@ class EventRepository {
   }
 
   Event _toDomain(EventRow row) {
+    final repeatUntil =
+        row.repeatUntil ?? RepeatUntilStorage.parseFromNote(row.note);
     return Event(
       id: row.id,
       title: row.title,
       date: row.date,
       startTime: row.startTime,
       endTime: row.endTime,
-      note: row.note,
+      note: RepeatUntilStorage.userNote(row.note, repeatUntil: repeatUntil),
       color: row.color,
       taskType: TaskTypeX.fromStorage(row.taskType),
       todoTimeMode: TodoTimeModeX.fromStorage(row.todoTimeMode),
       isCompleted: row.isCompleted,
       repeatType: RepeatTypeX.fromStorage(row.repeatType),
       repeatGroupId: row.repeatGroupId,
+      repeatUntil: repeatUntil,
       reminderOffsetsSeconds: decodeReminderOffsets(
         json: row.reminderOffsetsJson,
         legacySingleOffset: row.reminderOffsetSeconds,
@@ -584,13 +580,16 @@ class EventRepository {
       date: event.date,
       startTime: event.startTime,
       endTime: event.endTime,
-      note: _nullableNote(event.note),
+      note: _nullableNote(
+        RepeatUntilStorage.userNote(event.note, repeatUntil: event.repeatUntil),
+      ),
       color: event.color,
       taskType: event.taskType.storage,
       todoTimeMode: event.todoTimeMode.storage,
       isCompleted: event.isCompleted,
       repeatType: event.repeatType.storage,
       repeatGroupId: event.repeatGroupId,
+      repeatUntil: event.repeatUntil,
       reminderOffsetsJson: encodeReminderOffsets(event.reminderOffsetsSeconds),
       reminderOffsetSeconds: event.reminderOffsetsSeconds.length == 1
           ? event.reminderOffsetsSeconds.first
@@ -604,8 +603,9 @@ class EventRepository {
 
   String? _nullableNote(String? note) {
     if (note == null) return null;
-    final trimmed = note.trim();
-    return trimmed.isEmpty ? null : trimmed;
+    final trimmed = RepeatUntilStorage.stripFromNote(note)?.trim();
+    if (trimmed == null || trimmed.isEmpty) return null;
+    return trimmed;
   }
 }
 

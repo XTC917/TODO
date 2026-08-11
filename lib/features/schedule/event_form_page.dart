@@ -139,7 +139,7 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
       _existing = event;
       _occurrence = display;
       _titleController.text = display.title;
-      _noteController.text = display.note ?? '';
+      _noteController.text = display.userNote ?? '';
       _date = display.hasDate
           ? DateTimeFormats.parseDate(display.date)
           : DateTimeFormats.dateOnly(DateTime.now());

@@ -68,8 +68,9 @@ class _FocusPageState extends ConsumerState<FocusPage>
       unawaited(_onAppForeground());
       return;
     }
-    if (state == AppLifecycleState.inactive ||
-        state == AppLifecycleState.paused ||
+    // Only true background — not [inactive] (fires when resuming or opening
+    // overlays and would reset the strict-mode leave timestamp).
+    if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.hidden) {
       unawaited(_onAppBackground());
     }
@@ -82,7 +83,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
 
     if (session.enforcementMode == FocusEnforcementMode.strict) {
       final now = DateTime.now();
-      await ref.read(focusSessionStoreProvider).setStrictBackgroundedAt(now);
+      await ref.read(focusSessionStoreProvider).setStrictBackgroundTracking(now);
       if (!mounted) return;
       final l10n = AppLocalizations.of(context);
       await FocusNotificationService.instance.scheduleStrictBackgroundReminders(
@@ -97,24 +98,16 @@ class _FocusPageState extends ConsumerState<FocusPage>
 
   Future<void> _onAppForeground() async {
     await FocusNotificationService.instance.cancelStrictReminders();
-    final store = ref.read(focusSessionStoreProvider);
-    final bgAt = store.strictBackgroundedAt();
-    await store.clearStrictBackgroundedAt();
 
-    if (bgAt != null && mounted) {
-      final session = ref.read(focusTimerProvider).session;
-      if (session.isActive &&
-          session.enforcementMode == FocusEnforcementMode.strict &&
-          session.state == FocusTimerState.running &&
-          DateTime.now().difference(bgAt).inSeconds >= 60) {
-        final result = ref.read(focusTimerProvider.notifier).failStrictSession();
-        await FocusNotificationService.instance.cancelAll();
-        if (result != null && mounted) {
-          await _handleCompletion(result);
-        }
-        return;
-      }
+    final result =
+        ref.read(focusTimerProvider.notifier).failStrictSessionIfDue();
+    if (result != null && mounted) {
+      await FocusNotificationService.instance.cancelAll();
+      await _handleCompletion(result);
+      return;
     }
+
+    await ref.read(focusSessionStoreProvider).clearStrictBackgroundTracking();
 
     if (!mounted) return;
     ref.read(focusTimerProvider.notifier).refreshDisplay();

@@ -34,7 +34,7 @@ class RepeatExpander {
       if (_hasSkipOnDate(all, template.repeatGroupId!, key)) continue;
       if (_occursOn(template, date) &&
           !_hasConcreteInstance(all, template, key)) {
-        result.add(template.copyWith(date: key));
+        result.add(_virtualOccurrence(template, key));
       }
     }
 
@@ -43,7 +43,7 @@ class RepeatExpander {
       if (event.isRepeatSkip || event.repeatGroupId != null) continue;
       if (event.repeatType == RepeatType.oneTime || event.date == key) continue;
       if (_occursOn(event, date)) {
-        result.add(event.copyWith(date: key));
+        result.add(_virtualOccurrence(event, key));
       }
     }
 
@@ -165,6 +165,17 @@ class RepeatExpander {
     if (master.repeatGroupId == null) return false;
     return all.any(
       (e) => e.repeatGroupId == master.repeatGroupId && e.date == dateKey,
+    );
+  }
+
+  /// Virtual rows must not inherit completion or internal series metadata.
+  static Event _virtualOccurrence(Event template, String dateKey) {
+    return template.copyWith(
+      date: dateKey,
+      isCompleted: false,
+      clearCompletedAt: true,
+      note: template.userNote,
+      clearRepeatUntil: true,
     );
   }
 }
