@@ -802,6 +802,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get focusTodayTasks => '今日日程与任务';
 
   @override
+  String get focusTodaySchedules => '今日日程';
+
+  @override
+  String get focusTodayTodosSection => '今日待办';
+
+  @override
+  String get focusLongTermTodosSection => '长期待办';
+
+  @override
+  String get focusOtherDateTodos => '其它日期待办';
+
+  @override
   String get focusNoTask => '无分类';
 
   @override

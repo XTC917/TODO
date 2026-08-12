@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/utils/date_time_formats.dart';
+import '../../../core/utils/event_constants.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../models/event.dart';
 
@@ -151,13 +152,15 @@ class _FocusRecordEditSheetState extends State<_FocusRecordEditSheet> {
               const SizedBox(height: 16),
               TextField(
                 controller: _titleController,
-                maxLength: 30,
+                maxLength: kMaxEventTitleLength,
                 decoration: InputDecoration(
                   labelText: l10n.focusRecordTaskLabel,
                   counterText: '',
                   border: const OutlineInputBorder(),
                 ),
-                inputFormatters: [LengthLimitingTextInputFormatter(30)],
+                inputFormatters: [
+                  LengthLimitingTextInputFormatter(kMaxEventTitleLength),
+                ],
               ),
               const SizedBox(height: 8),
               ListTile(

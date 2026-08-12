@@ -17,6 +17,10 @@ class EventRepository {
   final AppDatabase _db;
   static const _uuid = Uuid();
 
+  Stream<List<Event>> watchAllEvents() {
+    return _db.watchAllEvents().map((rows) => rows.map(_toDomain).toList());
+  }
+
   Stream<List<Event>> watchByDate(String date) {
     return _db.watchAllEvents().map((rows) {
       final domain = rows.map(_toDomain).toList();

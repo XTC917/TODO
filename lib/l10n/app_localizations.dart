@@ -1552,6 +1552,30 @@ abstract class AppLocalizations {
   /// **'Today\'s Schedule & Tasks'**
   String get focusTodayTasks;
 
+  /// No description provided for @focusTodaySchedules.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s Schedule'**
+  String get focusTodaySchedules;
+
+  /// No description provided for @focusTodayTodosSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s Todos'**
+  String get focusTodayTodosSection;
+
+  /// No description provided for @focusLongTermTodosSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Long-term Todos'**
+  String get focusLongTermTodosSection;
+
+  /// No description provided for @focusOtherDateTodos.
+  ///
+  /// In en, this message translates to:
+  /// **'Other Dates'**
+  String get focusOtherDateTodos;
+
   /// No description provided for @focusNoTask.
   ///
   /// In en, this message translates to:

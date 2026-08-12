@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/providers/app_providers.dart';
 import '../../../core/utils/date_time_formats.dart';
+import '../../../core/utils/event_constants.dart';
+import '../../../core/utils/event_display.dart';
+import '../../../core/utils/focus_task_picker_items.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../models/event.dart';
 
@@ -77,25 +80,6 @@ class _FocusTaskPickerSheetState extends ConsumerState<_FocusTaskPickerSheet> {
     super.dispose();
   }
 
-  List<Event> _todayTasks(List<Event> events, String dateKey) {
-    return events
-        .where(
-          (e) =>
-              !e.isCompleted &&
-              e.hasDate &&
-              e.date == dateKey &&
-              (e.isTodo || e.isSchedule),
-        )
-        .toList()
-      ..sort((a, b) {
-        final typeOrder = a.isSchedule == b.isSchedule
-            ? 0
-            : (a.isSchedule ? -1 : 1);
-        if (typeOrder != 0) return typeOrder;
-        return a.title.compareTo(b.title);
-      });
-  }
-
   void _onModeChanged(_FocusTaskInputMode? mode) {
     if (mode == null || mode == _mode) return;
     setState(() {
@@ -123,7 +107,36 @@ class _FocusTaskPickerSheetState extends ConsumerState<_FocusTaskPickerSheet> {
     final size = MediaQuery.sizeOf(context);
     final isLandscape = size.width > size.height;
     if (isLandscape) return size.height * 0.94;
-    return size.height * 0.62;
+    return size.height * 0.72;
+  }
+
+  String _sectionTitle(
+    AppLocalizations l10n,
+    FocusTaskPickerSectionKind kind,
+  ) {
+    return switch (kind) {
+      FocusTaskPickerSectionKind.todaySchedules => l10n.focusTodaySchedules,
+      FocusTaskPickerSectionKind.todayTodos => l10n.focusTodayTodosSection,
+      FocusTaskPickerSectionKind.longTermTodos =>
+        l10n.focusLongTermTodosSection,
+      FocusTaskPickerSectionKind.otherDateTodos => l10n.focusOtherDateTodos,
+    };
+  }
+
+  String _taskSubtitle(AppLocalizations l10n, Event task) {
+    if (task.isSchedule) return l10n.taskTypeSchedule;
+    if (task.isNoTimeTodo) return l10n.longTermTask;
+    final timeLabel = eventTimeLabel(task, l10n);
+    if (task.date.isNotEmpty) {
+      final dateLabel = DateTimeFormats.formatSectionDate(
+        DateTime.parse(task.date),
+        l10n,
+      );
+      if (timeLabel.isEmpty) return dateLabel;
+      return '$dateLabel · $timeLabel';
+    }
+    if (timeLabel.isNotEmpty) return timeLabel;
+    return l10n.taskTypeTodo;
   }
 
   Widget _buildHeader(AppLocalizations l10n, ThemeData theme) {
@@ -172,13 +185,15 @@ class _FocusTaskPickerSheetState extends ConsumerState<_FocusTaskPickerSheet> {
           TextField(
             controller: _customController,
             focusNode: _customFocusNode,
-            maxLength: 30,
+            maxLength: kMaxEventTitleLength,
             decoration: InputDecoration(
               hintText: l10n.focusCustomTaskHint,
               counterText: '',
               border: const OutlineInputBorder(),
             ),
-            inputFormatters: [LengthLimitingTextInputFormatter(30)],
+            inputFormatters: [
+              LengthLimitingTextInputFormatter(kMaxEventTitleLength),
+            ],
             onChanged: (_) => setState(() {}),
             onSubmitted: (_) => _confirmCustom(),
             textInputAction: TextInputAction.done,
@@ -198,8 +213,7 @@ class _FocusTaskPickerSheetState extends ConsumerState<_FocusTaskPickerSheet> {
     required AppLocalizations l10n,
     required ThemeData theme,
     required Color muted,
-    required AsyncValue<List<Event>> eventsAsync,
-    required String dateKey,
+    required AsyncValue<List<FocusTaskPickerSection>> sectionsAsync,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -214,18 +228,11 @@ class _FocusTaskPickerSheetState extends ConsumerState<_FocusTaskPickerSheet> {
             const FocusTaskSelection(),
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
-          child: Text(
-            l10n.focusTodayTasks,
-            style: theme.textTheme.labelLarge?.copyWith(color: muted),
-          ),
-        ),
         Expanded(
-          child: eventsAsync.when(
-            data: (events) {
-              final tasks = _todayTasks(events, dateKey);
-              if (tasks.isEmpty) {
+          child: sectionsAsync.when(
+            data: (sections) {
+              final hasAny = sections.any((section) => section.items.isNotEmpty);
+              if (!hasAny) {
                 return Center(
                   child: Text(
                     l10n.noTodosForDay,
@@ -233,42 +240,52 @@ class _FocusTaskPickerSheetState extends ConsumerState<_FocusTaskPickerSheet> {
                   ),
                 );
               }
-              return ListView.builder(
+              return ListView(
                 padding: const EdgeInsets.only(bottom: 12),
-                itemCount: tasks.length,
-                itemBuilder: (context, index) {
-                  final task = tasks[index];
-                  final selected = _selectedEventId == task.id;
-                  return ListTile(
-                    dense: true,
-                    visualDensity: VisualDensity.compact,
-                    selected: selected,
-                    leading: Icon(
-                      task.isSchedule
-                          ? Icons.event_outlined
-                          : Icons.check_circle_outline,
-                      size: 20,
-                    ),
-                    title: Text(
-                      task.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    subtitle: Text(
-                      task.isSchedule
-                          ? l10n.taskTypeSchedule
-                          : l10n.taskTypeTodo,
-                      style: theme.textTheme.labelSmall,
-                    ),
-                    onTap: () => Navigator.pop(
-                      context,
-                      FocusTaskSelection(
-                        eventId: task.id,
-                        title: task.title,
+                children: [
+                  for (final section in sections)
+                    if (section.items.isNotEmpty) ...[
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+                        child: Text(
+                          _sectionTitle(l10n, section.kind),
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: muted,
+                          ),
+                        ),
                       ),
-                    ),
-                  );
-                },
+                      for (final task in section.items)
+                        ListTile(
+                          dense: true,
+                          visualDensity: VisualDensity.compact,
+                          selected: _selectedEventId == task.id,
+                          leading: Icon(
+                            task.isSchedule
+                                ? Icons.event_outlined
+                                : Icons.check_circle_outline,
+                            size: 20,
+                          ),
+                          title: Text(
+                            task.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          subtitle: Text(
+                            _taskSubtitle(l10n, task),
+                            style: theme.textTheme.labelSmall,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          onTap: () => Navigator.pop(
+                            context,
+                            FocusTaskSelection(
+                              eventId: task.id,
+                              title: task.title,
+                            ),
+                          ),
+                        ),
+                    ],
+                ],
               );
             },
             loading: () => const Center(
@@ -288,9 +305,7 @@ class _FocusTaskPickerSheetState extends ConsumerState<_FocusTaskPickerSheet> {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurface.withValues(alpha: 0.55);
-    final today = DateTimeFormats.dateOnly(DateTime.now());
-    final dateKey = DateTimeFormats.formatDate(today);
-    final eventsAsync = ref.watch(eventsForDateProvider(today));
+    final sectionsAsync = ref.watch(focusTaskPickerSectionsProvider);
     final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
 
     if (_mode == _FocusTaskInputMode.custom) {
@@ -333,8 +348,7 @@ class _FocusTaskPickerSheetState extends ConsumerState<_FocusTaskPickerSheet> {
                 l10n: l10n,
                 theme: theme,
                 muted: muted,
-                eventsAsync: eventsAsync,
-                dateKey: dateKey,
+                sectionsAsync: sectionsAsync,
               ),
             ),
           ],

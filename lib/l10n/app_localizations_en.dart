@@ -820,6 +820,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get focusTodayTasks => 'Today\'s Schedule & Tasks';
 
   @override
+  String get focusTodaySchedules => 'Today\'s Schedule';
+
+  @override
+  String get focusTodayTodosSection => 'Today\'s Todos';
+
+  @override
+  String get focusLongTermTodosSection => 'Long-term Todos';
+
+  @override
+  String get focusOtherDateTodos => 'Other Dates';
+
+  @override
   String get focusNoTask => 'Uncategorized';
 
   @override

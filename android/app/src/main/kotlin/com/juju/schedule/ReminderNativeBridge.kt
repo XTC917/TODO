@@ -1,10 +1,12 @@
 package com.juju.schedule
 
+import android.app.KeyguardManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.os.PowerManager
 import android.provider.Settings
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -20,6 +22,12 @@ object ReminderNativeBridge {
                 "getManufacturer" -> result.success(Build.MANUFACTURER)
                 "openAutostartSettings" -> {
                     result.success(openAutostartSettings(context))
+                }
+                "isScreenInteractive" -> {
+                    result.success(isScreenInteractive(context))
+                }
+                "isStrictFocusScreenLock" -> {
+                    result.success(isStrictFocusScreenLock(context))
                 }
                 else -> result.notImplemented()
             }
@@ -58,5 +66,18 @@ object ReminderNativeBridge {
             }
         context.startActivity(fallback)
         return false
+    }
+
+    private fun isScreenInteractive(context: Context): Boolean {
+        val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+        return pm.isInteractive
+    }
+
+    /// True when strict focus should NOT treat background as leaving the app
+    /// (keyguard locked and/or display off — includes lock screen still lit).
+    private fun isStrictFocusScreenLock(context: Context): Boolean {
+        val km = context.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+        if (km.isKeyguardLocked) return true
+        return !isScreenInteractive(context)
     }
 }

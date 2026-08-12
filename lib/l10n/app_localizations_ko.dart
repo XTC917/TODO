@@ -806,6 +806,18 @@ class AppLocalizationsKo extends AppLocalizations {
   String get focusTodayTasks => '오늘 일정 및 작업';
 
   @override
+  String get focusTodaySchedules => '오늘 일정';
+
+  @override
+  String get focusTodayTodosSection => '오늘 할 일';
+
+  @override
+  String get focusLongTermTodosSection => '장기 할 일';
+
+  @override
+  String get focusOtherDateTodos => '다른 날짜 할 일';
+
+  @override
   String get focusNoTask => '미분류';
 
   @override

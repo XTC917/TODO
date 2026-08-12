@@ -1,5 +1,15 @@
 # Changelog
 
+## v2.6.3
+
+### Fixed
+- Strict focus mode: locking the screen while the app is open no longer triggers leave detection when the lock screen stays lit or **keep screen awake** is enabled (uses keyguard state, not display power alone).
+
+## v2.6.2
+
+### Changed
+- Strict focus mode: **locking the screen** no longer counts as leaving the app; the timer keeps running and strict reminders/failures are not triggered (Android).
+
 ## v2.6.1
 
 ### Fixed

@@ -18,6 +18,7 @@ import '../services/notification_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/theme_palette.dart';
 import '../utils/date_time_formats.dart';
+import '../utils/focus_task_picker_items.dart';
 
 const _themeModeKey = 'theme_mode';
 const _accentColorKey = 'accent_color';
@@ -69,6 +70,7 @@ Future<void> reopenDatabase(WidgetRef ref) async {
   ref.invalidate(focusRepositoryProvider);
   ref.invalidate(eventsForDateProvider);
   ref.invalidate(allTodosProvider);
+  ref.invalidate(focusTaskPickerSectionsProvider);
   ref.invalidate(allFocusRecordsProvider);
   ref.invalidate(daySummaryProvider);
   ref.invalidate(eventDatesInMonthProvider);
@@ -83,6 +85,7 @@ Future<void> reloadDatabaseAfterExternalChange(WidgetRef ref) async {
   ref.invalidate(focusRepositoryProvider);
   ref.invalidate(eventsForDateProvider);
   ref.invalidate(allTodosProvider);
+  ref.invalidate(focusTaskPickerSectionsProvider);
   ref.invalidate(allFocusRecordsProvider);
   ref.invalidate(daySummaryProvider);
   ref.invalidate(eventDatesInMonthProvider);
@@ -266,6 +269,17 @@ final eventsForDateProvider =
 
 final allTodosProvider = StreamProvider<List<Event>>((ref) {
   return ref.watch(eventRepositoryProvider).watchAllTodos();
+});
+
+final focusTaskPickerSectionsProvider =
+    StreamProvider<List<FocusTaskPickerSection>>((ref) {
+  final repo = ref.watch(eventRepositoryProvider);
+  return repo.watchAllEvents().map((events) {
+    return FocusTaskPickerItems.build(
+      events,
+      today: DateTimeFormats.dateOnly(DateTime.now()),
+    );
+  });
 });
 
 final eventDatesInMonthProvider =

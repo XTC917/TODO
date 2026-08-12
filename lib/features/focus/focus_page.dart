@@ -10,6 +10,7 @@ import '../../../core/providers/app_providers.dart';
 import '../../../core/providers/focus_providers.dart';
 import '../../../core/services/focus_notification_service.dart';
 import '../../../core/services/focus_preset_service.dart';
+import '../../../core/services/focus_screen_state.dart';
 import '../../../core/services/focus_timer_service.dart';
 import '../../../core/utils/focus_display.dart';
 import '../../../l10n/app_localizations.dart';
@@ -82,6 +83,21 @@ class _FocusPageState extends ConsumerState<FocusPage>
     if (!session.isActive || session.state != FocusTimerState.running) return;
 
     if (session.enforcementMode == FocusEnforcementMode.strict) {
+      if (!await FocusScreenState.isLeavingAppForStrictMode()) {
+        return;
+      }
+      if (!mounted) return;
+      final lifecycle = WidgetsBinding.instance.lifecycleState;
+      if (lifecycle != AppLifecycleState.paused &&
+          lifecycle != AppLifecycleState.hidden) {
+        return;
+      }
+      final stillRunning = ref.read(focusTimerProvider).session;
+      if (!stillRunning.isActive ||
+          stillRunning.state != FocusTimerState.running ||
+          stillRunning.enforcementMode != FocusEnforcementMode.strict) {
+        return;
+      }
       final now = DateTime.now();
       await ref.read(focusSessionStoreProvider).setStrictBackgroundTracking(now);
       if (!mounted) return;
