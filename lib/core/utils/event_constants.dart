@@ -2,8 +2,8 @@
 const kNoDate = '';
 
 /// Max characters for event title and note (UI + validation).
-const kMaxEventTitleLength = 50;
-const kMaxEventNoteLength = 200;
+const kMaxEventTitleLength = 100;
+const kMaxEventNoteLength = 300;
 
 extension EventDateX on String {
   bool get hasEventDate => isNotEmpty;
