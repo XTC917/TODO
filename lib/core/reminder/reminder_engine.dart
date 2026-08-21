@@ -49,12 +49,14 @@ class ReminderEngine {
     Event event, {
     Event? previousEvent,
     bool skipPermissionCheck = false,
+    List<Event>? seriesEvents,
   }) =>
       _locked(
         () => _scheduleForEventUnlocked(
           event,
           previousEvent: previousEvent,
           skipPermissionCheck: skipPermissionCheck,
+          seriesEvents: seriesEvents,
         ),
       );
 
@@ -73,6 +75,7 @@ class ReminderEngine {
     Event event, {
     Event? previousEvent,
     bool skipPermissionCheck = false,
+    List<Event>? seriesEvents,
   }) async {
     if (!await _ensureReady()) {
       reminderLog('schedule eventId=${event.id} skipped — not initialized');
@@ -83,8 +86,9 @@ class ReminderEngine {
     await _cancelForEventUnlocked(event.id);
 
     if (!remindersEnabled) return 0;
+    if (event.isRepeatSkip) return 0;
     if (!ReminderPresets.hasReminder(event.reminderOffsetsSeconds)) return 0;
-    if (event.isCompleted) return 0;
+    if (!event.isRecurring && event.isCompleted) return 0;
 
     if (!skipPermissionCheck &&
         !await _permissions.hasNotificationPermission()) {
@@ -101,13 +105,47 @@ class ReminderEngine {
       );
     }
 
-    final anchor = event.reminderAnchorDateTime;
-    if (anchor == null) {
-      reminderLog('schedule eventId=${event.id} skipped — no anchor time');
+    final siblings = seriesEvents == null || seriesEvents.isEmpty
+        ? [event]
+        : seriesEvents;
+    final sources = RepeatExpander.reminderSources(event, siblings);
+    if (sources.isEmpty) {
+      reminderLog('schedule eventId=${event.id} skipped — no upcoming occurrence');
       return 0;
     }
 
     await _scheduler.ensureTimezone();
+    var scheduled = 0;
+    for (var occ = 0; occ < sources.length; occ++) {
+      scheduled += await _scheduleOccurrenceUnlocked(
+        sources[occ],
+        occurrence: occ,
+      );
+    }
+
+    if (scheduled > 0) {
+      final pending = await _scheduler.pendingCount();
+      reminderLog(
+        'schedule eventId=${event.id} done scheduled=$scheduled '
+        'occurrences=${sources.length} pending=$pending',
+      );
+    }
+
+    return scheduled;
+  }
+
+  Future<int> _scheduleOccurrenceUnlocked(
+    Event event, {
+    required int occurrence,
+  }) async {
+    final anchor = event.reminderAnchorDateTime;
+    if (anchor == null) {
+      reminderLog(
+        'schedule eventId=${event.id} occ=$occurrence skipped — no anchor time',
+      );
+      return 0;
+    }
+
     final now = tz.TZDateTime.now(tz.local);
     final offsets = [...event.reminderOffsetsSeconds]
       ..sort((a, b) => b.compareTo(a));
@@ -122,20 +160,24 @@ class ReminderEngine {
       final triggerTime = tz.TZDateTime.from(triggerLocal, tz.local);
       if (!triggerTime.isAfter(now)) {
         reminderLog(
-          'schedule eventId=${event.id} offset=${offsetSeconds}s skipped — '
-          'trigger in past ($triggerTime)',
+          'schedule eventId=${event.id} occ=$occurrence date=${event.date} '
+          'offset=${offsetSeconds}s skipped — trigger in past ($triggerTime)',
         );
         continue;
       }
 
-      final notificationId = notificationIdForEvent(event.id, i);
+      final notificationId = notificationIdForEvent(
+        event.id,
+        i,
+        occurrence: occurrence,
+      );
       final bodySuffix =
           bodyBuilder?.call(offsetSeconds) ?? _fallbackBodySuffix(offsetSeconds);
       final body = '${event.title}\n$bodySuffix';
 
       reminderLog(
-        'schedule eventId=${event.id} triggerTime=$triggerTime '
-        'offset=${offsetSeconds}s',
+        'schedule eventId=${event.id} occ=$occurrence date=${event.date} '
+        'triggerTime=$triggerTime offset=${offsetSeconds}s',
       );
 
       final mode = await _scheduler.scheduleAt(
@@ -144,25 +186,27 @@ class ReminderEngine {
         body: body,
         triggerTime: triggerTime,
         payload: '${ReminderConstants.eventPayloadPrefix}${event.id}',
-        logContext: 'eventId=${event.id} id=$notificationId',
+        logContext:
+            'eventId=${event.id} occ=$occurrence id=$notificationId',
       );
       if (mode != null) scheduled++;
     }
-
-    if (scheduled > 0) {
-      final pending = await _scheduler.pendingCount();
-      reminderLog(
-        'schedule eventId=${event.id} done scheduled=$scheduled pending=$pending',
-      );
-    }
-
     return scheduled;
   }
 
   Future<void> _cancelForEventUnlocked(int eventId) async {
     if (!_permissions.isReady) return;
     for (var i = 0; i < kMaxRemindersPerEvent; i++) {
-      await _scheduler.cancel(notificationIdForEvent(eventId, i));
+      await _scheduler.cancel(legacyNotificationIdForEvent(eventId, i));
+    }
+    final pending = await _scheduler.pendingIds();
+    final stride = kMaxScheduledOccurrences * kMaxRemindersPerEvent;
+    final start = eventId * stride;
+    final end = start + stride;
+    for (final id in pending) {
+      if (id >= start && id < end) {
+        await _scheduler.cancel(id);
+      }
     }
   }
 
@@ -185,14 +229,10 @@ class ReminderEngine {
 
     var total = 0;
     for (final event in events) {
-      final source = RepeatExpander.reminderSource(event, events);
-      if (source == null) {
-        await _cancelForEventUnlocked(event.id);
-        continue;
-      }
       total += await _scheduleForEventUnlocked(
-        source,
+        event,
         skipPermissionCheck: true,
+        seriesEvents: events,
       );
     }
 
@@ -221,21 +261,26 @@ class ReminderEngine {
 
     final now = tz.TZDateTime.now(tz.local);
     for (final event in events) {
-      final source = RepeatExpander.reminderSource(event, events);
-      if (source == null) continue;
-      if (!ReminderPresets.hasReminder(source.reminderOffsetsSeconds)) continue;
-      if (source.isCompleted) continue;
-      final anchor = source.reminderAnchorDateTime;
-      if (anchor == null) continue;
+      if (event.isRepeatSkip) continue;
+      if (!ReminderPresets.hasReminder(event.reminderOffsetsSeconds)) continue;
+      final sources = RepeatExpander.reminderSources(event, events);
+      for (var occ = 0; occ < sources.length; occ++) {
+        final source = sources[occ];
+        if (source.isCompleted) continue;
+        final anchor = source.reminderAnchorDateTime;
+        if (anchor == null) continue;
 
-      final offsets = [...source.reminderOffsetsSeconds]
-        ..sort((a, b) => b.compareTo(a));
-      for (var i = 0; i < offsets.length && i < kMaxRemindersPerEvent; i++) {
-        final offset = ReminderPresets.toDuration(offsets[i]);
-        if (offset == null) continue;
-        final trigger = tz.TZDateTime.from(anchor.subtract(offset), tz.local);
-        if (trigger.isAfter(now)) {
-          expected.add(notificationIdForEvent(source.id, i));
+        final offsets = [...source.reminderOffsetsSeconds]
+          ..sort((a, b) => b.compareTo(a));
+        for (var i = 0; i < offsets.length && i < kMaxRemindersPerEvent; i++) {
+          final offset = ReminderPresets.toDuration(offsets[i]);
+          if (offset == null) continue;
+          final trigger = tz.TZDateTime.from(anchor.subtract(offset), tz.local);
+          if (trigger.isAfter(now)) {
+            expected.add(
+              notificationIdForEvent(source.id, i, occurrence: occ),
+            );
+          }
         }
       }
     }

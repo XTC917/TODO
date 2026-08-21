@@ -18,3 +18,6 @@
 
 # permission_handler
 -keep class com.baseflow.permissionhandler.** { *; }
+
+# Daily reminder window refresh (WorkManager).
+-keep class com.juju.schedule.reminder.** { *; }

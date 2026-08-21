@@ -56,6 +56,7 @@ flutter {
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
     implementation("androidx.glance:glance-appwidget:1.1.1")
+    implementation("androidx.work:work-runtime-ktx:2.9.1")
 }
 
 // Flutter copies release output as app-release.apk; also emit a branded copy.

@@ -16,4 +16,8 @@ class ReminderConstants {
 
   /// How far ahead the test reminder is scheduled.
   static const testScheduleDelay = Duration(minutes: 1);
+
+  static const lastRescheduleMsKey = 'reminder_last_reschedule_ms';
+  static const backgroundRefreshUri = 'jujuschedule://reminder/refresh';
+  static const minBackgroundRefreshGap = Duration(hours: 6);
 }

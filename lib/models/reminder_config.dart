@@ -8,6 +8,9 @@ const kReminderCustomPicker = -1;
 /// Max reminders per event (also caps notification id suffix).
 const kMaxRemindersPerEvent = 20;
 
+/// Upper bound used in notification IDs. Per-type lookahead is smaller.
+const kMaxScheduledOccurrences = 24;
+
 /// Default reminder offsets in seconds before the due/start time.
 class ReminderPresets {
   ReminderPresets._();
@@ -83,7 +86,14 @@ String? encodeReminderOffsets(List<int> offsets) {
   return jsonEncode(unique);
 }
 
-int notificationIdForEvent(int eventId, int index) => eventId * 100 + index;
+int notificationIdForEvent(int eventId, int index, {int occurrence = 0}) {
+  return eventId * (kMaxScheduledOccurrences * kMaxRemindersPerEvent) +
+      occurrence * kMaxRemindersPerEvent +
+      index;
+}
+
+/// Pre-lookahead ids (`eventId * 100 + index`). Cancelled during reschedule.
+int legacyNotificationIdForEvent(int eventId, int index) => eventId * 100 + index;
 
 /// Human-readable relative reminder label for UI.
 String formatReminderOffset(AppLocalizations l10n, int? offsetSeconds) {

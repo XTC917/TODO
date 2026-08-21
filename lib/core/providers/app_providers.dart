@@ -19,7 +19,6 @@ import '../theme/app_colors.dart';
 import '../theme/theme_palette.dart';
 import '../utils/date_time_formats.dart';
 import '../utils/focus_task_picker_items.dart';
-import '../utils/repeat_expander.dart';
 
 const _themeModeKey = 'theme_mode';
 const _accentColorKey = 'accent_color';
@@ -339,19 +338,15 @@ class EventActions {
               : await _ref
                   .read(eventRepositoryProvider)
                   .getEventsByRepeatGroup(event.repeatGroupId!));
-      final source = RepeatExpander.reminderSource(
-        event,
-        siblings.isEmpty ? [event] : siblings,
-      );
-      if (source == null ||
-          !ReminderPresets.hasReminder(source.reminderOffsetsSeconds)) {
+      if (!ReminderPresets.hasReminder(event.reminderOffsetsSeconds)) {
         await NotificationService.instance.cancelForEvent(event.id);
         return;
       }
       await NotificationService.instance.scheduleForEvent(
-        source,
+        event,
         previousEvent: previous,
         skipPermissionCheck: true,
+        seriesEvents: siblings.isEmpty ? [event] : siblings,
       );
     } catch (e, st) {
       debugPrint('Reminder sync failed for event ${event.id}: $e\n$st');

@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.6.5
+
+### Fixed
+- Renaming a repeating task no longer fires two reminders (old title and new title) at the same time. Series updates resync every row in the group, and a day with an “only this” override is not scheduled twice.
+- Recurring reminders were only scheduled for the series start date, so a weekly task could remind the first week and then stop. The next occurrences are now pre-scheduled, a daily background refresh rolls the window forward, and past trigger times skip to the next occurrence.
+
 ## v2.6.4
 
 ### Changed

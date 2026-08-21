@@ -20,8 +20,8 @@ window.JUJU_CONFIG = {
   taglineZh: "让每天的安排，简单一点。",
   taglineEn: "Make every day a little simpler.",
 
-  /** 当前对外版本号，显示为 v2.6.4 */
-  version: "2.6.4",
+  /** 当前对外版本号，显示为 v2.6.5 */
+  version: "2.6.5",
 
   /**
    * 绑定自定义域名后填写，不要末尾斜杠。
@@ -36,7 +36,7 @@ window.JUJU_CONFIG = {
    * 正式版 Android / 鸿蒙目前展示为 Coming Soon。
    */
   downloads: {
-    beta: "https://juju-d7g3aezw61b68afe8-1358899741.tcloudbaseapp.com/downloads/JUJUSchedule-v2.6.4.apk",
+    beta: "https://juju-d7g3aezw61b68afe8-1358899741.tcloudbaseapp.com/downloads/JUJUSchedule-v2.6.5.apk",
   },
 
   platforms: {
@@ -61,6 +61,7 @@ window.JUJU_CONFIG = {
    * 每条一行：version + zh / en。新版本插到数组最前面。
    */
   changelog: [
+    { version: "2.6.5", zh: "修复重复任务的提醒问题", en: "Fix duplicate reminders after renaming a repeating task, and keep weekly/daily reminders going" },
     { version: "2.6.4", zh: "通知设置增加各品牌手机的自启动指引", en: "Autostart guides for more phone brands" },
     { version: "2.6.0", zh: "统一应用名称，备份可保存外观与专注预设", en: "Unified app name; backups include appearance and focus presets" },
     { version: "2.5.5", zh: "专注模式支持普通 / 严格", en: "Focus mode now supports Normal and Strict" },

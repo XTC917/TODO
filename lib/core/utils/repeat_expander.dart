@@ -133,42 +133,79 @@ class RepeatExpander {
 
   static bool occursOn(Event master, DateTime date) => _occursOn(master, date);
 
-  /// Row that should own the scheduled notification for [event], or null.
-  ///
-  /// Recurring masters skip dates that already have a one-time override or a
-  /// skip marker, so renaming "only this" occurrence does not leave the old
-  /// title scheduled on the same day.
+  /// Next occurrence that still has a reminder in the future, or null.
   static Event? reminderSource(
     Event event,
     List<Event> seriesOrAll, {
     DateTime? from,
   }) {
-    if (event.isRepeatSkip) return null;
-    if (!event.isRecurring) return event;
+    final sources = reminderSources(event, seriesOrAll, from: from);
+    return sources.isEmpty ? null : sources.first;
+  }
 
-    final groupId = event.repeatGroupId!;
+  /// Upcoming occurrences to pre-schedule as one-shot alarms.
+  ///
+  /// Recurring masters skip dates that already have a one-time override or a
+  /// skip marker, and skip occurrences whose reminder time has already passed.
+  static List<Event> reminderSources(
+    Event event,
+    List<Event> seriesOrAll, {
+    DateTime? from,
+    int? limit,
+  }) {
+    if (event.isRepeatSkip) return const [];
     final now = from ?? DateTime.now();
+    if (!event.isRecurring) {
+      return _hasFutureReminderTrigger(event, now) ? [event] : const [];
+    }
+
+    final max = limit ?? _lookaheadFor(event);
+    final groupId = event.repeatGroupId!;
     final today = DateTime(now.year, now.month, now.day);
     final seriesStart = DateTime.parse(event.date);
     final seriesStartDay =
         DateTime(seriesStart.year, seriesStart.month, seriesStart.day);
     var day = today.isBefore(seriesStartDay) ? seriesStartDay : today;
+    final result = <Event>[];
 
-    for (var i = 0; i < 400; i++) {
+    for (var i = 0; i < 800 && result.length < max; i++) {
       final candidate = day.add(Duration(days: i));
       if (!_occursOn(event, candidate)) continue;
       final key = DateTimeFormats.formatDate(candidate);
       if (_hasSkipOnDate(seriesOrAll, groupId, key)) continue;
       if (_hasOneTimeOverrideOnDate(seriesOrAll, groupId, key)) continue;
-      return event.copyWith(
+      final sourced = event.copyWith(
         date: key,
         isCompleted: false,
         clearCompletedAt: true,
         note: event.userNote,
         clearRepeatUntil: true,
       );
+      if (!_hasFutureReminderTrigger(sourced, now)) continue;
+      result.add(sourced);
     }
-    return null;
+    return result;
+  }
+
+  static int _lookaheadFor(Event event) {
+    return switch (event.repeatType) {
+      RepeatType.daily => 21,
+      RepeatType.weekly => 12,
+      RepeatType.monthly => 6,
+      RepeatType.oneTime => 1,
+    };
+  }
+
+  static bool _hasFutureReminderTrigger(Event event, DateTime now) {
+    final anchor = event.reminderAnchorDateTime;
+    if (anchor == null) return false;
+    if (event.reminderOffsetsSeconds.isEmpty) return false;
+    for (final seconds in event.reminderOffsetsSeconds) {
+      if (anchor.subtract(Duration(seconds: seconds)).isAfter(now)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   static bool _occursOn(Event master, DateTime date) {

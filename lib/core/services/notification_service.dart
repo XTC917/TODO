@@ -1,4 +1,5 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../database/event_repository.dart';
 import '../../models/event.dart';
@@ -156,8 +157,32 @@ class NotificationService {
     return ok ? TestNotificationResult.success : TestNotificationResult.showFailed;
   }
 
-  Future<void> rescheduleAll(EventRepository repository) =>
-      _engine.rescheduleAll(repository);
+  Future<void> rescheduleAll(EventRepository repository) async {
+    await _engine.rescheduleAll(repository);
+    await _markRescheduledNow();
+  }
+
+  static Future<void> _markRescheduledNow() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(
+        ReminderConstants.lastRescheduleMsKey,
+        DateTime.now().millisecondsSinceEpoch,
+      );
+    } catch (_) {}
+  }
+
+  static Future<bool> shouldSkipBackgroundRefresh() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final last = prefs.getInt(ReminderConstants.lastRescheduleMsKey);
+      if (last == null) return false;
+      final elapsed = DateTime.now().millisecondsSinceEpoch - last;
+      return elapsed < ReminderConstants.minBackgroundRefreshGap.inMilliseconds;
+    } catch (_) {
+      return false;
+    }
+  }
 
   Future<void> cancelAll() => _scheduler.cancelAll();
 
@@ -165,11 +190,13 @@ class NotificationService {
     Event event, {
     bool skipPermissionCheck = false,
     Event? previousEvent,
+    List<Event>? seriesEvents,
   }) =>
       _engine.scheduleForEvent(
         event,
         previousEvent: previousEvent,
         skipPermissionCheck: skipPermissionCheck,
+        seriesEvents: seriesEvents,
       );
 
   Future<void> cancelForEvent(int eventId) => _engine.cancelForEvent(eventId);

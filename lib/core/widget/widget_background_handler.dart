@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import '../../database/app_database.dart';
 import '../../database/event_repository.dart';
+import '../reminder/reminder_background_refresh.dart';
 import 'home_widget_keys.dart';
 import 'home_widget_snapshot.dart';
 
@@ -29,6 +30,11 @@ Future<void> handleWidgetBackgroundUri(Uri? uri) async {
     } finally {
       await db.close();
     }
+    return;
+  }
+
+  if (uri.host == 'reminder' && uri.path == '/refresh') {
+    await refreshRemindersInBackground();
     return;
   }
 

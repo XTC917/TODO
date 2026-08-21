@@ -9,6 +9,7 @@ Event _master({
   bool completed = false,
   String? note,
   String? repeatUntil,
+  List<int> reminderOffsetsSeconds = const [0],
 }) {
   final now = DateTime(2026, 1, 1);
   return Event(
@@ -25,6 +26,7 @@ Event _master({
     repeatGroupId: 'group-1',
     repeatUntil: repeatUntil,
     note: note,
+    reminderOffsetsSeconds: reminderOffsetsSeconds,
     focusedSeconds: 0,
     createdAt: now,
     updatedAt: now,
@@ -122,5 +124,72 @@ void main() {
       ),
       isNull,
     );
+  });
+
+  test('reminderSource skips today after the reminder already passed', () {
+    final master = _master(id: 1, date: '2026-01-05');
+    final source = RepeatExpander.reminderSource(
+      master,
+      [master],
+      from: DateTime(2026, 1, 12, 10),
+    );
+
+    expect(source, isNotNull);
+    expect(source!.date, '2026-01-19');
+  });
+
+  test('reminderSources pre-schedules several upcoming weeks', () {
+    final master = _master(id: 1, date: '2026-01-05');
+    final sources = RepeatExpander.reminderSources(
+      master,
+      [master],
+      from: DateTime(2026, 1, 12, 8),
+      limit: 4,
+    );
+
+    expect(
+      sources.map((e) => e.date).toList(),
+      ['2026-01-12', '2026-01-19', '2026-01-26', '2026-02-02'],
+    );
+  });
+
+  test('one-time override is scheduled instead of the series that day', () {
+    final master = _master(id: 1, date: '2026-01-05');
+    final override = master.copyWith(
+      id: 42,
+      title: 'Renamed standup',
+      date: '2026-01-12',
+      repeatType: RepeatType.oneTime,
+    );
+    final series = [master, override];
+    final from = DateTime(2026, 1, 12, 8);
+    final masterDates = RepeatExpander.reminderSources(
+      master,
+      series,
+      from: from,
+      limit: 3,
+    ).map((e) => e.date).toList();
+    final overrideDates = RepeatExpander.reminderSources(
+      override,
+      series,
+      from: from,
+    ).map((e) => e.date).toList();
+
+    expect(masterDates, ['2026-01-19', '2026-01-26', '2026-02-02']);
+    expect(overrideDates, ['2026-01-12']);
+  });
+
+  test('daily series looks ahead more than 12 days', () {
+    final daily = _master(id: 3, date: '2026-01-01').copyWith(
+      repeatType: RepeatType.daily,
+    );
+    final sources = RepeatExpander.reminderSources(
+      daily,
+      [daily],
+      from: DateTime(2026, 1, 1, 8),
+    );
+    expect(sources, hasLength(21));
+    expect(sources.first.date, '2026-01-01');
+    expect(sources.last.date, '2026-01-21');
   });
 }
