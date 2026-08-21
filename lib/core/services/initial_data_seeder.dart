@@ -11,6 +11,16 @@ import '../utils/date_time_formats.dart';
 const initialDataSeededKey = 'initial_data_seeded_v2';
 const expectedInitialEventCount = 9;
 const onboardingWidgetTodoMigrationKey = 'onboarding_widget_todo_v1';
+const onboardingReminderBackgroundHintKey = 'onboarding_reminder_bg_hint_v2';
+
+const _legacyReminderTitleFragments = [
+  '创建任务时可设置提醒',
+  'Set reminders when creating tasks',
+  '작업 생성 시 알림 설정',
+  '设提醒；设置→通知 开自启动与电池无限制',
+  'Settings → Notifications for autostart',
+  '설정→알림에서 자동 시작',
+];
 
 const _supportedSeedLocales = [
   Locale('en'),
@@ -210,6 +220,36 @@ class InitialDataSeeder {
 
     await _seedAll(repo, l10n);
     await prefs.setBool(initialDataSeededKey, true);
+  }
+
+  /// Updates the reminder onboarding schedule title with background-setup hint.
+  static Future<void> ensureReminderBackgroundHint({
+    required SharedPreferences prefs,
+    required EventRepository repo,
+    required AppLocalizations l10n,
+  }) async {
+    if (prefs.getBool(onboardingReminderBackgroundHintKey) == true) return;
+
+    final newTitle = buildInitialDrafts(l10n)[3].title;
+    final events = await repo.getAllEvents();
+    var updated = false;
+
+    for (final event in events) {
+      final title = event.title.trim();
+      final isLegacyReminder = _legacyReminderTitleFragments.any(title.contains);
+      if (!isLegacyReminder) continue;
+      if (title == newTitle) {
+        updated = true;
+        break;
+      }
+      await repo.update(event.copyWith(title: newTitle));
+      updated = true;
+      break;
+    }
+
+    if (updated || events.any((e) => e.title.trim() == newTitle)) {
+      await prefs.setBool(onboardingReminderBackgroundHintKey, true);
+    }
   }
 
   /// Adds the widget onboarding todo for installs that still have the 8-item set.

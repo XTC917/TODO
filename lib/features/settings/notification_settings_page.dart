@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/providers/app_providers.dart';
+import '../../core/reminder/autostart_guide.dart';
 import '../../core/reminder/reminder_log.dart';
 import '../../core/reminder/reminder_native.dart';
 import '../../core/services/notification_service.dart';
@@ -23,8 +24,6 @@ class NotificationSettingsPage extends ConsumerStatefulWidget {
 class _NotificationSettingsPageState
     extends ConsumerState<NotificationSettingsPage>
     with WidgetsBindingObserver {
-  bool _awaitingAutostartReturn = false;
-
   @override
   void initState() {
     super.initState();
@@ -44,19 +43,8 @@ class _NotificationSettingsPageState
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && mounted) {
       ref.invalidate(notificationPermissionProvider);
-      if (_awaitingAutostartReturn) {
-        _awaitingAutostartReturn = false;
-        unawaited(_markAutostartConfigured());
-      }
       setState(() {});
     }
-  }
-
-  Future<void> _markAutostartConfigured() async {
-    await ReminderNative.markAutostartConfigured(
-      ref.read(sharedPreferencesProvider),
-    );
-    if (mounted) setState(() {});
   }
 
   @override
@@ -64,7 +52,6 @@ class _NotificationSettingsPageState
     final l10n = AppLocalizations.of(context);
     final remindersEnabled = ref.watch(remindersEnabledProvider);
     final permissionAsync = ref.watch(notificationPermissionProvider);
-    final prefs = ref.watch(sharedPreferencesProvider);
 
     return SettingsSubpageScaffold(
       title: l10n.settingsNotifications,
@@ -80,8 +67,7 @@ class _NotificationSettingsPageState
             data: (granted) => _PermissionSection(
               granted: granted,
               showAutostartOnAndroid: Platform.isAndroid,
-              autostartConfiguredFuture:
-                  ReminderNative.isAutostartConfigured(prefs),
+              autostartGuideTypeFuture: ReminderNative.getAutostartGuideType(),
               onOpenNotificationSettings: () =>
                   _openSystemNotificationSettings(context),
               onRequestExactAlarm: () => _requestExactAlarm(context),
@@ -129,8 +115,18 @@ class _NotificationSettingsPageState
 
   Future<void> _openAutostartSettings(BuildContext context) async {
     reminderLog('settings autostart openSettings()');
-    _awaitingAutostartReturn = true;
-    await ReminderNative.openAutostartSettings();
+    final result = await ReminderNative.openAutostartSettings();
+    if (!context.mounted) return;
+
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final message = switch (result.destination) {
+      'failed' => l10n.autostartOpenResultFailed,
+      'app_details' => l10n.autostartOpenResultAppInfo,
+      _ when result.openedDirectSettings => l10n.autostartOpenResultDirect,
+      _ => l10n.autostartOpenResultAppInfo,
+    };
+    messenger.showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _rescheduleIfEnabled() async {
@@ -145,7 +141,7 @@ class _PermissionSection extends StatelessWidget {
   const _PermissionSection({
     required this.granted,
     required this.showAutostartOnAndroid,
-    required this.autostartConfiguredFuture,
+    required this.autostartGuideTypeFuture,
     required this.onOpenNotificationSettings,
     required this.onRequestExactAlarm,
     required this.onRequestBatteryOptimization,
@@ -154,7 +150,7 @@ class _PermissionSection extends StatelessWidget {
 
   final bool granted;
   final bool showAutostartOnAndroid;
-  final Future<bool> autostartConfiguredFuture;
+  final Future<AutostartGuideType> autostartGuideTypeFuture;
   final VoidCallback onOpenNotificationSettings;
   final VoidCallback onRequestExactAlarm;
   final VoidCallback onRequestBatteryOptimization;
@@ -250,10 +246,11 @@ class _PermissionSection extends StatelessWidget {
             },
           ),
           if (showAutostartOnAndroid)
-            FutureBuilder<bool>(
-              future: autostartConfiguredFuture,
-              builder: (context, snapshot) {
-                if (snapshot.data == true) return const SizedBox.shrink();
+            FutureBuilder<AutostartGuideType>(
+              future: autostartGuideTypeFuture,
+              builder: (context, guideSnapshot) {
+                final guideType =
+                    guideSnapshot.data ?? AutostartGuideType.generic;
                 return Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                   child: Column(
@@ -261,21 +258,33 @@ class _PermissionSection extends StatelessWidget {
                     children: [
                       ListTile(
                         contentPadding: EdgeInsets.zero,
-                        leading:
-                            const Icon(Icons.rocket_launch_outlined, size: 22),
-                        title: Text(l10n.settingsAutostartPermission),
-                        subtitle: Text(l10n.autostartPermissionNotConfigured),
+                        leading: const Icon(
+                          Icons.rocket_launch_outlined,
+                          size: 22,
+                        ),
+                        title: Text(l10n.settingsBackgroundPermission),
+                        subtitle: Text(l10n.autostartPermissionHint),
                       ),
-                      Text(
-                        l10n.autostartPermissionHint,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.error,
+                      const SizedBox(height: 10),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surfaceContainerHighest
+                              .withValues(alpha: 0.45),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          autostartManualGuide(l10n, guideType),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            height: 1.45,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
                       OutlinedButton(
                         onPressed: onOpenAutostartSettings,
-                        child: Text(l10n.requestAutostartPermission),
+                        child: Text(l10n.openBackgroundSettings),
                       ),
                     ],
                   ),

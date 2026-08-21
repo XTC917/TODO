@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 绑定域名后，把下面的地址改成 https://your.domain/... -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>./</loc></url>
+  <url><loc>./changelog.html</loc></url>
+  <url><loc>./faq.html</loc></url>
+  <url><loc>./feedback.html</loc></url>
+  <url><loc>./privacy.html</loc></url>
+</urlset>

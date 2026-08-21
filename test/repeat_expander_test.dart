@@ -60,4 +60,67 @@ void main() {
     expect(expanded.single.repeatUntil, isNull);
     expect(expanded.single.userNote, 'Bring slides');
   });
+
+  test('reminderSource skips a date that has an only-this override', () {
+    final master = _master(id: 1, date: '2026-01-05');
+    final override = master.copyWith(
+      id: 42,
+      title: 'Renamed standup',
+      date: '2026-01-12',
+      repeatType: RepeatType.oneTime,
+      reminderOffsetsSeconds: const [0],
+    );
+    final series = [master, override];
+    final from = DateTime(2026, 1, 12, 8);
+
+    final masterSource = RepeatExpander.reminderSource(
+      master,
+      series,
+      from: from,
+    );
+    final overrideSource = RepeatExpander.reminderSource(
+      override,
+      series,
+      from: from,
+    );
+
+    expect(masterSource, isNotNull);
+    expect(masterSource!.id, 1);
+    expect(masterSource.title, 'Weekly standup');
+    expect(masterSource.date, '2026-01-19');
+    expect(overrideSource, isNotNull);
+    expect(overrideSource!.id, 42);
+    expect(overrideSource.title, 'Renamed standup');
+    expect(overrideSource.date, '2026-01-12');
+  });
+
+  test('reminderSource keeps next occurrence when series was renamed', () {
+    final master = _master(id: 1, date: '2026-01-05').copyWith(
+      title: 'Renamed standup',
+    );
+    final source = RepeatExpander.reminderSource(
+      master,
+      [master],
+      from: DateTime(2026, 1, 12, 8),
+    );
+
+    expect(source, isNotNull);
+    expect(source!.title, 'Renamed standup');
+    expect(source.date, '2026-01-12');
+  });
+
+  test('reminderSource ignores skip-marker rows', () {
+    final skip = _master(id: 9, date: '2026-01-12').copyWith(
+      title: kRepeatSkipMarker,
+      repeatType: RepeatType.oneTime,
+    );
+    expect(
+      RepeatExpander.reminderSource(
+        skip,
+        [skip],
+        from: DateTime(2026, 1, 12, 8),
+      ),
+      isNull,
+    );
+  });
 }

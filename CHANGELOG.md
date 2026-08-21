@@ -1,5 +1,15 @@
 # Changelog
 
+## v2.6.4
+
+### Changed
+- Settings → Notifications: **background & autostart** section now shows **manufacturer-specific manual steps** (Xiaomi, Huawei, OPPO, vivo, Samsung, generic) instead of a single button that may do nothing.
+- Autostart button tries multiple system pages per device; if auto-open fails, users see clear feedback and can follow the manual guide or tap **I've completed setup**.
+- Default onboarding schedule reminder mentions opening **Settings → Notifications** for autostart and unrestricted battery.
+
+### Fixed
+- Android autostart shortcut: expanded MIUI/HyperOS intents and added Huawei, OPPO, vivo paths; always falls back to app info when a dedicated page is unavailable.
+
 ## v2.6.3
 
 ### Fixed

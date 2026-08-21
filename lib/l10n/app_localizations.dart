@@ -325,7 +325,7 @@ abstract class AppLocalizations {
   /// No description provided for @initialTimelineReminderTitle.
   ///
   /// In en, this message translates to:
-  /// **'🔔 Set reminders when creating tasks'**
+  /// **'🔔 Set reminders; Settings → Notifications for autostart & battery'**
   String get initialTimelineReminderTitle;
 
   /// No description provided for @initialTimelineFocusTitle.
@@ -622,22 +622,16 @@ abstract class AppLocalizations {
   /// **'Autostart'**
   String get settingsAutostartPermission;
 
-  /// No description provided for @autostartPermissionGranted.
+  /// No description provided for @settingsBackgroundPermission.
   ///
   /// In en, this message translates to:
-  /// **'Autostart enabled'**
-  String get autostartPermissionGranted;
-
-  /// No description provided for @autostartPermissionNotConfigured.
-  ///
-  /// In en, this message translates to:
-  /// **'Autostart not confirmed'**
-  String get autostartPermissionNotConfigured;
+  /// **'Background & autostart'**
+  String get settingsBackgroundPermission;
 
   /// No description provided for @autostartPermissionHint.
   ///
   /// In en, this message translates to:
-  /// **'After swiping the app away, reminders and focus timers may stop. On Xiaomi/Redmi enable autostart; on other devices allow unrestricted background activity in app settings.'**
+  /// **'After swiping the app away, reminders and focus timers may stop. Follow the steps below to enable autostart and unrestricted battery use.'**
   String get autostartPermissionHint;
 
   /// No description provided for @requestAutostartPermission.
@@ -645,6 +639,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enable autostart'**
   String get requestAutostartPermission;
+
+  /// No description provided for @openBackgroundSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open related system settings'**
+  String get openBackgroundSettings;
+
+  /// No description provided for @autostartOpenResultDirect.
+  ///
+  /// In en, this message translates to:
+  /// **'System settings opened — follow the steps above.'**
+  String get autostartOpenResultDirect;
+
+  /// No description provided for @autostartOpenResultAppInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'App info opened — allow background activity and autostart there.'**
+  String get autostartOpenResultAppInfo;
+
+  /// No description provided for @autostartOpenResultFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open settings automatically — follow the manual steps above.'**
+  String get autostartOpenResultFailed;
+
+  /// No description provided for @autostartManualGuideXiaomi.
+  ///
+  /// In en, this message translates to:
+  /// **'Xiaomi / Redmi / POCO:\n1. Settings → Apps → Manage apps → JUJU Schedule\n2. Enable Autostart and set battery to No restrictions\n3. Or: Security → Manage apps → Autostart → enable this app'**
+  String get autostartManualGuideXiaomi;
+
+  /// No description provided for @autostartManualGuideHuawei.
+  ///
+  /// In en, this message translates to:
+  /// **'Huawei / Honor:\n1. Settings → Apps → App launch\n2. Find JUJU Schedule, disable Manage automatically, enable all launch options\n3. Set battery to Unrestricted in app details'**
+  String get autostartManualGuideHuawei;
+
+  /// No description provided for @autostartManualGuideOppo.
+  ///
+  /// In en, this message translates to:
+  /// **'OPPO / OnePlus / realme:\n1. Settings → Apps → App management → JUJU Schedule\n2. Battery → Allow background activity / Don\'t restrict\n3. Permissions → Autostart → enable this app'**
+  String get autostartManualGuideOppo;
+
+  /// No description provided for @autostartManualGuideVivo.
+  ///
+  /// In en, this message translates to:
+  /// **'vivo / iQOO:\n1. Settings → Apps → Permission manager → Autostart\n2. Enable JUJU Schedule\n3. In app details, allow high background power use'**
+  String get autostartManualGuideVivo;
+
+  /// No description provided for @autostartManualGuideSamsung.
+  ///
+  /// In en, this message translates to:
+  /// **'Samsung:\n1. Settings → Apps → JUJU Schedule\n2. Battery → Unrestricted\n3. Confirm notifications are allowed'**
+  String get autostartManualGuideSamsung;
+
+  /// No description provided for @autostartManualGuideGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'General steps:\n1. Settings → Apps → JUJU Schedule\n2. Allow notifications\n3. Battery → Unrestricted / Don\'t optimize\n4. Enable Autostart or background activity if available\n\nSearch settings for \"autostart\" or \"battery optimization\".'**
+  String get autostartManualGuideGeneric;
 
   /// No description provided for @exactAlarmPermissionHint.
   ///

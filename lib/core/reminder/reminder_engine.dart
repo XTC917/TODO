@@ -6,6 +6,7 @@ import '../../database/event_repository.dart';
 import '../../models/event.dart';
 import '../../models/reminder_config.dart';
 import '../config/app_config.dart';
+import '../utils/repeat_expander.dart';
 import 'reminder_constants.dart';
 import 'reminder_log.dart';
 import 'reminder_permissions.dart';
@@ -184,8 +185,13 @@ class ReminderEngine {
 
     var total = 0;
     for (final event in events) {
+      final source = RepeatExpander.reminderSource(event, events);
+      if (source == null) {
+        await _cancelForEventUnlocked(event.id);
+        continue;
+      }
       total += await _scheduleForEventUnlocked(
-        event,
+        source,
         skipPermissionCheck: true,
       );
     }
@@ -215,19 +221,21 @@ class ReminderEngine {
 
     final now = tz.TZDateTime.now(tz.local);
     for (final event in events) {
-      if (!ReminderPresets.hasReminder(event.reminderOffsetsSeconds)) continue;
-      if (event.isCompleted) continue;
-      final anchor = event.reminderAnchorDateTime;
+      final source = RepeatExpander.reminderSource(event, events);
+      if (source == null) continue;
+      if (!ReminderPresets.hasReminder(source.reminderOffsetsSeconds)) continue;
+      if (source.isCompleted) continue;
+      final anchor = source.reminderAnchorDateTime;
       if (anchor == null) continue;
 
-      final offsets = [...event.reminderOffsetsSeconds]
+      final offsets = [...source.reminderOffsetsSeconds]
         ..sort((a, b) => b.compareTo(a));
       for (var i = 0; i < offsets.length && i < kMaxRemindersPerEvent; i++) {
         final offset = ReminderPresets.toDuration(offsets[i]);
         if (offset == null) continue;
         final trigger = tz.TZDateTime.from(anchor.subtract(offset), tz.local);
         if (trigger.isAfter(now)) {
-          expected.add(notificationIdForEvent(event.id, i));
+          expected.add(notificationIdForEvent(source.id, i));
         }
       }
     }

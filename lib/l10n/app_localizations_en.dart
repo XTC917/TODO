@@ -126,7 +126,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get initialTimelineReminderTitle =>
-      '🔔 Set reminders when creating tasks';
+      '🔔 Set reminders; Settings → Notifications for autostart & battery';
 
   @override
   String get initialTimelineFocusTitle => '🍅 Start your first focus session';
@@ -288,17 +288,53 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAutostartPermission => 'Autostart';
 
   @override
-  String get autostartPermissionGranted => 'Autostart enabled';
-
-  @override
-  String get autostartPermissionNotConfigured => 'Autostart not confirmed';
+  String get settingsBackgroundPermission => 'Background & autostart';
 
   @override
   String get autostartPermissionHint =>
-      'After swiping the app away, reminders and focus timers may stop. On Xiaomi/Redmi enable autostart; on other devices allow unrestricted background activity in app settings.';
+      'After swiping the app away, reminders and focus timers may stop. Follow the steps below to enable autostart and unrestricted battery use.';
 
   @override
   String get requestAutostartPermission => 'Enable autostart';
+
+  @override
+  String get openBackgroundSettings => 'Open related system settings';
+
+  @override
+  String get autostartOpenResultDirect =>
+      'System settings opened — follow the steps above.';
+
+  @override
+  String get autostartOpenResultAppInfo =>
+      'App info opened — allow background activity and autostart there.';
+
+  @override
+  String get autostartOpenResultFailed =>
+      'Could not open settings automatically — follow the manual steps above.';
+
+  @override
+  String get autostartManualGuideXiaomi =>
+      'Xiaomi / Redmi / POCO:\n1. Settings → Apps → Manage apps → JUJU Schedule\n2. Enable Autostart and set battery to No restrictions\n3. Or: Security → Manage apps → Autostart → enable this app';
+
+  @override
+  String get autostartManualGuideHuawei =>
+      'Huawei / Honor:\n1. Settings → Apps → App launch\n2. Find JUJU Schedule, disable Manage automatically, enable all launch options\n3. Set battery to Unrestricted in app details';
+
+  @override
+  String get autostartManualGuideOppo =>
+      'OPPO / OnePlus / realme:\n1. Settings → Apps → App management → JUJU Schedule\n2. Battery → Allow background activity / Don\'t restrict\n3. Permissions → Autostart → enable this app';
+
+  @override
+  String get autostartManualGuideVivo =>
+      'vivo / iQOO:\n1. Settings → Apps → Permission manager → Autostart\n2. Enable JUJU Schedule\n3. In app details, allow high background power use';
+
+  @override
+  String get autostartManualGuideSamsung =>
+      'Samsung:\n1. Settings → Apps → JUJU Schedule\n2. Battery → Unrestricted\n3. Confirm notifications are allowed';
+
+  @override
+  String get autostartManualGuideGeneric =>
+      'General steps:\n1. Settings → Apps → JUJU Schedule\n2. Allow notifications\n3. Battery → Unrestricted / Don\'t optimize\n4. Enable Autostart or background activity if available\n\nSearch settings for \"autostart\" or \"battery optimization\".';
 
   @override
   String get exactAlarmPermissionHint =>

@@ -10,6 +10,7 @@ import android.os.PowerManager
 import android.provider.Settings
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import java.util.Locale
 
 object ReminderNativeBridge {
     private const val CHANNEL = "com.juju.schedule/reminder_native"
@@ -20,6 +21,7 @@ object ReminderNativeBridge {
                 result ->
             when (call.method) {
                 "getManufacturer" -> result.success(Build.MANUFACTURER)
+                "getAutostartGuideType" -> result.success(autostartGuideType())
                 "openAutostartSettings" -> {
                     result.success(openAutostartSettings(context))
                 }
@@ -34,38 +36,167 @@ object ReminderNativeBridge {
         }
     }
 
-    private fun openAutostartSettings(context: Context): Boolean {
-        val intents =
-            listOf(
-                ComponentName(
-                    "com.miui.securitycenter",
-                    "com.miui.permcenter.autostart.AutoStartManagementActivity",
-                ),
-                ComponentName(
-                    "com.miui.securitycenter",
-                    "com.miui.powercenter.PowerSettings",
-                ),
-            )
-        for (component in intents) {
+    private fun autostartGuideType(): String {
+        val manufacturer = Build.MANUFACTURER.lowercase(Locale.US)
+        val brand = Build.BRAND.lowercase(Locale.US)
+        return when {
+            manufacturer.contains("xiaomi") ||
+                brand.contains("xiaomi") ||
+                brand.contains("redmi") ||
+                brand.contains("poco") -> "xiaomi"
+            manufacturer.contains("huawei") ||
+                manufacturer.contains("honor") ||
+                brand.contains("honor") -> "huawei"
+            manufacturer.contains("oppo") ||
+                manufacturer.contains("realme") ||
+                brand.contains("oppo") ||
+                brand.contains("realme") ||
+                brand.contains("oneplus") -> "oppo"
+            manufacturer.contains("vivo") ||
+                brand.contains("vivo") ||
+                brand.contains("iqoo") -> "vivo"
+            manufacturer.contains("samsung") -> "samsung"
+            else -> "generic"
+        }
+    }
+
+    private fun openAutostartSettings(context: Context): Map<String, Any> {
+        val guideType = autostartGuideType()
+        for ((destination, intent) in autostartIntents(context, guideType)) {
+            if (!canLaunch(context, intent)) continue
             try {
-                val intent =
-                    Intent().apply {
-                        setComponent(component)
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    }
                 context.startActivity(intent)
-                return true
+                return mapOf("opened" to true, "destination" to destination)
             } catch (_: Exception) {
                 // try next
             }
         }
-        val fallback =
-            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                data = Uri.fromParts("package", context.packageName, null)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        return mapOf("opened" to false, "destination" to "failed")
+    }
+
+    private fun autostartIntents(
+        context: Context,
+        guideType: String,
+    ): List<Pair<String, Intent>> {
+        val pkg = context.packageName
+        val intents = mutableListOf<Pair<String, Intent>>()
+
+        fun add(destination: String, configure: Intent.() -> Unit) {
+            intents.add(
+                destination to
+                    Intent().apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        configure()
+                    },
+            )
+        }
+
+        when (guideType) {
+            "xiaomi" -> {
+                add("miui_autostart") {
+                    action = "miui.intent.action.OP_AUTO_START"
+                    addCategory(Intent.CATEGORY_DEFAULT)
+                    putExtra("extra_pkg", pkg)
+                }
+                add("miui_autostart") {
+                    component =
+                        ComponentName(
+                            "com.miui.securitycenter",
+                            "com.miui.permcenter.autostart.AutoStartManagementActivity",
+                        )
+                }
+                add("miui_autostart") {
+                    component =
+                        ComponentName(
+                            "com.miui.securitycenter",
+                            "com.miui.permcenter.permissions.PermissionsEditorActivity",
+                        )
+                    putExtra("extra_pkg", pkg)
+                }
+                add("miui_autostart") {
+                    component =
+                        ComponentName(
+                            "com.miui.securitycenter",
+                            "com.miui.powercenter.PowerSettings",
+                        )
+                }
             }
-        context.startActivity(fallback)
-        return false
+            "huawei" -> {
+                add("huawei_autostart") {
+                    component =
+                        ComponentName(
+                            "com.huawei.systemmanager",
+                            "com.huawei.systemmanager.startupmgr.ui.StartupNormalAppListActivity",
+                        )
+                }
+                add("huawei_autostart") {
+                    component =
+                        ComponentName(
+                            "com.huawei.systemmanager",
+                            "com.huawei.systemmanager.appcontrol.activity.StartupAppControlActivity",
+                        )
+                }
+            }
+            "oppo" -> {
+                add("oppo_autostart") {
+                    component =
+                        ComponentName(
+                            "com.coloros.safecenter",
+                            "com.coloros.safecenter.permission.startup.StartupAppListActivity",
+                        )
+                }
+                add("oppo_autostart") {
+                    component =
+                        ComponentName(
+                            "com.oppo.safe",
+                            "com.oppo.safe.permission.startup.StartupAppListActivity",
+                        )
+                }
+                add("oppo_autostart") {
+                    component =
+                        ComponentName(
+                            "com.coloros.safecenter",
+                            "com.coloros.safecenter.startupapp.StartupAppListActivity",
+                        )
+                }
+            }
+            "vivo" -> {
+                add("vivo_autostart") {
+                    component =
+                        ComponentName(
+                            "com.vivo.permissionmanager",
+                            "com.vivo.permissionmanager.activity.BgStartUpManagerActivity",
+                        )
+                }
+                add("vivo_autostart") {
+                    component =
+                        ComponentName(
+                            "com.iqoo.secure",
+                            "com.iqoo.secure.ui.phoneoptimize.BgStartUpManager",
+                        )
+                }
+            }
+            "samsung" -> {
+                add("samsung_battery") {
+                    component =
+                        ComponentName(
+                            "com.samsung.android.lool",
+                            "com.samsung.android.sm.battery.ui.BatteryActivity",
+                        )
+                }
+            }
+        }
+
+        add("app_details") {
+            action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+            data = Uri.fromParts("package", pkg, null)
+        }
+
+        return intents
+    }
+
+    private fun canLaunch(context: Context, intent: Intent): Boolean {
+        return intent.resolveActivity(context.packageManager) != null
     }
 
     private fun isScreenInteractive(context: Context): Boolean {

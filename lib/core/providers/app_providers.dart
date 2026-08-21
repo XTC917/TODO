@@ -19,6 +19,7 @@ import '../theme/app_colors.dart';
 import '../theme/theme_palette.dart';
 import '../utils/date_time_formats.dart';
 import '../utils/focus_task_picker_items.dart';
+import '../utils/repeat_expander.dart';
 
 const _themeModeKey = 'theme_mode';
 const _accentColorKey = 'accent_color';
@@ -322,18 +323,33 @@ class EventActions {
 
   final Ref _ref;
 
-  Future<void> _syncReminder(Event event, {Event? previous}) async {
+  Future<void> _syncReminder(
+    Event event, {
+    Event? previous,
+    List<Event>? groupRows,
+  }) async {
     try {
       if (!_ref.read(remindersEnabledProvider)) {
         await NotificationService.instance.cancelForEvent(event.id);
         return;
       }
-      if (!ReminderPresets.hasReminder(event.reminderOffsetsSeconds)) {
+      final siblings = groupRows ??
+          (event.repeatGroupId == null
+              ? <Event>[event]
+              : await _ref
+                  .read(eventRepositoryProvider)
+                  .getEventsByRepeatGroup(event.repeatGroupId!));
+      final source = RepeatExpander.reminderSource(
+        event,
+        siblings.isEmpty ? [event] : siblings,
+      );
+      if (source == null ||
+          !ReminderPresets.hasReminder(source.reminderOffsetsSeconds)) {
         await NotificationService.instance.cancelForEvent(event.id);
         return;
       }
       await NotificationService.instance.scheduleForEvent(
-        event,
+        source,
         previousEvent: previous,
         skipPermissionCheck: true,
       );
@@ -413,9 +429,29 @@ class EventActions {
     RepeatScope scope,
   ) async {
     final repo = _ref.read(eventRepositoryProvider);
-    final previous = await repo.getById(occurrence.id);
+    final groupId = occurrence.repeatGroupId;
+    final previousIds = <int>{occurrence.id};
+    if (groupId != null) {
+      final previousRows = await repo.getEventsByRepeatGroup(groupId);
+      previousIds.addAll(previousRows.map((row) => row.id));
+    }
     await repo.updateWithScope(occurrence, updated, scope);
-    await _syncReminder(updated, previous: previous);
+    if (groupId == null) {
+      final event = await repo.getById(occurrence.id);
+      if (event != null) await _syncReminder(event);
+      return;
+    }
+
+    final rows = await repo.getEventsByRepeatGroup(groupId);
+    final currentIds = {for (final row in rows) row.id};
+    for (final id in previousIds) {
+      if (!currentIds.contains(id)) {
+        await _cancelReminder(id);
+      }
+    }
+    for (final row in rows) {
+      await _syncReminder(row, groupRows: rows);
+    }
   }
 
   Future<Event> duplicate(int id) async {

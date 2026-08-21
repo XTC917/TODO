@@ -133,6 +133,44 @@ class RepeatExpander {
 
   static bool occursOn(Event master, DateTime date) => _occursOn(master, date);
 
+  /// Row that should own the scheduled notification for [event], or null.
+  ///
+  /// Recurring masters skip dates that already have a one-time override or a
+  /// skip marker, so renaming "only this" occurrence does not leave the old
+  /// title scheduled on the same day.
+  static Event? reminderSource(
+    Event event,
+    List<Event> seriesOrAll, {
+    DateTime? from,
+  }) {
+    if (event.isRepeatSkip) return null;
+    if (!event.isRecurring) return event;
+
+    final groupId = event.repeatGroupId!;
+    final now = from ?? DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final seriesStart = DateTime.parse(event.date);
+    final seriesStartDay =
+        DateTime(seriesStart.year, seriesStart.month, seriesStart.day);
+    var day = today.isBefore(seriesStartDay) ? seriesStartDay : today;
+
+    for (var i = 0; i < 400; i++) {
+      final candidate = day.add(Duration(days: i));
+      if (!_occursOn(event, candidate)) continue;
+      final key = DateTimeFormats.formatDate(candidate);
+      if (_hasSkipOnDate(seriesOrAll, groupId, key)) continue;
+      if (_hasOneTimeOverrideOnDate(seriesOrAll, groupId, key)) continue;
+      return event.copyWith(
+        date: key,
+        isCompleted: false,
+        clearCompletedAt: true,
+        note: event.userNote,
+        clearRepeatUntil: true,
+      );
+    }
+    return null;
+  }
+
   static bool _occursOn(Event master, DateTime date) {
     final masterDate = DateTime.parse(master.date);
     final day = DateTime(date.year, date.month, date.day);

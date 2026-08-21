@@ -1,54 +1,43 @@
 import 'dart:io';
 
 import 'package:flutter/services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
+import 'autostart_guide.dart';
 import 'reminder_log.dart';
 
-const autostartConfiguredKey = 'autostart_configured';
-
-/// Android-only: MIUI autostart settings (no foreground service).
+/// Android-only helpers for manufacturer autostart / background settings.
 class ReminderNative {
   ReminderNative._();
 
   static const _channel = MethodChannel('com.juju.schedule/reminder_native');
 
-  static Future<bool> needsAutostartGuide() async {
-    if (!Platform.isAndroid) return false;
+  static Future<AutostartGuideType> getAutostartGuideType() async {
+    if (!Platform.isAndroid) return AutostartGuideType.generic;
     try {
-      final manufacturer =
-          (await _channel.invokeMethod<String>('getManufacturer'))
-              ?.toLowerCase() ??
-              '';
-      return manufacturer.contains('xiaomi') ||
-          manufacturer.contains('redmi') ||
-          manufacturer.contains('poco');
+      final raw =
+          await _channel.invokeMethod<String>('getAutostartGuideType');
+      return AutostartGuideType.fromStorage(raw);
     } catch (e) {
-      reminderLog('autostart needsGuide check failed — $e');
-      return false;
+      reminderLog('autostart guideType failed — $e');
+      return AutostartGuideType.generic;
     }
   }
 
-  static Future<bool> isAutostartConfigured(SharedPreferences prefs) async {
-    if (!Platform.isAndroid) return true;
-    return prefs.getBool(autostartConfiguredKey) ?? false;
-  }
-
-  static Future<void> markAutostartConfigured(SharedPreferences prefs) async {
-    await prefs.setBool(autostartConfiguredKey, true);
-    reminderLog('autostart configured by user');
-  }
-
-  static Future<bool> openAutostartSettings() async {
-    if (!Platform.isAndroid) return false;
+  static Future<AutostartOpenResult> openAutostartSettings() async {
+    if (!Platform.isAndroid) {
+      return const AutostartOpenResult(opened: false, destination: 'failed');
+    }
     try {
-      final opened =
-          await _channel.invokeMethod<bool>('openAutostartSettings') ?? false;
-      reminderLog('autostart openSettings opened=$opened');
-      return opened;
+      final raw = await _channel.invokeMethod<Object>('openAutostartSettings');
+      final result = AutostartOpenResult.fromMap(raw);
+      reminderLog(
+        'autostart openSettings opened=${result.opened} '
+        'destination=${result.destination}',
+      );
+      return result;
     } catch (e) {
       reminderLog('autostart openSettings failed — $e');
-      return false;
+      return const AutostartOpenResult(opened: false, destination: 'failed');
     }
   }
 }

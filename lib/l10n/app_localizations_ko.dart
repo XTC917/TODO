@@ -122,7 +122,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get initialTimelineEditTitle => '✏️ 왼쪽으로 밀거나 길게 눌러 편집';
 
   @override
-  String get initialTimelineReminderTitle => '🔔 작업 생성 시 알림 설정';
+  String get initialTimelineReminderTitle => '🔔 알림 설정; 설정→알림에서 자동 시작·배터리 허용';
 
   @override
   String get initialTimelineFocusTitle => '🍅 첫 집중 세션 시작';
@@ -278,17 +278,51 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settingsAutostartPermission => '자동 시작';
 
   @override
-  String get autostartPermissionGranted => '자동 시작 켜짐';
-
-  @override
-  String get autostartPermissionNotConfigured => '자동 시작 미확인';
+  String get settingsBackgroundPermission => '백그라운드 및 자동 시작';
 
   @override
   String get autostartPermissionHint =>
-      '앱을 종료하면 알림과 집중 타이머가 멈출 수 있습니다. 샤오미/레드미는 자동 시작을 켜고, 다른 기기는 앱 설정에서 백그라운드 실행을 허용하세요.';
+      '앱을 종료하면 알림과 집중 타이머가 멈출 수 있습니다. 아래 단계에 따라 자동 시작과 배터리 제한 해제를 설정하세요.';
 
   @override
   String get requestAutostartPermission => '자동 시작 설정 열기';
+
+  @override
+  String get openBackgroundSettings => '관련 시스템 설정 열기';
+
+  @override
+  String get autostartOpenResultDirect => '시스템 설정을 열었습니다. 위 단계를 따라 설정하세요.';
+
+  @override
+  String get autostartOpenResultAppInfo =>
+      '앱 정보를 열었습니다. 배터리/자동 시작에서 백그라운드 실행을 허용하세요.';
+
+  @override
+  String get autostartOpenResultFailed => '자동으로 열 수 없습니다. 위 단계를 따라 수동으로 설정하세요.';
+
+  @override
+  String get autostartManualGuideXiaomi =>
+      '샤오미 / 레드미 / POCO:\n1. 설정 → 앱 → 앱 관리 → JUJU 일정\n2. 자동 시작 켜기, 배터리 「제한 없음」\n3. 또는 보안 → 앱 관리 → 자동 시작에서 이 앱 허용';
+
+  @override
+  String get autostartManualGuideHuawei =>
+      '화웨이 / 아너:\n1. 설정 → 앱 → 앱 실행 관리\n2. JUJU 일정 찾아 자동 관리 끄고 자동 시작·백그라운드 허용\n3. 배터리 「제한 없음」 설정';
+
+  @override
+  String get autostartManualGuideOppo =>
+      'OPPO / 원플러스 / realme:\n1. 설정 → 앱 → JUJU 일정\n2. 배터리 → 백그라운드 실행 허용\n3. 권한 → 자동 시작에서 이 앱 허용';
+
+  @override
+  String get autostartManualGuideVivo =>
+      'vivo / iQOO:\n1. 설정 → 앱 → 권한 → 자동 시작\n2. JUJU 일정 허용\n3. 앱 정보에서 백그라운드 전력 사용 허용';
+
+  @override
+  String get autostartManualGuideSamsung =>
+      '삼성:\n1. 설정 → 앱 → JUJU 일정\n2. 배터리 → 제한 없음\n3. 알림 권한 확인';
+
+  @override
+  String get autostartManualGuideGeneric =>
+      '일반:\n1. 설정 → 앱 → JUJU 일정\n2. 알림 허용\n3. 배터리 → 제한 없음 / 최적화 안 함\n4. 자동 시작·백그라운드 활동 옵션이 있으면 허용\n\n설정 검색에서 「자동 시작」 또는 「배터리 최적화」를 찾아보세요.';
 
   @override
   String get exactAlarmPermissionHint =>
