@@ -8,9 +8,21 @@
 
 当前以 **Android** 为主要平台，版本 **2.6.5**。仓库里包含 Flutter 生成的 iOS / Windows / Linux / Web 工程，但提醒投递、桌面小组件和厂商后台适配都写在 Android 原生层，日常开发和发布也围绕 Android 进行。
 
+官网链接：
+
+[https://juju-d7g3aezw61b68afe8-1358899741.tcloudbaseapp.com](https://juju-d7g3aezw61b68afe8-1358899741.tcloudbaseapp.com)
+
+Android 安装包（v2.6.5）：
+
+[https://juju-d7g3aezw61b68afe8-1358899741.tcloudbaseapp.com/downloads/JUJUSchedule-v2.6.5.apk](https://juju-d7g3aezw61b68afe8-1358899741.tcloudbaseapp.com/downloads/JUJUSchedule-v2.6.5.apk)
+
 ---
 
+
+
 ## ✨ Features
+
+
 
 ### Schedule & Todo
 
@@ -68,7 +80,7 @@
 - 待办完成数 / 待办总数
 - 专注总时长
 - 按任务标题汇总的专注排行
-- 周、月、年的专注柱状图（日视图不展示图表）
+- 周、月、年的专注分布柱状图
 
 首页日期栏也会显示当天的专注时长、日程数量和待办进度。
 
@@ -91,6 +103,8 @@ Android 主屏幕提供四类小组件（Jetpack Glance）：
 - 界面语言：跟随系统，或固定中文 / English / 한국어
 - 应用内意见反馈会打开外部表单
 
+
+
 ### Data Management
 
 - 日程、待办、专注记录存在本机 SQLite（Drift，当前 schema 版本 8）
@@ -103,27 +117,34 @@ Android 主屏幕提供四类小组件（Jetpack Glance）：
 
 ---
 
+
+
 ## 🛠 Tech Stack
 
 **Framework**
+
 - Flutter
 - Dart（SDK `>=3.5.0 <4.0.0`）
 
 **State Management**
+
 - Riverpod（`flutter_riverpod`）
 - `StateNotifier` 用于主题、语言、提醒开关、专注计时等
 
 **Local Storage**
+
 - Drift + SQLite（`sqlite3_flutter_libs`）
 - SharedPreferences（设置、专注会话恢复、小组件快照相关键）
 
 **Reminder / Notification**
+
 - `flutter_local_notifications`
 - `timezone` / `flutter_timezone`
 - Android `SCHEDULE_EXACT_ALARM`、`POST_NOTIFICATIONS`、`RECEIVE_BOOT_COMPLETED`
 - WorkManager（每日刷新提醒窗口）
 
 **Platform / Native（Android）**
+
 - Kotlin
 - Jetpack Glance 桌面小组件
 - AlarmManager（经 `flutter_local_notifications` 的 `zonedSchedule`）
@@ -132,18 +153,22 @@ Android 主屏幕提供四类小组件（Jetpack Glance）：
 - `permission_handler` / `app_settings`
 
 **UI**
+
 - Material 3
 - `table_calendar`
 - `fl_chart`
 - `google_fonts`
 
 **Other**
+
 - `file_picker`（备份导入导出）
 - `uuid`（重复系列 group id）
 - `intl` / `flutter_localizations`
 - `url_launcher`（反馈表单）
 
 ---
+
+
 
 ## 🏗 Architecture
 
@@ -198,6 +223,8 @@ flowchart TB
   Bridge --> Pages
 ```
 
+
+
 **UI Layer**  
 `lib/features/` 下的六个底栏页面，以及创建 / 编辑表单、详情底栏、批量工具栏等共用组件。
 
@@ -205,10 +232,11 @@ flowchart TB
 `lib/core/providers/`：数据库、仓库、主题、语言、日期选择、统计查询、专注计时都以 Provider 暴露。页面通过 `ref.watch` 订阅 Drift 的 `Stream`。
 
 **Business Logic**  
+
 - `EventRepository` / `FocusRepository`：领域模型和数据库行的转换，重复展开、完成状态、系列编辑范围  
 - `RepeatExpander`：按日期生成重复实例，并为提醒计算即将到来的发生日  
 - `StatisticsService`：按周期聚合待办完成情况和专注数据  
-- `FocusTimerService` + `FocusSessionStore`：计时与会话恢复  
+- `FocusTimerService` + `FocusSessionStore`：计时与会话恢复
 
 **Database / Persistence**  
 `AppDatabase` 定义 `events`、`focus_records` 两张表。提醒偏移以 JSON 存在事项行上。备份服务在导出前做 WAL checkpoint，并把部分设置嵌入 SQLite。
@@ -220,6 +248,8 @@ flowchart TB
 `MainActivity` 注册 MethodChannel（厂商自启动页、屏幕 / 锁屏状态）并启动 WorkManager 周期任务。小组件 Receiver 在桌面勾选时直接更新 SQLite，再通知 Glance 刷新。
 
 ---
+
+
 
 ## 📁 Project Structure
 
@@ -263,14 +293,18 @@ scripts/install_release.ps1   # 构建 release APK 并 adb 安装
 
 ---
 
+
+
 ## 💾 Data Storage
 
-| 数据 | 位置 | 说明 |
-|------|------|------|
-| 日程 / 待办 | `soft_schedule.sqlite` → `events` | 标题、日期、时间、类型、重复、提醒偏移、完成状态、累计专注秒数 |
-| 专注记录 | 同一数据库 → `focus_records` | 时长、模式、是否完成、关联任务、普通 / 严格 |
-| 外观、语言、提醒总开关、专注预设 | SharedPreferences | 备份时可嵌入 SQLite |
-| 进行中的专注会话 | SharedPreferences | 用于进程被杀后恢复 |
+
+| 数据               | 位置                                | 说明                              |
+| ---------------- | --------------------------------- | ------------------------------- |
+| 日程 / 待办          | `soft_schedule.sqlite` → `events` | 标题、日期、时间、类型、重复、提醒偏移、完成状态、累计专注秒数 |
+| 专注记录             | 同一数据库 → `focus_records`           | 时长、模式、是否完成、关联任务、普通 / 严格         |
+| 外观、语言、提醒总开关、专注预设 | SharedPreferences                 | 备份时可嵌入 SQLite                   |
+| 进行中的专注会话         | SharedPreferences                 | 用于进程被杀后恢复                       |
+
 
 数据库文件在应用文档目录，文件名 `soft_schedule.sqlite`。Drift `schemaVersion` 为 8，从旧版本升级时会按序补列（任务类型、完成状态、重复、提醒、专注记录字段、`repeatUntil` 等）。`repeatUntil` 主要用于截断「从此以后」编辑 / 删除后的重复系列，创建表单里没有单独的「重复结束日」选择器。
 
@@ -286,42 +320,54 @@ scripts/install_release.ps1   # 构建 release APK 并 adb 安装
 
 ---
 
+
+
 ## 🔔 Reminder Implementation
 
 提醒是本地排程，不是推送。
 
-1. **锚点**  
-   日程和时间段待办用开始时间；截止待办用 deadline；无时间待办不排提醒。
-
-2. **触发时刻**  
-   `锚点 − 偏移秒数`。多个偏移各自生成一条通知。已过期的触发时刻会被跳过。
-
-3. **调度**  
-   `ReminderScheduler` 调用 `zonedSchedule`。Android 上优先 `exactAllowWhileIdle`（精确闹钟）；拿不到精确闹钟权限时改用 `inexactAllowWhileIdle`。时区来自 `flutter_timezone`，失败时按偏移回退到常见 IANA 时区。
-
-4. **重复任务**  
-   `RepeatExpander.reminderSources` 只预排窗口内、尚未完成、且提醒时刻仍在未来的发生日。应用冷启动时 `NotificationBootstrap` 会 `rescheduleAll`。
-
-5. **后台续期**  
-   `ReminderRefreshScheduler` 用 WorkManager 注册大约一天一次的任务。若 App 不在前台，会通过 `jujuschedule://reminder/refresh` 拉起后台 isolate，重新打开数据库并重排。距上次重排不足 6 小时则跳过。开机后由 `flutter_local_notifications` 的 `BOOT_COMPLETED` Receiver 恢复系统侧已登记的闹钟。
-
-6. **与任务生命周期同步**  
-   创建、更新、改期、完成、删除、导入备份后都会取消或重排对应通知。完成事项会取消其未触发提醒。
-
-7. **Android 保活相关**  
-   精确闹钟、忽略电池优化、各品牌自启动页通过设置页和 `ReminderNativeBridge` 引导。这些不能从应用内强制打开，需要用户在系统设置里确认。不同厂商对后台限制不同，提醒准时程度取决于系统策略是否放行。
+1. **锚点**
+  日程和时间段待办用开始时间；截止待办用 deadline；无时间待办不排提醒。
+2. **触发时刻**
+  `锚点 − 偏移秒数`。多个偏移各自生成一条通知。已过期的触发时刻会被跳过。
+3. **调度**
+  `ReminderScheduler` 调用 `zonedSchedule`。Android 上优先 `exactAllowWhileIdle`（精确闹钟）；拿不到精确闹钟权限时改用 `inexactAllowWhileIdle`。时区来自 `flutter_timezone`，失败时按偏移回退到常见 IANA 时区。
+4. **重复任务**
+  `RepeatExpander.reminderSources` 只预排窗口内、尚未完成、且提醒时刻仍在未来的发生日。应用冷启动时 `NotificationBootstrap` 会 `rescheduleAll`。
+5. **后台续期**
+  `ReminderRefreshScheduler` 用 WorkManager 注册大约一天一次的任务。若 App 不在前台，会通过 `jujuschedule://reminder/refresh` 拉起后台 isolate，重新打开数据库并重排。距上次重排不足 6 小时则跳过。开机后由 `flutter_local_notifications` 的 `BOOT_COMPLETED` Receiver 恢复系统侧已登记的闹钟。
+6. **与任务生命周期同步**
+  创建、更新、改期、完成、删除、导入备份后都会取消或重排对应通知。完成事项会取消其未触发提醒。
+7. **Android 保活相关**
+  精确闹钟、忽略电池优化、各品牌自启动页通过设置页和 `ReminderNativeBridge` 引导。这些不能从应用内强制打开，需要用户在系统设置里确认。不同厂商对后台限制不同，提醒准时程度取决于系统策略是否放行。
 
 专注相关通知（番茄结束、严格模式离开提醒）使用独立 channel `juju_focus`，与日程提醒 channel `soft_schedule_reminders` 分开。
 
 ---
 
+
+
 ## 🚀 Getting Started
+
+
+
+### 下载网站
+
+为了方便用户下载最新版app，部署了一个官方网站，将apk维护在网站中。
+
+当前网站上的 Android APK（v2.6.5）：
+
+[https://juju-d7g3aezw61b68afe8-1358899741.tcloudbaseapp.com](https://juju-d7g3aezw61b68afe8-1358899741.tcloudbaseapp.com/downloads/JUJUSchedule-v2.6.5.apk)
+
+若通过源码运行，则如下操作。
 
 ### 环境
 
 - Flutter SDK（Dart `>=3.5.0 <4.0.0`）
 - Android 构建工具（调试或安装到真机）
 - 建议在 Android 真机上验证提醒和小组件；模拟器上精确闹钟与厂商后台行为不完整
+
+
 
 ### 运行
 
@@ -337,6 +383,8 @@ flutter devices
 flutter run -d <device_id>
 ```
 
+
+
 ### 构建 Release APK
 
 ```bash
@@ -351,6 +399,8 @@ Windows 上若已连接手机并打开 USB 调试，可以用：
 .\scripts\install_release.ps1
 ```
 
+
+
 ### 测试
 
 ```bash
@@ -363,16 +413,19 @@ flutter test
 
 首次启动会请求通知权限。若需要更准时的后台提醒，请在 **设置 → 通知** 中：
 
-1. 打开通知权限  
-2. 允许精确闹钟  
-3. 忽略电池优化  
-4. 按机型说明打开自启动 / 允许后台活动  
+1. 打开通知权限
+2. 允许精确闹钟
+3. 忽略电池优化
+4. 按机型说明打开自启动 / 允许后台活动
 
 ---
+
+
 
 ## 📌 Current Status
 
 - **版本**：2.6.5（`pubspec.yaml` `2.6.5+54`）
+- **下载**：[Android APK](https://juju-d7g3aezw61b68afe8-1358899741.tcloudbaseapp.com/downloads/JUJUSchedule-v2.6.5.apk)
 - **形态**：个人独立开发的本地 Android 应用
 - **数据**：本机存储，无账号、无云同步
 - **平台**：Android 为实际维护与发布目标；提醒、小组件、厂商适配均已实现。其他 Flutter 平台目录存在，但不作为当前产品能力描述
@@ -381,6 +434,8 @@ flutter test
 这是一份仍在迭代的个人项目。仓库根目录这份 README 描述的是当前代码里已经落地的行为，而不是路线图。
 
 ---
+
+
 
 ## License
 
