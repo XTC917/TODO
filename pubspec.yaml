@@ -1,7 +1,7 @@
 name: soft_schedule
 description: A personal electronic schedule book with focus tracking.
 publish_to: "none"
-version: 2.6.5+54
+version: 2.6.7+56
 environment:
   sdk: ">=3.5.0 <4.0.0"
 

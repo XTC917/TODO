@@ -43,6 +43,18 @@ website/
 7. FAQ
 8. Footer
 
+## v2.6.7 新功能（官网文案用）
+
+App 2.6.7 新增**全局任务搜索**，官网介绍功能时可以用下面这段口径：
+
+- 入口：待办页、日历页、首页时间轴顶部都有搜索按钮，按标题或备注关键词搜全部待办和日程。
+- 中文单字 / 多字直查，英文大小写不敏感；排序是 exact > 前缀 > 包含 > 模糊，备注命中显示关键词片段并高亮。
+- 三个可自由组合的筛选：**状态**（全部 / 未完成 / 已完成）、**类型**（全部 / 待办 / 日程）、**时间**（全部 / 将来 / 过去）。
+- 重复任务按实际发生日展开成独立结果（无限重复搜过去 1 年～未来 1 年，有结束日的系列按 start→end 全覆盖）：跳过 / 删除的日期不出现，单独编辑过的日期显示编辑后内容，每个 occurrence 用自己的完成状态和日期参与筛选排序，点击结果把日历跳到该 occurrence 所在日期。
+- 提醒方面：已完成事项不再排提醒（含重复系列中单独完成的那一天、桌面小组件勾选），同一事项的多个提醒共用一次精确 / 非精确闹钟决策。
+
+`js/config.js` 的 `changelog` 已同步写入 2.6.7 / 2.6.6 两条，首页和更新日志页的版本号 pill 会自动跟随 `version` 字段，无需手动改 HTML。
+
 ## 本地如何运行
 
 官网是普通 HTML，**不需要构建**。
@@ -162,26 +174,26 @@ flutter build apk --release
 在仓库根目录执行：
 
 ```powershell
-.\website\deploy.ps1 -Version 2.6.5
+.\website\deploy.ps1 -Version 2.6.7
 ```
 
 或在 `website` 目录执行：
 
 ```powershell
-.\deploy.ps1 -Version 2.6.5
+.\deploy.ps1 -Version 2.6.7
 ```
 
 脚本会：
 
 1. 检查上述 APK 是否存在
-2. 复制为 `website/downloads/JUJUSchedule-v2.6.5.apk`
+2. 复制为 `website/downloads/JUJUSchedule-v2.6.7.apk`
 3. 写入 `js/config.js` 的 `version` 和 `downloads.beta`
 4. 把 APK 上传到 CloudBase `/downloads/`
 5. 把 `js/config.js` 上传到 CloudBase `/js/config.js`
 
 下载地址会变成：
 
-`https://juju-d7g3aezw61b68afe8-1358899741.tcloudbaseapp.com/downloads/JUJUSchedule-v2.6.5.apk`
+`https://juju-d7g3aezw61b68afe8-1358899741.tcloudbaseapp.com/downloads/JUJUSchedule-v2.6.7.apk`
 
 未登录 CLI、环境 ID 不对、或找不到 APK 时，脚本会立刻停止，**不会改线上文件**。
 

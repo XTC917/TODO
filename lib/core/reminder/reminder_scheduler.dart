@@ -70,6 +70,10 @@ class ReminderScheduler {
   }
 
   /// Schedules one notification. Returns the mode that succeeded, or null.
+  ///
+  /// Pass [useExact] (precomputed once per task) so all reminders of the same
+  /// task share one consistent exact/inexact decision. When null, falls back
+  /// to a cached platform check (used by the settings test path).
   Future<AndroidScheduleMode?> scheduleAt({
     required int notificationId,
     required String title,
@@ -77,16 +81,19 @@ class ReminderScheduler {
     required tz.TZDateTime triggerTime,
     required String payload,
     String? logContext,
+    bool? useExact,
   }) async {
     await ensureTimezone();
 
     final exactOk =
-        !Platform.isAndroid || await _permissions.canScheduleExactAlarms();
+        useExact ?? (!Platform.isAndroid ||
+            await _permissions.canScheduleExactAlarms());
     final modes = <AndroidScheduleMode>[
       if (exactOk) AndroidScheduleMode.exactAllowWhileIdle,
       AndroidScheduleMode.inexactAllowWhileIdle,
     ];
 
+    final apiCalledAt = DateTime.now();
     for (final mode in modes) {
       final ctx = logContext ?? 'id=$notificationId';
       try {
@@ -102,12 +109,23 @@ class ReminderScheduler {
           payload: payload,
         );
         reminderLog(
-          'schedule $ctx triggerTime=$triggerTime scheduleMode=$mode schedule success',
+          'schedule $ctx triggerTime=$triggerTime scheduleMode=$mode '
+          'exactAlarmPermission=$exactOk apiCalledAt=$apiCalledAt '
+          'schedule success',
         );
+        if (!exactOk) {
+          reminderLog(
+            'schedule $ctx WARNING — scheduled as inexact '
+            '(expected delivery window ~1-15min, Doze may batch); '
+            'grant exact alarms and reschedule for minute precision',
+          );
+        }
         return mode;
       } catch (e) {
         reminderLog(
-          'schedule $ctx triggerTime=$triggerTime scheduleMode=$mode schedule failed — $e',
+          'schedule $ctx triggerTime=$triggerTime scheduleMode=$mode '
+          'exactAlarmPermission=$exactOk apiCalledAt=$apiCalledAt '
+          'schedule failed — $e',
         );
       }
     }
@@ -167,11 +185,13 @@ class ReminderScheduler {
     }
 
     await ensureTimezone();
-    final triggerTime = tz.TZDateTime.now(tz.local).add(
-      ReminderConstants.testScheduleDelay,
-    );
+    final now = tz.TZDateTime.now(tz.local);
+    final triggerTime = now.add(ReminderConstants.testScheduleDelay);
 
-    reminderLog('schedule test notification triggerTime=$triggerTime');
+    reminderLog(
+      'schedule test notification now=$now tz=${tz.local.name} '
+      'expectedTrigger=$triggerTime finalScheduled=$triggerTime',
+    );
 
     final mode = await scheduleAt(
       notificationId: ReminderConstants.testNotificationId,

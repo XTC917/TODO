@@ -19,15 +19,22 @@ Future<void> refreshRemindersInBackground() async {
     reminderLog('background refresh skipped — recently rescheduled');
     return;
   }
+  await syncRemindersFromRepository();
+}
+
+/// Reschedules all event reminders (e.g. after widget toggles completion).
+Future<void> syncRemindersFromRepository([EventRepository? repository]) async {
+  WidgetsFlutterBinding.ensureInitialized();
 
   final prefs = await SharedPreferences.getInstance();
   if (!(prefs.getBool('reminders_enabled') ?? true)) {
-    reminderLog('background refresh skipped — reminders disabled');
+    reminderLog('reminder sync skipped — reminders disabled');
     return;
   }
 
-  final db = AppDatabase();
+  final db = repository == null ? AppDatabase() : null;
   try {
+    final repo = repository ?? EventRepository(db!);
     await NotificationService.instance.initialize();
     NotificationService.instance.remindersEnabled = true;
     NotificationService.instance.setBodyBuilder((offsetSeconds) {
@@ -40,11 +47,11 @@ Future<void> refreshRemindersInBackground() async {
         offsetSeconds,
       );
     });
-    await NotificationService.instance.rescheduleAll(EventRepository(db));
-    reminderLog('background refresh done');
+    await NotificationService.instance.rescheduleAll(repo);
+    reminderLog('reminder sync done');
   } catch (e, st) {
-    reminderLog('background refresh failed — $e\n$st');
+    reminderLog('reminder sync failed — $e\n$st');
   } finally {
-    await db.close();
+    if (db != null) await db.close();
   }
 }

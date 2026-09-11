@@ -88,7 +88,7 @@ class ReminderEngine {
     if (!remindersEnabled) return 0;
     if (event.isRepeatSkip) return 0;
     if (!ReminderPresets.hasReminder(event.reminderOffsetsSeconds)) return 0;
-    if (!event.isRecurring && event.isCompleted) return 0;
+    if (event.isCompleted) return 0;
 
     if (!skipPermissionCheck &&
         !await _permissions.hasNotificationPermission()) {
@@ -98,7 +98,12 @@ class ReminderEngine {
       return 0;
     }
 
-    if (Platform.isAndroid && !await _permissions.canScheduleExactAlarms()) {
+    // Single exact/inexact decision per task: one platform check feeds both
+    // the warning and every reminder of this task, so a transient `false`
+    // mid-batch can no longer downgrade a single sibling to inexact.
+    final exactGranted =
+        !Platform.isAndroid || await _permissions.canScheduleExactAlarms();
+    if (Platform.isAndroid && !exactGranted) {
       reminderLog(
         'schedule eventId=${event.id} warning — exact alarm not granted, '
         'background delivery may fail on some devices',
@@ -114,12 +119,21 @@ class ReminderEngine {
       return 0;
     }
 
+    // Single exact/inexact decision per schedule call so every reminder of
+    // this task uses the same mode (fixes "one reminder late, others on
+    // time" caused by per-reminder platform-check flapping mid-batch).
+    final useExact = exactGranted;
+    reminderLog(
+      'schedule eventId=${event.id} useExact=$useExact '
+      'occurrences=${sources.length}',
+    );
     await _scheduler.ensureTimezone();
     var scheduled = 0;
     for (var occ = 0; occ < sources.length; occ++) {
       scheduled += await _scheduleOccurrenceUnlocked(
         sources[occ],
         occurrence: occ,
+        useExact: useExact,
       );
     }
 
@@ -137,7 +151,9 @@ class ReminderEngine {
   Future<int> _scheduleOccurrenceUnlocked(
     Event event, {
     required int occurrence,
+    required bool useExact,
   }) async {
+    if (event.isCompleted) return 0;
     final anchor = event.reminderAnchorDateTime;
     if (anchor == null) {
       reminderLog(
@@ -147,6 +163,7 @@ class ReminderEngine {
     }
 
     final now = tz.TZDateTime.now(tz.local);
+    final scheduleCalledAt = DateTime.now();
     final offsets = [...event.reminderOffsetsSeconds]
       ..sort((a, b) => b.compareTo(a));
 
@@ -177,7 +194,10 @@ class ReminderEngine {
 
       reminderLog(
         'schedule eventId=${event.id} occ=$occurrence date=${event.date} '
-        'triggerTime=$triggerTime offset=${offsetSeconds}s',
+        'taskStart=$anchor offset=${offsetSeconds}s '
+        'expectedTrigger=$triggerTime finalScheduled=$triggerTime '
+        'reminderId=$i notificationId=$notificationId now=$now '
+        'tz=${tz.local.name} useExact=$useExact apiCalledAt=$scheduleCalledAt',
       );
 
       final mode = await _scheduler.scheduleAt(
@@ -188,6 +208,7 @@ class ReminderEngine {
         payload: '${ReminderConstants.eventPayloadPrefix}${event.id}',
         logContext:
             'eventId=${event.id} occ=$occurrence id=$notificationId',
+        useExact: useExact,
       );
       if (mode != null) scheduled++;
     }

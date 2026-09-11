@@ -14,6 +14,7 @@ import '../../l10n/app_localizations.dart';
 import '../../models/event.dart';
 import '../home/widgets/timeline_view.dart';
 import '../schedule/event_form_page.dart';
+import '../search/task_search_page.dart';
 
 class CalendarPage extends ConsumerWidget {
   const CalendarPage({super.key});
@@ -160,6 +161,8 @@ class CalendarPage extends ConsumerWidget {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
+            if (!batch.active) const TaskSearchButton(size: 19),
+            if (!batch.active) const SizedBox(width: 2),
             if (!batch.active)
               _CalendarAddButton(
                 onPressed: () => _openForm(context, selected),

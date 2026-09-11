@@ -376,7 +376,7 @@ class EnglishNaturalLanguageParser {
     }
 
     for (final m in RegExp(
-      r'\b(?:at\s+)?(\d{1,2})\s*(?:o''?clock\b)?(?!\s*(?:am|pm)\b)',
+      r'\b(?:at\s+)?(\d{1,2})\s*(?:o''?clock\b)?(?!s*(?:am|pm)\b)',
       caseSensitive: false,
     ).allMatches(text)) {
       if (RegExp(r'\d:\d').hasMatch(m.group(0)!)) continue;

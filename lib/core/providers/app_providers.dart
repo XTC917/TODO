@@ -342,6 +342,10 @@ class EventActions {
         await NotificationService.instance.cancelForEvent(event.id);
         return;
       }
+      if (event.isCompleted) {
+        await NotificationService.instance.cancelForEvent(event.id);
+        return;
+      }
       await NotificationService.instance.scheduleForEvent(
         event,
         previousEvent: previous,
@@ -407,6 +411,16 @@ class EventActions {
         );
     if (completed) {
       await _cancelReminder(occurrence.id);
+      if (occurrence.repeatGroupId != null) {
+        final master = await _ref
+            .read(eventRepositoryProvider)
+            .getSeriesTemplate(occurrence.repeatGroupId!);
+        if (master != null) {
+          await _syncReminder(master, groupRows: await _ref
+              .read(eventRepositoryProvider)
+              .getEventsByRepeatGroup(occurrence.repeatGroupId!));
+        }
+      }
     } else {
       await _syncReminder(occurrence);
     }

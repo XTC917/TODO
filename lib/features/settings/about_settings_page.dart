@@ -40,7 +40,7 @@ class AboutSettingsPage extends ConsumerWidget {
               ),
               trailing: const Icon(Icons.open_in_new, size: 18),
               onTap: () {
-                Clipboard.setData(ClipboardData(text: AppConfig.githubUrl));
+                Clipboard.setData(const ClipboardData(text: AppConfig.githubUrl));
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text(l10n.settingsGitHubCopied)),
                 );

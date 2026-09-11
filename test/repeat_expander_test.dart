@@ -179,6 +179,49 @@ void main() {
     expect(overrideDates, ['2026-01-12']);
   });
 
+  test('reminderSources skips completed one-time event', () {
+    final event = _master(id: 1, date: '2026-01-12', completed: true).copyWith(
+      repeatType: RepeatType.oneTime,
+      clearRepeatGroupId: true,
+    );
+
+    expect(
+      RepeatExpander.reminderSources(
+        event,
+        [event],
+        from: DateTime(2026, 1, 12, 8),
+      ),
+      isEmpty,
+    );
+  });
+
+  test('reminderSources skips completed recurring occurrence date', () {
+    final master = _master(id: 1, date: '2026-01-05');
+    final completed = master.copyWith(
+      id: 42,
+      date: '2026-01-12',
+      repeatType: RepeatType.oneTime,
+      isCompleted: true,
+    );
+    final series = [master, completed];
+    final sources = RepeatExpander.reminderSources(
+      master,
+      series,
+      from: DateTime(2026, 1, 12, 8),
+      limit: 3,
+    );
+
+    expect(sources.map((e) => e.date).toList(), ['2026-01-19', '2026-01-26', '2026-02-02']);
+    expect(
+      RepeatExpander.reminderSources(
+        completed,
+        series,
+        from: DateTime(2026, 1, 12, 8),
+      ),
+      isEmpty,
+    );
+  });
+
   test('daily series looks ahead more than 12 days', () {
     final daily = _master(id: 3, date: '2026-01-01').copyWith(
       repeatType: RepeatType.daily,

@@ -1,5 +1,21 @@
 # Changelog
 
+## v2.6.7
+
+### Added
+- Unified task search: search all todos and schedules by title or note from Todo, Home timeline, and Calendar (Chinese single/multi-character, case-insensitive English, exact / prefix / contains / fuzzy ranking, note snippets with keyword highlight).
+- Search results can be narrowed with three combinable filters: status (all / incomplete / completed), type (all / todo / schedule), and time (all / future / past).
+- Recurring events expand into their real occurrences (past 1 year – future 1 year, full start → end for bounded series): skip/deleted days show nothing, edited occurrences show edited content, each occurrence keeps its own completion state and date, and tapping a result jumps Calendar to that occurrence's own day.
+
+### Fixed
+- Completed todos and schedules no longer receive reminders: scheduling skips completed events, recurring series skip completed occurrence dates, and completing from the home-screen widget now resyncs/cancels pending alarms.
+- Same task's reminders now share one exact/inexact scheduling decision (cached exact-alarm check), fixing occasional single-reminder delays while siblings fired on time.
+
+## v2.6.6
+
+### Fixed
+- Completed todos and schedules no longer receive reminders: scheduling skips completed events, recurring series skip completed occurrence dates, and completing from the home-screen widget now resyncs/cancels pending alarms.
+
 ## v2.6.5
 
 ### Fixed

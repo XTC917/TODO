@@ -6,15 +6,15 @@
 
 很多日程工具要么偏日历、要么偏任务清单。JUJU 面向个人日常规划：创建任务要快，查看今天要清楚，提醒要能在后台真正响起来。数据保存在本机 SQLite，不需要注册账号，也不依赖云同步。
 
-当前以 **Android** 为主要平台，版本 **2.6.5**。仓库里包含 Flutter 生成的 iOS / Windows / Linux / Web 工程，但提醒投递、桌面小组件和厂商后台适配都写在 Android 原生层，日常开发和发布也围绕 Android 进行。
+当前以 **Android** 为主要平台，版本 **2.6.7**。仓库里包含 Flutter 生成的 iOS / Windows / Linux / Web 工程，但提醒投递、桌面小组件和厂商后台适配都写在 Android 原生层，日常开发和发布也围绕 Android 进行。
 
 官网链接：
 
 [https://juju-d7g3aezw61b68afe8-1358899741.tcloudbaseapp.com](https://juju-d7g3aezw61b68afe8-1358899741.tcloudbaseapp.com)
 
-Android 安装包（v2.6.5）：
+Android 安装包（v2.6.7）：
 
-[https://juju-d7g3aezw61b68afe8-1358899741.tcloudbaseapp.com/downloads/JUJUSchedule-v2.6.5.apk](https://juju-d7g3aezw61b68afe8-1358899741.tcloudbaseapp.com/downloads/JUJUSchedule-v2.6.5.apk)
+[https://juju-d7g3aezw61b68afe8-1358899741.tcloudbaseapp.com/downloads/JUJUSchedule-v2.6.7.apk](https://juju-d7g3aezw61b68afe8-1358899741.tcloudbaseapp.com/downloads/JUJUSchedule-v2.6.7.apk)
 
 ---
 
@@ -41,6 +41,14 @@ Android 安装包（v2.6.5）：
 创建页提供 **一句话快速添加**：中文和英文界面下，用本地规则解析日期、时间、任务类型和提醒，无需联网，也没有接入大模型。韩语暂时不支持。
 
 首次启动会写入一组本地引导事项，帮助熟悉时间轴、待办和提醒设置。
+
+### Task Search
+
+待办页、日历页和首页顶部都有搜索入口，可以按标题或备注关键词搜索全部待办和日程：
+
+- 中文支持单字 / 多字直查，英文大小写不敏感； exact > 前缀 > 包含 > 模糊的顺序排结果，备注命中会显示关键词片段并高亮
+- 三个可自由组合的筛选：**状态**（全部 / 未完成 / 已完成）、**类型**（全部 / 待办 / 日程）、**时间**（全部 / 将来 / 过去）
+- 重复任务按实际发生日展开成独立结果：跳过 / 删除的日期不出现，单独编辑过的日期显示编辑后内容，每个 occurrence 用自己的完成状态和日期参与筛选排序，点击结果会把日历跳到该 occurrence 所在日期
 
 ### Reminder
 
@@ -355,9 +363,9 @@ scripts/install_release.ps1   # 构建 release APK 并 adb 安装
 
 为了方便用户下载最新版app，部署了一个官方网站，将apk维护在网站中。
 
-当前网站上的 Android APK（v2.6.5）：
+当前网站上的 Android APK（v2.6.7）：
 
-[https://juju-d7g3aezw61b68afe8-1358899741.tcloudbaseapp.com](https://juju-d7g3aezw61b68afe8-1358899741.tcloudbaseapp.com/downloads/JUJUSchedule-v2.6.5.apk)
+[https://juju-d7g3aezw61b68afe8-1358899741.tcloudbaseapp.com](https://juju-d7g3aezw61b68afe8-1358899741.tcloudbaseapp.com/downloads/JUJUSchedule-v2.6.7.apk)
 
 若通过源码运行，则如下操作。
 
@@ -424,8 +432,8 @@ flutter test
 
 ## 📌 Current Status
 
-- **版本**：2.6.5（`pubspec.yaml` `2.6.5+54`）
-- **下载**：[Android APK](https://juju-d7g3aezw61b68afe8-1358899741.tcloudbaseapp.com/downloads/JUJUSchedule-v2.6.5.apk)
+- **版本**：2.6.7（`pubspec.yaml` `2.6.7+56`）
+- **下载**：[Android APK](https://juju-d7g3aezw61b68afe8-1358899741.tcloudbaseapp.com/downloads/JUJUSchedule-v2.6.7.apk)
 - **形态**：个人独立开发的本地 Android 应用
 - **数据**：本机存储，无账号、无云同步
 - **平台**：Android 为实际维护与发布目标；提醒、小组件、厂商适配均已实现。其他 Flutter 平台目录存在，但不作为当前产品能力描述

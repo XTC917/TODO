@@ -254,14 +254,14 @@ class _FocusBarChartState extends State<FocusBarChart> {
                             ],
                           ),
                         ),
-                        SizedBox(height: xGap),
+                        const SizedBox(height: xGap),
                         SizedBox(
                           height: widget.period == StatsPeriod.month
                               ? 18.0
                               : xLabelHeight,
                           child: Row(
                             children: [
-                              SizedBox(width: yAxisWidth),
+                              const SizedBox(width: yAxisWidth),
                               Expanded(
                                 child: Row(
                                   children: [

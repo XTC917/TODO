@@ -24,6 +24,7 @@ Future<void> handleWidgetBackgroundUri(Uri? uri) async {
         event,
         completed: !event.isCompleted,
       );
+      await syncRemindersFromRepository(repo);
       await HomeWidgetSnapshotWriter.syncFromDatabase();
     } catch (e, st) {
       debugPrint('Widget background toggle failed: $e\n$st');

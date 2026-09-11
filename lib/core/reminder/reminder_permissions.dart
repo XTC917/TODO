@@ -18,6 +18,15 @@ class ReminderPermissions {
 
   void markReady() => _ready = true;
 
+  // Short-TTL cache for `canScheduleExactNotifications()`. The N reminders
+  // of one task are scheduled milliseconds apart; without this a single
+  // transient `false` from the platform channel silently downgrades exactly
+  // one of them to inexact (1-15 min batching jitter) while its siblings
+  // stay exact — precisely the "17:00准时、18:02延迟、18:40准时" symptom.
+  bool _exactCached = false;
+  DateTime? _exactCheckAt;
+  static const _exactCacheTtl = Duration(seconds: 10);
+
   AndroidFlutterLocalNotificationsPlugin? get _android =>
       _plugin.resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>();
@@ -149,23 +158,44 @@ class ReminderPermissions {
     return hasNotificationPermission();
   }
 
-  Future<bool> canScheduleExactAlarms() async {
+  Future<bool> canScheduleExactAlarms({bool useCache = true}) async {
     if (!Platform.isAndroid) return true;
-    final ok = await _android?.canScheduleExactNotifications() ?? false;
+    // Cache the platform check for a short TTL so that the N reminders of
+    // one task (scheduled within milliseconds of each other) always share a
+    // single consistent answer. Without this, one transient `false` in the
+    // middle of a batch silently downgrades exactly one reminder to inexact.
+    if (useCache &&
+        _exactCheckAt != null &&
+        DateTime.now().difference(_exactCheckAt!) < _exactCacheTtl) {
+      return _exactCached;
+    }
+    bool ok = false;
+    try {
+      ok = await _android?.canScheduleExactNotifications() ?? false;
+    } catch (e) {
+      reminderLog('exactAlarmPermission() check failed — $e');
+      if (_exactCheckAt != null) return _exactCached;
+      return false;
+    }
+    _exactCached = ok;
+    _exactCheckAt = DateTime.now();
     reminderLog('exactAlarmPermission() granted=$ok');
     return ok;
   }
+
+  void invalidateExactAlarmCache() => _exactCheckAt = null;
 
   Future<bool> requestExactAlarmPermission() async {
     if (!Platform.isAndroid) return true;
     final android = _android;
     if (android == null) return false;
-    if (await canScheduleExactAlarms()) return true;
+    if (await canScheduleExactAlarms(useCache: false)) return true;
 
     reminderLog('exactAlarmPermission() requesting…');
     try {
       final requested = await android.requestExactAlarmsPermission() ?? false;
-      final ok = requested || await canScheduleExactAlarms();
+      final ok =
+          requested || await canScheduleExactAlarms(useCache: false);
       reminderLog('exactAlarmPermission() granted=$ok');
       return ok;
     } catch (e) {

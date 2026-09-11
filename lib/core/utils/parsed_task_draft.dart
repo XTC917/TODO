@@ -5,7 +5,6 @@ import '../../models/enums.dart';
 import '../../models/event.dart';
 import '../utils/date_time_formats.dart';
 import '../utils/parsed_task.dart';
-import '../utils/natural_language_parser.dart';
 import '../utils/theme_event_color.dart';
 
 String _formatTime(TimeOfDay time) {

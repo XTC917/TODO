@@ -11,6 +11,7 @@ import '../../core/widgets/swipe_event_actions.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/event.dart';
 import '../schedule/event_form_page.dart';
+import '../search/task_search_page.dart';
 
 class TodoPage extends ConsumerWidget {
   const TodoPage({super.key});
@@ -21,6 +22,24 @@ class TodoPage extends ConsumerWidget {
     final batch = ref.watch(todoBatchProvider);
 
     return Scaffold(
+      appBar: batch.active
+          ? null
+          : AppBar(
+              toolbarHeight: 44,
+              titleSpacing: 20,
+              title: Text(
+                AppLocalizations.of(context).navTodo,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+              actions: const [
+                Padding(
+                  padding: EdgeInsets.only(right: 8),
+                  child: TaskSearchButton(),
+                ),
+              ],
+            ),
       body: SafeArea(
         child: Column(
           children: [

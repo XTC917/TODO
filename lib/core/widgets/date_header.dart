@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../features/search/task_search_page.dart';
 import '../../l10n/app_localizations.dart';
 import '../utils/date_time_formats.dart';
 
@@ -9,10 +10,12 @@ class DateHeader extends StatelessWidget {
     super.key,
     required this.selected,
     this.onBackToToday,
+    this.showSearch = true,
   });
 
   final DateTime selected;
   final VoidCallback? onBackToToday;
+  final bool showSearch;
 
   static const _backButtonWidth = 72.0;
   static const _backButtonHeight = 32.0;
@@ -28,7 +31,16 @@ class DateHeader extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(width: _backButtonWidth),
+          SizedBox(
+            width: _backButtonWidth,
+            height: _backButtonHeight,
+            child: showSearch
+                ? const Align(
+                    alignment: Alignment.topLeft,
+                    child: TaskSearchButton(),
+                  )
+                : null,
+          ),
           Expanded(
             child: Column(
               children: [

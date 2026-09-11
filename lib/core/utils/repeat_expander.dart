@@ -156,6 +156,7 @@ class RepeatExpander {
     if (event.isRepeatSkip) return const [];
     final now = from ?? DateTime.now();
     if (!event.isRecurring) {
+      if (event.isCompleted) return const [];
       return _hasFutureReminderTrigger(event, now) ? [event] : const [];
     }
 
@@ -174,6 +175,7 @@ class RepeatExpander {
       final key = DateTimeFormats.formatDate(candidate);
       if (_hasSkipOnDate(seriesOrAll, groupId, key)) continue;
       if (_hasOneTimeOverrideOnDate(seriesOrAll, groupId, key)) continue;
+      if (_isOccurrenceCompleted(seriesOrAll, groupId, key)) continue;
       final sourced = event.copyWith(
         date: key,
         isCompleted: false,
@@ -196,7 +198,22 @@ class RepeatExpander {
     };
   }
 
+  static bool _isOccurrenceCompleted(
+    List<Event> all,
+    String groupId,
+    String dateKey,
+  ) {
+    return all.any(
+      (e) =>
+          !e.isRepeatSkip &&
+          e.repeatGroupId == groupId &&
+          e.date == dateKey &&
+          e.isCompleted,
+    );
+  }
+
   static bool _hasFutureReminderTrigger(Event event, DateTime now) {
+    if (event.isCompleted) return false;
     final anchor = event.reminderAnchorDateTime;
     if (anchor == null) return false;
     if (event.reminderOffsetsSeconds.isEmpty) return false;

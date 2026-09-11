@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:soft_schedule/core/utils/repeat_occurrence_utils.dart';
 import 'package:soft_schedule/database/app_database.dart';
-import 'package:soft_schedule/models/event.dart';
 
 EventRow _row({
   required int id,

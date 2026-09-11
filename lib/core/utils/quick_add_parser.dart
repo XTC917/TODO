@@ -25,8 +25,8 @@ ParsedTask parseQuickAddInput(
 }) {
   return switch (language) {
     QuickAddParserLanguage.zh =>
-      ChineseNaturalLanguageParser().parse(input, reference: reference),
+      const ChineseNaturalLanguageParser().parse(input, reference: reference),
     QuickAddParserLanguage.en =>
-      EnglishNaturalLanguageParser().parse(input, reference: reference),
+      const EnglishNaturalLanguageParser().parse(input, reference: reference),
   };
 }
