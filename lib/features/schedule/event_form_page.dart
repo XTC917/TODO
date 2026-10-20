@@ -25,6 +25,7 @@ class EventFormPage extends ConsumerStatefulWidget {
     this.editingOccurrence,
     this.initialDate,
     this.initialTitle,
+    this.initialNote,
     this.initialStartTime,
     this.initialEndTime,
     this.initialTaskType,
@@ -32,13 +33,16 @@ class EventFormPage extends ConsumerStatefulWidget {
     this.forceTaskType,
     this.forceTodoTimeMode,
     this.initialReminderOffsetsSeconds,
+    this.initialDateUnresolved = false,
   });
 
   final int? eventId;
+
   /// The occurrence shown in the list (date may differ from stored row).
   final Event? editingOccurrence;
   final DateTime? initialDate;
   final String? initialTitle;
+  final String? initialNote;
   final TimeOfDay? initialStartTime;
   final TimeOfDay? initialEndTime;
   final TaskType? initialTaskType;
@@ -46,6 +50,9 @@ class EventFormPage extends ConsumerStatefulWidget {
   final TaskType? forceTaskType;
   final TodoTimeMode? forceTodoTimeMode;
   final List<int>? initialReminderOffsetsSeconds;
+
+  /// True when the date came from a parse that could not resolve one.
+  final bool initialDateUnresolved;
 
   bool get isEditing => eventId != null;
 
@@ -71,6 +78,7 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
   Event? _existing;
   bool _loading = false;
   bool _initialized = false;
+  bool _dateUnresolved = false;
 
   @override
   void initState() {
@@ -81,17 +89,20 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
     final endMinutes = _start.hour * 60 + _start.minute + 60;
     _end = TimeOfDay(hour: (endMinutes ~/ 60) % 24, minute: endMinutes % 60);
     _deadline = const TimeOfDay(hour: 23, minute: 59);
-    _taskType =
-        widget.forceTaskType ?? widget.initialTaskType ?? TaskType.todo;
+    _taskType = widget.forceTaskType ?? widget.initialTaskType ?? TaskType.todo;
     _todoTimeMode = widget.forceTodoTimeMode ??
         widget.initialTodoTimeMode ??
         TodoTimeMode.timeBlock;
     _repeatType = RepeatType.oneTime;
     _reminderOffsetsSeconds = const [];
+    _dateUnresolved = widget.initialDateUnresolved;
 
     if (!widget.isEditing) {
       if (widget.initialTitle != null && widget.initialTitle!.isNotEmpty) {
         _titleController.text = widget.initialTitle!;
+      }
+      if (widget.initialNote != null && widget.initialNote!.isNotEmpty) {
+        _noteController.text = widget.initialNote!;
       }
       if (widget.initialStartTime != null) {
         _start = widget.initialStartTime!;
@@ -145,6 +156,7 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
     setState(() {
       _existing = event;
       _occurrence = display;
+      _dateUnresolved = false;
       _titleController.text = display.title;
       _noteController.text = display.userNote ?? '';
       _date = display.hasDate
@@ -190,14 +202,17 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
   }
 
   void _applyQuickAddPrefill(ParsedTask parsed) {
-    final prefill = QuickAddPrefill.fromParsed(
-      parsed: parsed,
-      fallbackDate: _date,
-    );
+    final prefill = QuickAddPrefill.fromParsed(parsed: parsed);
     setState(() {
       _titleController.text = prefill.title;
+      if (prefill.note != null && prefill.note!.isNotEmpty) {
+        _noteController.text = prefill.note!;
+      }
       if (prefill.date != null) {
         _date = DateTimeFormats.dateOnly(prefill.date!);
+        _dateUnresolved = false;
+      } else {
+        _dateUnresolved = prefill.dateUnresolved;
       }
       if (widget.forceTaskType == null) {
         _taskType = prefill.taskType;
@@ -227,7 +242,8 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppLocalizations.of(context).quickAddUnsupportedLanguage),
+          content:
+              Text(AppLocalizations.of(context).quickAddUnsupportedLanguage),
         ),
       );
       return;
@@ -389,9 +405,41 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
         const SizedBox(height: 10),
       ],
       if (_showDate) ...[
+        if (_dateUnresolved)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.errorContainer,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.error_outline_rounded,
+                    size: 18,
+                    color: Theme.of(context).colorScheme.onErrorContainer,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      l10n.quickAddDateUnresolved,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color:
+                                Theme.of(context).colorScheme.onErrorContainer,
+                          ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         _PickerTile(
           label: l10n.dateLabel,
-          value: DateTimeFormats.formatDate(_date),
+          value: _dateUnresolved
+              ? l10n.quickAddDateUnresolved
+              : DateTimeFormats.formatDate(_date),
           icon: Icons.calendar_today_rounded,
           onTap: _pickDate,
         ),
@@ -489,6 +537,7 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
   }
 
   DateTime? _reminderAnchorDateTime() {
+    if (_dateUnresolved) return null;
     final fields = _resolveFields();
     final date = fields.$1;
     if (date.isEmpty) return null;
@@ -539,7 +588,12 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
       firstDate: DateTime(2020),
       lastDate: DateTime(2040),
     );
-    if (picked != null) setState(() => _date = DateTimeFormats.dateOnly(picked));
+    if (picked != null) {
+      setState(() {
+        _date = DateTimeFormats.dateOnly(picked);
+        _dateUnresolved = false;
+      });
+    }
   }
 
   Future<void> _pickTime({required bool isStart}) async {
@@ -598,6 +652,14 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
       );
       return;
     }
+    if (_dateUnresolved && !_showNoTime) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context).quickAddDateUnresolved),
+        ),
+      );
+      return;
+    }
     if (!_formKey.currentState!.validate()) return;
 
     if (_showStartEnd) {
@@ -605,7 +667,8 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
       final endMin = _end.hour * 60 + _end.minute;
       if (endMin <= startMin) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context).endTimeAfterStart)),
+          SnackBar(
+              content: Text(AppLocalizations.of(context).endTimeAfterStart)),
         );
         return;
       }
@@ -633,7 +696,8 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
           reminderOffsetsSeconds: _reminderOffsetsSeconds,
           clearReminderOffsets: _reminderOffsetsSeconds.isEmpty,
         );
-        final occurrence = (_occurrence ?? _existing!).copyWith(date: fields.$1);
+        final occurrence =
+            (_occurrence ?? _existing!).copyWith(date: fields.$1);
         if (occurrence.isRepeatSeriesOccurrence) {
           final scope = await pickRepeatScope(
             context,

@@ -33,18 +33,29 @@ class ChineseNaturalLanguageParser {
 
     final normalized = _normalize(raw);
     final removals = <_Span>[];
-    final eveningContext = normalized.contains('今晚') || normalized.contains('今夜');
+    var working = normalized;
 
-    final explicitType = _extractExplicitTaskType(normalized, removals);
-    final date = _extractDate(normalized, ref, removals);
-    final range = _extractTimeRange(normalized, removals);
+    final note = _extractNote(working, removals);
+    if (note != null) {
+      working = _maskSpan(working, note.span);
+    }
+    final eveningContext = working.contains('今晚') || working.contains('今夜');
+
+    final explicitType = _extractExplicitTaskType(working, removals);
+    final dateMatch = _extractDate(working, ref);
+    if (dateMatch != null) {
+      removals.add(dateMatch.span);
+      working = _maskSpan(working, dateMatch.span);
+    }
+    final date = dateMatch?.date;
+    final range = _extractTimeRange(working, removals);
     final single = range == null
-        ? _extractSingleTime(normalized, removals, eveningContext: eveningContext)
+        ? _extractSingleTime(working, removals, eveningContext: eveningContext)
         : null;
 
     var startTime = range?.start ?? single;
     var endTime = range?.end;
-    final isDeadline = _hasDeadlineHint(normalized, removals);
+    final isDeadline = _hasDeadlineHint(working, removals);
 
     if (isDeadline && startTime != null && endTime == null) {
       endTime = startTime;
@@ -67,7 +78,7 @@ class ChineseNaturalLanguageParser {
     );
 
     final reminderOffsets = _extractReminders(
-      normalized,
+      working,
       removals,
       canSchedule: _canScheduleReminder(
         taskType: taskType,
@@ -86,6 +97,7 @@ class ChineseNaturalLanguageParser {
       date: date,
       startTime: startTime,
       endTime: endTime,
+      note: note?.text,
       taskType: taskType,
       todoTimeMode: todoTimeMode,
       reminderOffsetsSeconds: reminderOffsets,
@@ -122,47 +134,38 @@ class ChineseNaturalLanguageParser {
     List<_Span> removals, {
     required bool canSchedule,
   }) {
-    if (!canSchedule) return const [];
     if (!_reminderTriggers.any(text.contains)) return const [];
 
-    final block = _findReminderBlock(text);
-    if (block == null) return const [];
+    final blocks = _findReminderBlocks(text);
+    if (blocks.isEmpty) return const [];
 
-    final offsets = _parseReminderOffsets(block.text);
-    if (offsets.isEmpty) return const [];
+    final offsets = <int>{};
+    for (final block in blocks) {
+      final parsed = _parseReminderOffsets(block.text);
+      if (parsed.isEmpty) continue;
+      removals.add(block.span);
+      if (canSchedule) offsets.addAll(parsed);
+    }
 
-    removals.add(block.span);
-    return offsets;
+    if (!canSchedule || offsets.isEmpty) return const [];
+    final list = offsets.toList()..sort((a, b) => b.compareTo(a));
+    return list;
   }
 
-  _ReminderBlock? _findReminderBlock(String text) {
-    final patterns = [
-      RegExp(
-        r'[，,]\s*(提前[^，,；;]+?(?:提醒我|通知我|叫我|提醒)?)\s*$',
-      ),
-      RegExp(
-        r'[，,]\s*([^，,；;]+?(?:提醒我|通知我|叫我))\s*$',
-      ),
-      RegExp(r'(提前[^，,；;]+?(?:提醒我|通知我|叫我|提醒)?)\s*$'),
-    ];
-
-    for (final p in patterns) {
-      final m = p.firstMatch(text);
-      if (m == null) continue;
-      final clause = m.group(1)!;
-      if (!clause.contains('提前') &&
-          !clause.contains('提醒我') &&
-          !clause.contains('通知我') &&
-          !clause.contains('叫我') &&
-          !clause.contains('之前提醒')) {
-        continue;
-      }
-      return _ReminderBlock(
+  List<_ReminderBlock> _findReminderBlocks(String text) {
+    final blocks = <_ReminderBlock>[];
+    final pattern = RegExp(
+      r'提前[^，,；;。!?！？]*?(?:提醒我|通知我|叫我|提醒|$)',
+    );
+    for (final m in pattern.allMatches(text)) {
+      final clause = m.group(0)!.trim();
+      if (!clause.startsWith('提前')) continue;
+      blocks.add(_ReminderBlock(
         text: clause,
-        span: _Span(m.start, m.end),
-      );
+        span: _Span(m.start, m.start + clause.length),
+      ));
     }
-    return null;
+    return blocks;
   }
 
   List<int> _parseReminderOffsets(String clause) {
@@ -187,14 +190,18 @@ class ChineseNaturalLanguageParser {
 
   int? _parseReminderOffsetPart(String part) {
     var token = part.trim().replaceFirst(RegExp(r'^提前'), '').trim();
+    token =
+        token.replaceFirst(RegExp(r'(?:提醒我|通知我|叫我|提醒|之前|前)\s*$'), '').trim();
     if (token.isEmpty) return null;
 
-    if (token.contains('半小时')) return 30 * 60;
+    if (RegExp(r'^半\s*小时$').hasMatch(token)) return 30 * 60;
 
     final match = RegExp(
-      r'(\d+|[一二三四五六七八九十两]+)\s*(分钟|分|小时|钟头|时|天|日)',
+      r'^(\d+|[一二三四五六七八九十两]+)\s*(分钟|分|小时|钟头|时|天|日)',
     ).firstMatch(token);
     if (match != null) {
+      final rest = token.substring(match.end).trim();
+      if (rest.isNotEmpty) return null;
       final amount = _parseNumberToken(match.group(1)!);
       if (amount == null || amount <= 0) return null;
       return switch (match.group(2)!) {
@@ -257,9 +264,9 @@ class ChineseNaturalLanguageParser {
   }) {
     if (taskType == TaskType.schedule) return TodoTimeMode.timeBlock;
     if (isDeadline && hasDeadlineTime) return TodoTimeMode.deadline;
-    if (!hasDate) return TodoTimeMode.noTime;
     if (isDeadline || hasDeadlineTime) return TodoTimeMode.deadline;
     if (hasBlockTime) return TodoTimeMode.timeBlock;
+    if (!hasDate) return TodoTimeMode.noTime;
     return TodoTimeMode.deadline;
   }
 
@@ -340,7 +347,40 @@ class ChineseNaturalLanguageParser {
 
   DateTime _dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
 
-  DateTime? _extractDate(String text, DateTime ref, List<_Span> removals) {
+  _NoteResult? _extractNote(String text, List<_Span> removals) {
+    final patterns = <RegExp>[
+      RegExp(r'(?:备注|说明|注释)\s*(?:一下)?\s*[:：]?\s*([^，,；;。!?！？]+)'),
+      RegExp(r'\bnote(?:s)?\s*[:：]\s*([^,;.!?]+)', caseSensitive: false),
+    ];
+
+    Match? best;
+    for (final pattern in patterns) {
+      final match = pattern.firstMatch(text);
+      if (match == null) continue;
+      if (best == null || match.start < best.start) best = match;
+    }
+    if (best == null) return null;
+
+    var note = (best.group(1) ?? '').trim();
+    note = note.replaceFirst(RegExp(r'^(?:在|于)\s*'), '').trim();
+    note = note.replaceFirst(RegExp(r'^(?:地点|位置)\s*[:：]?\s*(?:在)?\s*'), '');
+    if (note.isEmpty) return null;
+
+    final span = _Span(best.start, best.end);
+    removals.add(span);
+    return _NoteResult(note, span);
+  }
+
+  String _maskSpan(String text, _Span span) {
+    final length = span.end - span.start;
+    if (length <= 0) return text;
+    return text.replaceRange(span.start, span.end, ' ' * length);
+  }
+
+  _DateMatch? _extractDate(String text, DateTime ref) {
+    final absolute = _extractAbsoluteDate(text, ref);
+    if (absolute != null) return absolute;
+
     final patterns = <RegExp>[
       RegExp(r'下(?:周|星期)([一二三四五六日天])'),
       RegExp(r'(?:周|星期)([一二三四五六日天])'),
@@ -362,20 +402,20 @@ class ChineseNaturalLanguageParser {
     }
     if (best == null || bestPattern == null) return null;
 
-    removals.add(_Span(best.start, best.end));
+    final span = _Span(best.start, best.end);
     final token = best.group(0)!;
 
     if (token == '大后天') {
-      return ref.add(const Duration(days: 3));
+      return _DateMatch(ref.add(const Duration(days: 3)), span);
     }
     if (token == '后天') {
-      return ref.add(const Duration(days: 2));
+      return _DateMatch(ref.add(const Duration(days: 2)), span);
     }
     if (token == '明天' || token == '明日') {
-      return ref.add(const Duration(days: 1));
+      return _DateMatch(ref.add(const Duration(days: 1)), span);
     }
     if (token == '今天' || token == '今日' || token == '今晚') {
-      return ref;
+      return _DateMatch(ref, span);
     }
 
     final weekdayChar = best.group(1)!;
@@ -384,9 +424,188 @@ class ChineseNaturalLanguageParser {
 
     final isNextWeek = bestPattern.pattern.startsWith('下');
     if (isNextWeek) {
-      return _dateOfNextWeekday(ref, target, nextWeek: true);
+      return _DateMatch(
+        _dateOfNextWeekday(ref, target, nextWeek: true),
+        span,
+      );
     }
-    return _dateOfNextWeekday(ref, target, nextWeek: false);
+    return _DateMatch(
+      _dateOfNextWeekday(ref, target, nextWeek: false),
+      span,
+    );
+  }
+
+  _DateMatch? _extractAbsoluteDate(String text, DateTime ref) {
+    final candidates = <_DateCandidate>[];
+
+    void addFullYearMatches(RegExp pattern, int priority) {
+      for (final m in pattern.allMatches(text)) {
+        final year = int.tryParse(m.group(1)!);
+        final month = int.tryParse(m.group(2)!);
+        final day = int.tryParse(m.group(3)!);
+        if (year == null || month == null || day == null) continue;
+        final date = _buildDate(
+          year: year,
+          month: month,
+          day: day,
+          ref: ref,
+          allowYearInference: false,
+        );
+        if (date != null) {
+          candidates.add(_DateCandidate(date, _Span(m.start, m.end), priority));
+        }
+      }
+    }
+
+    addFullYearMatches(
+      RegExp(r'(\d{4})\s*[-/.]\s*(\d{1,2})\s*[-/.]\s*(\d{1,2})'),
+      0,
+    );
+    addFullYearMatches(
+      RegExp(r'(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*[日号]?'),
+      0,
+    );
+
+    for (final m
+        in RegExp(r'(\d{1,2})\s*月\s*(\d{1,2})\s*[日号]?').allMatches(text)) {
+      final month = int.tryParse(m.group(1)!);
+      final day = int.tryParse(m.group(2)!);
+      if (month == null || day == null) continue;
+      final date = _buildDate(
+        year: ref.year,
+        month: month,
+        day: day,
+        ref: ref,
+        allowYearInference: true,
+      );
+      if (date != null) {
+        candidates.add(_DateCandidate(date, _Span(m.start, m.end), 1));
+      }
+    }
+
+    for (final m in RegExp(r'下个月\s*(\d{1,2})\s*[日号]?').allMatches(text)) {
+      final day = int.tryParse(m.group(1)!);
+      if (day == null) continue;
+      var year = ref.year;
+      var month = ref.month + 1;
+      if (month > 12) {
+        month = 1;
+        year++;
+      }
+      final date = _buildDate(
+        year: year,
+        month: month,
+        day: day,
+        ref: ref,
+        allowYearInference: false,
+      );
+      if (date != null) {
+        candidates.add(_DateCandidate(date, _Span(m.start, m.end), 2));
+      }
+    }
+
+    for (final m
+        in RegExp(r'(\d{1,2})\s*([./-])\s*(\d{1,2})').allMatches(text)) {
+      final month = int.tryParse(m.group(1)!);
+      final day = int.tryParse(m.group(3)!);
+      final separator = m.group(2)!;
+      if (month == null || day == null) continue;
+      if (!_isShortNumericDateContext(
+        text,
+        m,
+        separator,
+        month: month,
+        day: day,
+      )) {
+        continue;
+      }
+      final date = _buildDate(
+        year: ref.year,
+        month: month,
+        day: day,
+        ref: ref,
+        allowYearInference: true,
+      );
+      if (date != null) {
+        candidates.add(_DateCandidate(date, _Span(m.start, m.end), 3));
+      }
+    }
+
+    if (candidates.isEmpty) return null;
+    candidates.sort((a, b) {
+      final byStart = a.span.start.compareTo(b.span.start);
+      if (byStart != 0) return byStart;
+      return a.priority.compareTo(b.priority);
+    });
+    final best = candidates.first;
+    return _DateMatch(best.date, best.span);
+  }
+
+  bool _isShortNumericDateContext(
+    String text,
+    Match match,
+    String separator, {
+    required int month,
+    required int day,
+  }) {
+    final before = match.start > 0 ? text[match.start - 1] : '';
+    final after = match.end < text.length ? text[match.end] : '';
+
+    if (_isAsciiDigit(before) || _isAsciiDigit(after)) return false;
+    const boundaryChars = '-/.:：';
+    if ((before.isNotEmpty && boundaryChars.contains(before)) ||
+        (after.isNotEmpty && boundaryChars.contains(after))) {
+      return false;
+    }
+    if (after == '点' || after == '时' || after == '分') return false;
+
+    final suffixEnd = match.end + 3 < text.length ? match.end + 3 : text.length;
+    final suffix = text.substring(match.end, suffixEnd);
+    if (RegExp(r'^(?:小时|分钟|分|天|日|个|元|块|公里|km|kg|%|％)').hasMatch(suffix)) {
+      return false;
+    }
+
+    final prefixStart = match.start > 3 ? match.start - 3 : 0;
+    final prefix = text.substring(prefixStart, match.start);
+    if (RegExp(r'(?:上午|下午|晚上|中午|凌晨)\s*$').hasMatch(prefix)) {
+      return false;
+    }
+
+    // Hyphen is also a time-range separator. Only treat it as a date when at
+    // least one component is unambiguously date-like (e.g. 11-1, 3-15), so
+    // that "下午3-5" keeps its existing time-range meaning.
+    if (separator == '-' && month < 10 && day < 10) return false;
+
+    return true;
+  }
+
+  bool _isAsciiDigit(String char) {
+    if (char.isEmpty) return false;
+    final code = char.codeUnitAt(0);
+    return code >= 48 && code <= 57;
+  }
+
+  DateTime? _buildDate({
+    required int year,
+    required int month,
+    required int day,
+    required DateTime ref,
+    required bool allowYearInference,
+  }) {
+    if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+
+    if (!allowYearInference) {
+      final date = DateTime(year, month, day);
+      return date.month == month && date.day == day ? date : null;
+    }
+
+    var date = DateTime(ref.year, month, day);
+    if (date.month != month || date.day != day) return null;
+    if (date.isBefore(ref)) {
+      final next = DateTime(ref.year + 1, month, day);
+      if (next.month == month && next.day == day) date = next;
+    }
+    return date;
   }
 
   DateTime _dateOfNextWeekday(
@@ -426,12 +645,15 @@ class ChineseNaturalLanguageParser {
       if (m.groupCount >= 7 && m.group(2) != null) {
         final startPeriod = m.group(1);
         final startHour = _parseNumberToken(m.group(2)!);
-        final startMinute = _parseMinuteToken(m.group(3), m.group(0)!, isStart: true);
+        final startMinute =
+            _parseMinuteToken(m.group(3), m.group(0)!, isStart: true);
         final endPeriod = m.group(5);
         final endHour = _parseNumberToken(m.group(6)!);
-        final endMinute = _parseMinuteToken(m.group(7), m.group(0)!, isStart: false);
+        final endMinute =
+            _parseMinuteToken(m.group(7), m.group(0)!, isStart: false);
         if (startHour == null || endHour == null) continue;
-        start = _toTimeOfDay(startHour, startMinute, startPeriod, isRange: true);
+        start =
+            _toTimeOfDay(startHour, startMinute, startPeriod, isRange: true);
         end = _toTimeOfDay(
           endHour,
           endMinute,
@@ -481,8 +703,7 @@ class ChineseNaturalLanguageParser {
       final hour = _parseNumberToken(m.group(2)!);
       if (hour == null) continue;
       final minute = _parseMinuteToken(m.group(3), m.group(0)!, isStart: true);
-      final time =
-          _toTimeOfDay(hour, minute, m.group(1), isRange: false);
+      final time = _toTimeOfDay(hour, minute, m.group(1), isRange: false);
       if (time != null) candidates.add((m, time));
     }
 
@@ -605,6 +826,10 @@ class ChineseNaturalLanguageParser {
     for (final word in ['上午', '下午', '晚上', '中午', '凌晨']) {
       title = title.replaceAll(word, '');
     }
+    title = title.replaceAll(RegExp(r'\s+'), ' ').trim();
+    title = title.replaceAll(RegExp(r'^(?:在|于)\s*'), '');
+    // "上英语课" is more useful to the user as "英语课"; keep "上课"/"上班".
+    title = title.replaceFirst(RegExp(r'^上(?=.{2,}课$)'), '');
     return title.replaceAll(RegExp(r'\s+'), ' ').trim();
   }
 }
@@ -613,6 +838,25 @@ class _Span {
   const _Span(this.start, this.end);
   final int start;
   final int end;
+}
+
+class _DateMatch {
+  const _DateMatch(this.date, this.span);
+  final DateTime date;
+  final _Span span;
+}
+
+class _DateCandidate {
+  const _DateCandidate(this.date, this.span, this.priority);
+  final DateTime date;
+  final _Span span;
+  final int priority;
+}
+
+class _NoteResult {
+  const _NoteResult(this.text, this.span);
+  final String text;
+  final _Span span;
 }
 
 class _TimeRange {

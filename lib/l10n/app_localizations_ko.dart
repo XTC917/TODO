@@ -560,6 +560,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get quickAddEmptyInput => '할 일 설명을 입력하세요.';
 
   @override
+  String get quickAddDateUnresolved => '날짜를 인식하지 못했습니다. 날짜를 확인하세요.';
+
+  @override
+  String get quickAddConfirmDate => '날짜 확인';
+
+  @override
   String get editTitle => '편집';
 
   @override

@@ -81,6 +81,11 @@ class _QuickAddPageState extends ConsumerState<QuickAddPage> {
     final parsed = _parsed;
     if (parsed == null) return;
 
+    if (parsed.needsDateConfirmation) {
+      _openEditor();
+      return;
+    }
+
     setState(() => _saving = true);
     try {
       final draft = parsedTaskToDraft(parsed, ref);
@@ -290,6 +295,11 @@ class _PreviewStep extends StatelessWidget {
                             parsed.date!,
                             l10n,
                           ),
+                        )
+                      else if (parsed.needsDateConfirmation)
+                        _PreviewRow(
+                          icon: Icons.error_outline_rounded,
+                          text: l10n.quickAddDateUnresolved,
                         ),
                       if ((parsed.todoTimeMode == TodoTimeMode.deadline ||
                               (parsed.endTime != null &&
@@ -299,7 +309,8 @@ class _PreviewStep extends StatelessWidget {
                           icon: Icons.schedule_outlined,
                           text: _formatClock(parsed.endTime!),
                         )
-                      else if (parsed.startTime != null && parsed.endTime == null)
+                      else if (parsed.startTime != null &&
+                          parsed.endTime == null)
                         _PreviewRow(
                           icon: Icons.schedule_outlined,
                           text: _formatClock(parsed.startTime!),
@@ -317,6 +328,11 @@ class _PreviewStep extends StatelessWidget {
                             l10n,
                             parsed.reminderOffsetsSeconds,
                           ),
+                        ),
+                      if (parsed.note != null && parsed.note!.isNotEmpty)
+                        _PreviewRow(
+                          icon: Icons.notes_outlined,
+                          text: '${l10n.noteLabel}: ${parsed.note}',
                         ),
                     ],
                   ),
@@ -344,9 +360,14 @@ class _PreviewStep extends StatelessWidget {
                       ? const SizedBox(
                           width: 22,
                           height: 22,
-                          child: CircularProgressIndicator.adaptive(strokeWidth: 2),
+                          child: CircularProgressIndicator.adaptive(
+                              strokeWidth: 2),
                         )
-                      : Text(l10n.quickAddConfirm),
+                      : Text(
+                          parsed.needsDateConfirmation
+                              ? l10n.quickAddConfirmDate
+                              : l10n.quickAddConfirm,
+                        ),
                 ),
                 const SizedBox(height: 8),
                 OutlinedButton(

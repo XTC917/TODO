@@ -576,6 +576,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quickAddEmptyInput => 'Please enter a task description.';
 
   @override
+  String get quickAddDateUnresolved =>
+      'Date not recognized. Please confirm the date.';
+
+  @override
+  String get quickAddConfirmDate => 'Confirm date';
+
+  @override
   String get editTitle => 'Edit';
 
   @override

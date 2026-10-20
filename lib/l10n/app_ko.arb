@@ -183,6 +183,8 @@
   "quickAddConfirm": "추가 확인",
   "quickAddEdit": "편집",
   "quickAddEmptyInput": "할 일 설명을 입력하세요.",
+  "quickAddDateUnresolved": "날짜를 인식하지 못했습니다. 날짜를 확인하세요.",
+  "quickAddConfirmDate": "날짜 확인",
   "editTitle": "편집",
   "titleLabel": "제목",
   "typeLabel": "유형",

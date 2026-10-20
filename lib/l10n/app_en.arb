@@ -234,6 +234,8 @@
   "quickAddConfirm": "Confirm",
   "quickAddEdit": "Edit",
   "quickAddEmptyInput": "Please enter a task description.",
+  "quickAddDateUnresolved": "Date not recognized. Please confirm the date.",
+  "quickAddConfirmDate": "Confirm date",
   "editTitle": "Edit",
   "titleLabel": "Title",
   "typeLabel": "Type",

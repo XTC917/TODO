@@ -32,15 +32,21 @@ class EnglishNaturalLanguageParser {
 
     final normalized = _normalize(raw);
     final removals = <_Span>[];
-    final lower = normalized.toLowerCase();
+    var working = normalized;
+
+    final note = _extractNote(working, removals);
+    if (note != null) {
+      working = _maskSpan(working, note.span);
+    }
+    final lower = working.toLowerCase();
     final eveningContext = lower.contains('tonight');
 
-    final explicitType = _extractExplicitTaskType(normalized, removals);
-    final date = _extractDate(normalized, ref, removals);
-    final range = _extractTimeRange(normalized, removals);
+    final explicitType = _extractExplicitTaskType(working, removals);
+    final date = _extractDate(working, ref, removals);
+    final range = _extractTimeRange(working, removals);
     final single = range == null
         ? _extractSingleTime(
-            normalized,
+            working,
             removals,
             eveningContext: eveningContext,
           )
@@ -48,7 +54,7 @@ class EnglishNaturalLanguageParser {
 
     var startTime = range?.start ?? single;
     var endTime = range?.end;
-    final isDeadline = _hasDeadlineHint(normalized, removals);
+    final isDeadline = _hasDeadlineHint(working, removals);
 
     if (isDeadline && startTime != null && endTime == null) {
       endTime = startTime;
@@ -71,7 +77,7 @@ class EnglishNaturalLanguageParser {
     );
 
     final reminderOffsets = _extractReminders(
-      normalized,
+      working,
       removals,
       canSchedule: _canScheduleReminder(
         taskType: taskType,
@@ -90,6 +96,7 @@ class EnglishNaturalLanguageParser {
       date: date,
       startTime: startTime,
       endTime: endTime,
+      note: note?.text,
       taskType: taskType,
       todoTimeMode: todoTimeMode,
       reminderOffsetsSeconds: reminderOffsets,
@@ -122,9 +129,9 @@ class EnglishNaturalLanguageParser {
   }) {
     if (taskType == TaskType.schedule) return TodoTimeMode.timeBlock;
     if (isDeadline && hasDeadlineTime) return TodoTimeMode.deadline;
-    if (!hasDate) return TodoTimeMode.noTime;
     if (isDeadline || hasDeadlineTime) return TodoTimeMode.deadline;
     if (hasBlockTime) return TodoTimeMode.timeBlock;
+    if (!hasDate) return TodoTimeMode.noTime;
     return TodoTimeMode.deadline;
   }
 
@@ -199,6 +206,36 @@ class EnglishNaturalLanguageParser {
   }
 
   DateTime _dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
+
+  _NoteResult? _extractNote(String text, List<_Span> removals) {
+    final patterns = <RegExp>[
+      RegExp(r'\bnote(?:s)?\s*[:：]\s*([^,;.!?]+)', caseSensitive: false),
+      RegExp(r'(?:备注|说明|注释)\s*(?:一下)?\s*[:：]?\s*([^，,；;。!?！？]+)'),
+    ];
+
+    Match? best;
+    for (final pattern in patterns) {
+      final match = pattern.firstMatch(text);
+      if (match == null) continue;
+      if (best == null || match.start < best.start) best = match;
+    }
+    if (best == null) return null;
+
+    var note = (best.group(1) ?? '').trim();
+    note = note.replaceFirst(RegExp(r'^(?:在|于)\s*'), '').trim();
+    note = note.replaceFirst(RegExp(r'^(?:地点|位置)\s*[:：]?\s*(?:在)?\s*'), '');
+    if (note.isEmpty) return null;
+
+    final span = _Span(best.start, best.end);
+    removals.add(span);
+    return _NoteResult(note, span);
+  }
+
+  String _maskSpan(String text, _Span span) {
+    final length = span.end - span.start;
+    if (length <= 0) return text;
+    return text.replaceRange(span.start, span.end, ' ' * length);
+  }
 
   DateTime? _extractDate(String text, DateTime ref, List<_Span> removals) {
     final patterns = <RegExp>[
@@ -297,9 +334,8 @@ class EnglishNaturalLanguageParser {
 
     for (final (pattern, bothMeridiem) in patterns) {
       for (final m in pattern.allMatches(text)) {
-        final range = bothMeridiem
-            ? _rangeWithMeridiem(m)
-            : _rangeWithSharedMeridiem(m);
+        final range =
+            bothMeridiem ? _rangeWithMeridiem(m) : _rangeWithSharedMeridiem(m);
         if (range == null) continue;
         if (best == null || m.end - m.start > best.end - best.start) {
           best = m;
@@ -376,7 +412,7 @@ class EnglishNaturalLanguageParser {
     }
 
     for (final m in RegExp(
-      r'\b(?:at\s+)?(\d{1,2})\s*(?:o''?clock\b)?(?!s*(?:am|pm)\b)',
+      r'\b(?:at\s+)?(\d{1,2})\s*(?:o' '?clock\b)?(?!s*(?:am|pm)\b)',
       caseSensitive: false,
     ).allMatches(text)) {
       if (RegExp(r'\d:\d').hasMatch(m.group(0)!)) continue;
@@ -592,6 +628,12 @@ class _Span {
   const _Span(this.start, this.end);
   final int start;
   final int end;
+}
+
+class _NoteResult {
+  const _NoteResult(this.text, this.span);
+  final String text;
+  final _Span span;
 }
 
 class _TimeRange {

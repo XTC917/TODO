@@ -183,6 +183,8 @@
   "quickAddConfirm": "确认添加",
   "quickAddEdit": "编辑",
   "quickAddEmptyInput": "请输入任务描述。",
+  "quickAddDateUnresolved": "日期未识别，请确认日期",
+  "quickAddConfirmDate": "去确认日期",
   "editTitle": "编辑",
   "titleLabel": "标题",
   "typeLabel": "类型",

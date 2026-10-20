@@ -22,9 +22,14 @@ TimeOfDay _endFromStart(TimeOfDay start) {
 EventDraft parsedTaskToDraft(ParsedTask parsed, WidgetRef ref) {
   final color = themeEventColorHex(ref);
   final taskType = parsed.taskType;
-  final todoMode =
-      taskType == TaskType.schedule ? TodoTimeMode.timeBlock : parsed.todoTimeMode;
+  final todoMode = taskType == TaskType.schedule
+      ? TodoTimeMode.timeBlock
+      : parsed.todoTimeMode;
   final reminders = parsed.reminderOffsetsSeconds;
+
+  if (parsed.needsDateConfirmation) {
+    throw StateError('Date must be confirmed before creating an event draft.');
+  }
 
   if (todoMode == TodoTimeMode.noTime || parsed.date == null) {
     return EventDraft(
@@ -32,6 +37,7 @@ EventDraft parsedTaskToDraft(ParsedTask parsed, WidgetRef ref) {
       date: '',
       startTime: '',
       endTime: '',
+      note: parsed.note,
       color: color,
       taskType: TaskType.todo,
       todoTimeMode: TodoTimeMode.noTime,
@@ -40,19 +46,18 @@ EventDraft parsedTaskToDraft(ParsedTask parsed, WidgetRef ref) {
 
   final dateStr = DateTimeFormats.formatDate(parsed.date!);
 
-  if (taskType == TaskType.schedule ||
-      todoMode == TodoTimeMode.timeBlock) {
+  if (taskType == TaskType.schedule || todoMode == TodoTimeMode.timeBlock) {
     if (parsed.startTime == null) {
       return EventDraft(
         title: parsed.title,
         date: dateStr,
         startTime: '',
         endTime: '',
+        note: parsed.note,
         color: color,
         taskType: taskType,
-        todoTimeMode: taskType == TaskType.schedule
-            ? TodoTimeMode.timeBlock
-            : todoMode,
+        todoTimeMode:
+            taskType == TaskType.schedule ? TodoTimeMode.timeBlock : todoMode,
         reminderOffsetsSeconds: const [],
       );
     }
@@ -63,6 +68,7 @@ EventDraft parsedTaskToDraft(ParsedTask parsed, WidgetRef ref) {
       date: dateStr,
       startTime: _formatTime(start),
       endTime: _formatTime(end),
+      note: parsed.note,
       color: color,
       taskType: taskType,
       todoTimeMode: TodoTimeMode.timeBlock,
@@ -77,6 +83,7 @@ EventDraft parsedTaskToDraft(ParsedTask parsed, WidgetRef ref) {
       date: dateStr,
       startTime: '00:00',
       endTime: end == null ? '' : _formatTime(end),
+      note: parsed.note,
       color: color,
       taskType: TaskType.todo,
       todoTimeMode: TodoTimeMode.deadline,
@@ -89,6 +96,7 @@ EventDraft parsedTaskToDraft(ParsedTask parsed, WidgetRef ref) {
     date: dateStr,
     startTime: '00:00',
     endTime: '00:00',
+    note: parsed.note,
     color: color,
     taskType: TaskType.todo,
     todoTimeMode: todoMode,

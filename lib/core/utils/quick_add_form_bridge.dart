@@ -9,9 +9,11 @@ class QuickAddPrefill {
   const QuickAddPrefill({
     required this.date,
     required this.title,
+    this.note,
     this.startTime,
     this.endTime,
     this.deadline,
+    this.dateUnresolved = false,
     required this.taskType,
     required this.todoTimeMode,
     required this.reminderOffsetsSeconds,
@@ -19,9 +21,13 @@ class QuickAddPrefill {
 
   final DateTime? date;
   final String title;
+  final String? note;
   final TimeOfDay? startTime;
   final TimeOfDay? endTime;
   final TimeOfDay? deadline;
+
+  /// True when time/reminders were parsed but no date could be resolved.
+  final bool dateUnresolved;
   final TaskType taskType;
   final TodoTimeMode todoTimeMode;
   final List<int> reminderOffsetsSeconds;
@@ -29,7 +35,6 @@ class QuickAddPrefill {
   factory QuickAddPrefill.fromParsed({
     required ParsedTask parsed,
     TaskType? taskTypeOverride,
-    DateTime? fallbackDate,
   }) {
     final taskType = taskTypeOverride ?? parsed.taskType;
     final todoMode = QuickAddFormBridge.effectiveTodoMode(parsed, taskType);
@@ -47,11 +52,13 @@ class QuickAddPrefill {
     }
 
     return QuickAddPrefill(
-      date: parsed.date ?? fallbackDate,
+      date: parsed.date,
       title: parsed.title,
+      note: parsed.note,
       startTime: times.start,
       endTime: times.end,
       deadline: deadline,
+      dateUnresolved: parsed.needsDateConfirmation,
       taskType: taskType,
       todoTimeMode: todoMode,
       reminderOffsetsSeconds: reminders,
@@ -71,18 +78,19 @@ class QuickAddFormBridge {
     final prefill = QuickAddPrefill.fromParsed(
       parsed: parsed,
       taskTypeOverride: taskTypeOverride,
-      fallbackDate: fallbackDate,
     );
 
     return EventFormPage(
-      initialDate: prefill.date,
+      initialDate: prefill.date ?? fallbackDate,
       initialTitle: prefill.title,
+      initialNote: prefill.note,
       initialStartTime: prefill.startTime,
       initialEndTime: prefill.deadline ?? prefill.endTime,
       initialTaskType: prefill.taskType,
       initialTodoTimeMode:
           prefill.taskType == TaskType.todo ? prefill.todoTimeMode : null,
       initialReminderOffsetsSeconds: prefill.reminderOffsetsSeconds,
+      initialDateUnresolved: prefill.dateUnresolved,
     );
   }
 
@@ -100,6 +108,7 @@ class QuickAddFormBridge {
       endTime: prefill.todoTimeMode == TodoTimeMode.deadline
           ? prefill.deadline
           : prefill.endTime,
+      note: prefill.note,
       taskType: prefill.taskType,
       todoTimeMode: prefill.todoTimeMode,
       reminderOffsetsSeconds: prefill.reminderOffsetsSeconds,
@@ -132,10 +141,6 @@ class QuickAddFormBridge {
         todoMode == TodoTimeMode.deadline &&
         parsed.endTime != null) {
       return (start: null, end: parsed.endTime);
-    }
-
-    if (parsed.date == null && todoMode == TodoTimeMode.timeBlock) {
-      return (start: null, end: null);
     }
 
     if (taskType == TaskType.schedule || todoMode == TodoTimeMode.timeBlock) {

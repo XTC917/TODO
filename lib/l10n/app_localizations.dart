@@ -1114,6 +1114,18 @@ abstract class AppLocalizations {
   /// **'Please enter a task description.'**
   String get quickAddEmptyInput;
 
+  /// No description provided for @quickAddDateUnresolved.
+  ///
+  /// In en, this message translates to:
+  /// **'Date not recognized. Please confirm the date.'**
+  String get quickAddDateUnresolved;
+
+  /// No description provided for @quickAddConfirmDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm date'**
+  String get quickAddConfirmDate;
+
   /// No description provided for @editTitle.
   ///
   /// In en, this message translates to:

@@ -555,6 +555,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get quickAddEmptyInput => '请输入任务描述。';
 
   @override
+  String get quickAddDateUnresolved => '日期未识别，请确认日期';
+
+  @override
+  String get quickAddConfirmDate => '去确认日期';
+
+  @override
   String get editTitle => '编辑';
 
   @override

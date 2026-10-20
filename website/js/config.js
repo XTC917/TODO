@@ -21,7 +21,7 @@ window.JUJU_CONFIG = {
   taglineEn: "Make every day a little simpler.",
 
   /** 当前对外版本号，显示为 v2.6.7 */
-  version: "2.6.7",
+  version: "2.6.8",
 
   /**
    * 绑定自定义域名后填写，不要末尾斜杠。
@@ -36,7 +36,7 @@ window.JUJU_CONFIG = {
    * 正式版 Android / 鸿蒙目前展示为 Coming Soon。
    */
   downloads: {
-    beta: "https://juju-d7g3aezw61b68afe8-1358899741.tcloudbaseapp.com/downloads/JUJUSchedule-v2.6.7.apk",
+    beta: "https://juju-d7g3aezw61b68afe8-1358899741.tcloudbaseapp.com/downloads/JUJUSchedule-v2.6.8.apk",
   },
 
   platforms: {
