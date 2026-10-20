@@ -1077,4 +1077,37 @@ class AppLocalizationsKo extends AppLocalizations {
   String deadlineTime(String time) {
     return '마감 $time';
   }
+
+  @override
+  String get todoRangeToday => '오늘';
+
+  @override
+  String get todoRangeNext7 => '향후 7일';
+
+  @override
+  String get todoRangeNext30 => '향후 30일';
+
+  @override
+  String get todoRangeAll => '전체';
+
+  @override
+  String get todoRangeCustom => '사용자 지정';
+
+  @override
+  String get todoSortAscending => '날짜 오름차순';
+
+  @override
+  String get todoSortDescending => '날짜 내림차순';
+
+  @override
+  String get todoSortAscLabel => '오름차순';
+
+  @override
+  String get todoSortDescLabel => '내림차순';
+
+  @override
+  String get todoEmptyInRange => '이 날짜 범위에 할 일이 없습니다';
+
+  @override
+  String get todoSelectDateRange => '날짜 범위 선택';
 }

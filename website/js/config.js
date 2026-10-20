@@ -61,6 +61,7 @@ window.JUJU_CONFIG = {
    * 每条一行：version + zh / en。新版本插到数组最前面。
    */
   changelog: [
+    { version: "2.6.8", zh: "待办页支持今天 / 未来7天 / 未来30天 / 全部 / 自定义日期筛选，可切换正序倒序，并自动记住上次设置", en: "Todo date range filters (today / next 7 / next 30 / all / custom), ascending or descending sort, and remembered preferences" },
     { version: "2.6.7", zh: "新增全局任务搜索：按标题/备注搜全部待办和日程，支持状态/类型/时间筛选，重复任务按实际发生日展开", en: "Unified task search with status/type/time filters; recurring events expand into real occurrences" },
     { version: "2.6.4", zh: "通知设置增加各品牌手机的自启动指引", en: "Autostart guides for more phone brands" },
     { version: "2.6.0", zh: "统一应用名称，备份可保存外观与专注预设", en: "Unified app name; backups include appearance and focus presets" },

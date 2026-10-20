@@ -508,5 +508,16 @@
     "placeholders": {
       "time": { "type": "String" }
     }
-  }
+  },
+  "todoRangeToday": "Today",
+  "todoRangeNext7": "Next 7 days",
+  "todoRangeNext30": "Next 30 days",
+  "todoRangeAll": "All",
+  "todoRangeCustom": "Custom",
+  "todoSortAscending": "Date ascending",
+  "todoSortDescending": "Date descending",
+  "todoSortAscLabel": "Ascending",
+  "todoSortDescLabel": "Descending",
+  "todoEmptyInRange": "No todos in this date range",
+  "todoSelectDateRange": "Select date range"
 }

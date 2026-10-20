@@ -1095,4 +1095,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String deadlineTime(String time) {
     return 'Deadline $time';
   }
+
+  @override
+  String get todoRangeToday => 'Today';
+
+  @override
+  String get todoRangeNext7 => 'Next 7 days';
+
+  @override
+  String get todoRangeNext30 => 'Next 30 days';
+
+  @override
+  String get todoRangeAll => 'All';
+
+  @override
+  String get todoRangeCustom => 'Custom';
+
+  @override
+  String get todoSortAscending => 'Date ascending';
+
+  @override
+  String get todoSortDescending => 'Date descending';
+
+  @override
+  String get todoSortAscLabel => 'Ascending';
+
+  @override
+  String get todoSortDescLabel => 'Descending';
+
+  @override
+  String get todoEmptyInRange => 'No todos in this date range';
+
+  @override
+  String get todoSelectDateRange => 'Select date range';
 }

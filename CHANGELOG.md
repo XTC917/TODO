@@ -1,5 +1,19 @@
 # Changelog
 
+## v2.6.8
+
+### Added
+- Todo date range filter: **Today / Next 7 days / Next 30 days / All / Custom range**, switchable from a horizontal chip bar at the top of the Todo page. Next 7 / Next 30 include today; custom ranges include both boundaries.
+- Sort toggle for the Todo list: **ascending** (dates and in-group times from early to late) or **descending**; applies to dated pending tasks and dated completed tasks. The AppBar control now shows a text label next to the arrow (“Ascending ↓ / Descending ↑”).
+- Todo view preferences are remembered across app restarts via SharedPreferences: range preset, custom start/end dates, and sort direction. Dynamic presets only store the preset type and are recalculated from the current local date; corrupted or missing values fall back to **All + ascending**.
+
+### Changed
+- Completed todos follow the same date window as pending todos; undated completed todos stay in the completed section, and undated long-term tasks are always visible and unaffected by sorting.
+- Changing the date range, the sort direction, or crossing midnight clears any active batch selection so hidden tasks can never be acted on. The filter bar is hidden in batch mode.
+
+### Fixed
+- Hidden repeat “skip” marker rows are no longer rendered as blank todos in the Todo list.
+
 ## v2.6.7
 
 ### Added

@@ -343,5 +343,16 @@
   "statsFocusLabel": "집중: {duration}",
   "statsTasksLabel": "작업: {done}/{total}",
   "statsProgressLabel": "진행: {percent}%",
-  "deadlineTime": "마감 {time}"
+  "deadlineTime": "마감 {time}",
+  "todoRangeToday": "오늘",
+  "todoRangeNext7": "향후 7일",
+  "todoRangeNext30": "향후 30일",
+  "todoRangeAll": "전체",
+  "todoRangeCustom": "사용자 지정",
+  "todoSortAscending": "날짜 오름차순",
+  "todoSortDescending": "날짜 내림차순",
+  "todoSortAscLabel": "오름차순",
+  "todoSortDescLabel": "내림차순",
+  "todoEmptyInRange": "이 날짜 범위에 할 일이 없습니다",
+  "todoSelectDateRange": "날짜 범위 선택"
 }

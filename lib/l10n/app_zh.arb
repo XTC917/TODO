@@ -343,5 +343,16 @@
   "statsFocusLabel": "专注：{duration}",
   "statsTasksLabel": "任务：{done}/{total}",
   "statsProgressLabel": "进度：{percent}%",
-  "deadlineTime": "截止 {time}"
+  "deadlineTime": "截止 {time}",
+  "todoRangeToday": "今天",
+  "todoRangeNext7": "未来7天",
+  "todoRangeNext30": "未来30天",
+  "todoRangeAll": "全部",
+  "todoRangeCustom": "自定义",
+  "todoSortAscending": "日期升序",
+  "todoSortDescending": "日期降序",
+  "todoSortAscLabel": "正序",
+  "todoSortDescLabel": "倒序",
+  "todoEmptyInRange": "当前日期区间暂无待办",
+  "todoSelectDateRange": "选择日期区间"
 }

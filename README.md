@@ -6,7 +6,7 @@
 
 很多日程工具要么偏日历、要么偏任务清单。JUJU 面向个人日常规划：创建任务要快，查看今天要清楚，提醒要能在后台真正响起来。数据保存在本机 SQLite，不需要注册账号，也不依赖云同步。
 
-当前以 **Android** 为主要平台，版本 **2.6.7**。仓库里包含 Flutter 生成的 iOS / Windows / Linux / Web 工程，但提醒投递、桌面小组件和厂商后台适配都写在 Android 原生层，日常开发和发布也围绕 Android 进行。
+当前以 **Android** 为主要平台，版本 **2.6.8**。仓库里包含 Flutter 生成的 iOS / Windows / Linux / Web 工程，但提醒投递、桌面小组件和厂商后台适配都写在 Android 原生层，日常开发和发布也围绕 Android 进行。
 
 官网链接：
 
@@ -432,7 +432,7 @@ flutter test
 
 ## 📌 Current Status
 
-- **版本**：2.6.7（`pubspec.yaml` `2.6.7+56`）
+- **版本**：2.6.7（`pubspec.yaml` `2.6.8+57`）
 - **下载**：[Android APK](https://juju-d7g3aezw61b68afe8-1358899741.tcloudbaseapp.com/downloads/JUJUSchedule-v2.6.7.apk)
 - **形态**：个人独立开发的本地 Android 应用
 - **数据**：本机存储，无账号、无云同步

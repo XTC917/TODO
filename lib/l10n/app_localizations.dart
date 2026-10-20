@@ -2043,6 +2043,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Deadline {time}'**
   String deadlineTime(String time);
+
+  /// No description provided for @todoRangeToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get todoRangeToday;
+
+  /// No description provided for @todoRangeNext7.
+  ///
+  /// In en, this message translates to:
+  /// **'Next 7 days'**
+  String get todoRangeNext7;
+
+  /// No description provided for @todoRangeNext30.
+  ///
+  /// In en, this message translates to:
+  /// **'Next 30 days'**
+  String get todoRangeNext30;
+
+  /// No description provided for @todoRangeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get todoRangeAll;
+
+  /// No description provided for @todoRangeCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get todoRangeCustom;
+
+  /// No description provided for @todoSortAscending.
+  ///
+  /// In en, this message translates to:
+  /// **'Date ascending'**
+  String get todoSortAscending;
+
+  /// No description provided for @todoSortDescending.
+  ///
+  /// In en, this message translates to:
+  /// **'Date descending'**
+  String get todoSortDescending;
+
+  /// No description provided for @todoSortAscLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Ascending'**
+  String get todoSortAscLabel;
+
+  /// No description provided for @todoSortDescLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Descending'**
+  String get todoSortDescLabel;
+
+  /// No description provided for @todoEmptyInRange.
+  ///
+  /// In en, this message translates to:
+  /// **'No todos in this date range'**
+  String get todoEmptyInRange;
+
+  /// No description provided for @todoSelectDateRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Select date range'**
+  String get todoSelectDateRange;
 }
 
 class _AppLocalizationsDelegate

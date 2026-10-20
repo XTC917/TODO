@@ -43,6 +43,19 @@ website/
 7. FAQ
 8. Footer
 
+## v2.6.8 新功能（官网文案用）
+
+App 2.6.8 为**待办页**新增日期筛选、排序与偏好记忆，官网介绍功能时可以用下面这段口径：
+
+- **日期筛选**：待办页顶部新增一排可横向滑动的筛选 Chip——今天、未来 7 天、未来 30 天、全部、自定义。未来 7 / 30 天都包含今天；自定义区间包含起止两天，用系统日期范围选择器一次选完。
+- **正序 / 倒序**：右上角切换「正序 ↓ / 倒序 ↑」，同时作用于日期分组顺序和同一天内的时间顺序；已完成任务也会跟着排序。
+- **记住上次设置**：区间预设、自定义起止日期、排序方向都会保存在本地，完全退出重开后自动恢复。今天 / 未来 7 天 / 未来 30 天属于动态预设，只记住类型，每次按当天日期重新计算；自定义日期则保持原样。
+- **过滤但不影响数据**：被筛掉的任务只是不显示，不会被删除或修改；长期任务（无日期）始终可见且顺序不变；已完成任务按同一日期窗口过滤，无日期的已完成任务仍保留在已完成区。
+- **重复任务保持原有逻辑**：本次没有改动重复任务的编辑、完成、删除与批量操作，只是不再把删除单个日期后留下的隐藏标记行显示成一条空任务。
+- **细节**：切换筛选 / 排序、或跨过零点时会自动退出批量选择，避免误操作到看不见的任务；批量模式下筛选条自动隐藏。
+
+`js/config.js` 的 `changelog` 已同步写入 2.6.8 一条，首页和更新日志页的版本号 pill 会自动跟随 `version` 字段，无需手动改 HTML（运行 `deploy.ps1` 时会自动更新 `version` 和 `downloads.beta`）。
+
 ## v2.6.7 新功能（官网文案用）
 
 App 2.6.7 新增**全局任务搜索**，官网介绍功能时可以用下面这段口径：
@@ -174,26 +187,26 @@ flutter build apk --release
 在仓库根目录执行：
 
 ```powershell
-.\website\deploy.ps1 -Version 2.6.7
+.\website\deploy.ps1 -Version 2.6.8
 ```
 
 或在 `website` 目录执行：
 
 ```powershell
-.\deploy.ps1 -Version 2.6.7
+.\deploy.ps1 -Version 2.6.8
 ```
 
 脚本会：
 
 1. 检查上述 APK 是否存在
-2. 复制为 `website/downloads/JUJUSchedule-v2.6.7.apk`
+2. 复制为 `website/downloads/JUJUSchedule-v2.6.8.apk`
 3. 写入 `js/config.js` 的 `version` 和 `downloads.beta`
 4. 把 APK 上传到 CloudBase `/downloads/`
 5. 把 `js/config.js` 上传到 CloudBase `/js/config.js`
 
 下载地址会变成：
 
-`https://juju-d7g3aezw61b68afe8-1358899741.tcloudbaseapp.com/downloads/JUJUSchedule-v2.6.7.apk`
+`https://juju-d7g3aezw61b68afe8-1358899741.tcloudbaseapp.com/downloads/JUJUSchedule-v2.6.8.apk`
 
 未登录 CLI、环境 ID 不对、或找不到 APK 时，脚本会立刻停止，**不会改线上文件**。
 

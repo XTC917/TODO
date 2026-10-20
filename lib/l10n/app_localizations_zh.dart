@@ -1072,4 +1072,37 @@ class AppLocalizationsZh extends AppLocalizations {
   String deadlineTime(String time) {
     return '截止 $time';
   }
+
+  @override
+  String get todoRangeToday => '今天';
+
+  @override
+  String get todoRangeNext7 => '未来7天';
+
+  @override
+  String get todoRangeNext30 => '未来30天';
+
+  @override
+  String get todoRangeAll => '全部';
+
+  @override
+  String get todoRangeCustom => '自定义';
+
+  @override
+  String get todoSortAscending => '日期升序';
+
+  @override
+  String get todoSortDescending => '日期降序';
+
+  @override
+  String get todoSortAscLabel => '正序';
+
+  @override
+  String get todoSortDescLabel => '倒序';
+
+  @override
+  String get todoEmptyInRange => '当前日期区间暂无待办';
+
+  @override
+  String get todoSelectDateRange => '选择日期区间';
 }
