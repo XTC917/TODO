@@ -30,6 +30,25 @@ android {
         versionName = flutter.versionName
     }
 
+    // Two installable builds sharing one Flutter codebase.
+    //  - prod   : public app "JUJU Schedule" (unchanged applicationId/data dir, no AI).
+    //  - private: private AI app "JUJU aiSchedule" (Gemini Smart Add).
+    flavorDimensions += "version"
+    productFlavors {
+        create("prod") {
+            dimension = "version"
+            applicationId = "com.juju.schedule"
+        }
+        create("private") {
+            dimension = "version"
+            // Deliberately keep the historical ".dev" applicationId so an
+            // existing com.juju.schedule.dev install upgrades in place.
+            // Distinct applicationId => separate install, data dir, prefs and
+            // SQLite database. Never shares user data with prod.
+            applicationId = "com.juju.schedule.dev"
+        }
+    }
+
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.
@@ -59,20 +78,30 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:2.9.1")
 }
 
-// Flutter copies release output as app-release.apk; also emit a branded copy.
+// Flutter copies release output as app-<flavor>-release.apk; also emit a
+// branded copy for each flavor.
 tasks.register("copyBrandedReleaseApk") {
     doLast {
         val flutterApkDir = layout.buildDirectory.dir("outputs/flutter-apk").get().asFile
-        val from = flutterApkDir.resolve("app-release.apk")
-        val to = flutterApkDir.resolve("JUJUSchedule-v${flutter.versionName}.apk")
-        if (from.exists()) {
-            from.copyTo(to, overwrite = true)
+        val branded = mapOf(
+            "prod" to "JUJUSchedule-v${flutter.versionName}.apk",
+            "private" to "JUJUaiSchedule-v${flutter.versionName}.apk",
+        )
+        branded.forEach { (flavor, targetName) ->
+            val from = flutterApkDir.resolve("app-$flavor-release.apk")
+            if (from.exists()) {
+                from.copyTo(flutterApkDir.resolve(targetName), overwrite = true)
+            }
         }
     }
 }
 
 afterEvaluate {
-    tasks.matching { it.name == "assembleRelease" }.configureEach {
+    tasks.matching {
+        it.name == "assembleRelease" ||
+            it.name == "assembleProdRelease" ||
+            it.name == "assemblePrivateRelease"
+    }.configureEach {
         finalizedBy("copyBrandedReleaseApk")
     }
 }

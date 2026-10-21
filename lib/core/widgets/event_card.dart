@@ -81,7 +81,9 @@ class EventCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${event.startTime} - ${event.endTime}',
+                          event.endTime.isEmpty
+                              ? event.startTime
+                              : '${event.startTime} - ${event.endTime}',
                           style: theme.textTheme.labelLarge?.copyWith(
                             color: theme.colorScheme.onSurface
                                 .withValues(alpha: completed ? 0.35 : 0.55),

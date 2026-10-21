@@ -561,6 +561,37 @@ class AppLocalizationsZh extends AppLocalizations {
   String get quickAddConfirmDate => '去确认日期';
 
   @override
+  String get aiSmartAddButton => 'AI 智能识别';
+
+  @override
+  String get aiSmartAddRecognizing => '正在识别…';
+
+  @override
+  String get aiSmartAddBadge => 'Gemini AI';
+
+  @override
+  String get aiSmartAddNoKey =>
+      '未配置 Gemini API Key，请在本地开发配置中添加 GEMINI_API_KEY。';
+
+  @override
+  String get aiSmartAddTimeout => 'AI 识别超时，请重试或使用规则识别。';
+
+  @override
+  String get aiSmartAddNetworkError => '网络不可用，请检查网络后重试。';
+
+  @override
+  String get aiSmartAddAuthError => 'AI 服务拒绝了该 Key（401/403），请检查 API Key。';
+
+  @override
+  String get aiSmartAddRateLimited => 'AI 配额不足（429），请稍后再试。';
+
+  @override
+  String get aiSmartAddServerError => 'AI 服务暂时异常，请稍后再试。';
+
+  @override
+  String get aiSmartAddInvalidResponse => 'AI 结果无法解析，请重试或使用规则识别。';
+
+  @override
   String get editTitle => '编辑';
 
   @override
@@ -595,6 +626,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get endLabel => '结束';
+
+  @override
+  String get noEndTime => '无结束时间';
+
+  @override
+  String get clearEndTime => '清除结束时间';
 
   @override
   String get deadlineLabel => '截止时间';

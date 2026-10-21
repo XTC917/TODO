@@ -177,10 +177,11 @@ tcb login
 2. 在项目根目录打好 Release APK：
 
 ```powershell
-flutter build apk --release
+flutter build apk --release --flavor prod
 ```
 
-产物路径必须是：`build/app/outputs/flutter-apk/app-release.apk`
+产物路径必须是：`build/app/outputs/flutter-apk/app-prod-release.apk`
+（旧的 `app-release.apk` 仍兼容，但公开版请务必用 `--flavor prod`，不要把 private/AI 包发上官网。）
 
 ### 发布
 

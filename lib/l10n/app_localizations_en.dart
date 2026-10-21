@@ -583,6 +583,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quickAddConfirmDate => 'Confirm date';
 
   @override
+  String get aiSmartAddButton => 'AI Smart Add';
+
+  @override
+  String get aiSmartAddRecognizing => 'Recognizing…';
+
+  @override
+  String get aiSmartAddBadge => 'Gemini AI';
+
+  @override
+  String get aiSmartAddNoKey =>
+      'Gemini API key is not configured. Add GEMINI_API_KEY to your local dev config.';
+
+  @override
+  String get aiSmartAddTimeout =>
+      'AI request timed out. Please retry or use rule-based parsing.';
+
+  @override
+  String get aiSmartAddNetworkError =>
+      'Network unavailable. Check your connection and retry.';
+
+  @override
+  String get aiSmartAddAuthError =>
+      'AI service rejected the key (401/403). Please check your API key.';
+
+  @override
+  String get aiSmartAddRateLimited =>
+      'AI quota exceeded (429). Please try again later.';
+
+  @override
+  String get aiSmartAddServerError =>
+      'AI service is temporarily unavailable. Please try again later.';
+
+  @override
+  String get aiSmartAddInvalidResponse =>
+      'Couldn\'t understand the AI result. Retry or use rule-based parsing.';
+
+  @override
   String get editTitle => 'Edit';
 
   @override
@@ -617,6 +654,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get endLabel => 'End';
+
+  @override
+  String get noEndTime => 'No end time';
+
+  @override
+  String get clearEndTime => 'Clear end time';
 
   @override
   String get deadlineLabel => 'Deadline';

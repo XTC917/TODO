@@ -566,6 +566,38 @@ class AppLocalizationsKo extends AppLocalizations {
   String get quickAddConfirmDate => '날짜 확인';
 
   @override
+  String get aiSmartAddButton => 'AI 스마트 추가';
+
+  @override
+  String get aiSmartAddRecognizing => '인식 중…';
+
+  @override
+  String get aiSmartAddBadge => 'Gemini AI';
+
+  @override
+  String get aiSmartAddNoKey =>
+      'Gemini API 키가 설정되지 않았습니다. 로컬 개발 설정에 GEMINI_API_KEY를 추가하세요.';
+
+  @override
+  String get aiSmartAddTimeout => 'AI 요청 시간이 초과되었습니다. 다시 시도하거나 규칙 인식을 사용하세요.';
+
+  @override
+  String get aiSmartAddNetworkError => '네트워크를 사용할 수 없습니다. 연결을 확인한 후 다시 시도하세요.';
+
+  @override
+  String get aiSmartAddAuthError => 'AI 서비스가 키를 거부했습니다(401/403). API 키를 확인하세요.';
+
+  @override
+  String get aiSmartAddRateLimited => 'AI 할당량이 초과되었습니다(429). 나중에 다시 시도하세요.';
+
+  @override
+  String get aiSmartAddServerError => 'AI 서비스를 일시적으로 사용할 수 없습니다. 나중에 다시 시도하세요.';
+
+  @override
+  String get aiSmartAddInvalidResponse =>
+      'AI 결과를 해석할 수 없습니다. 다시 시도하거나 규칙 인식을 사용하세요.';
+
+  @override
   String get editTitle => '편집';
 
   @override
@@ -600,6 +632,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get endLabel => '종료';
+
+  @override
+  String get noEndTime => '종료 시간 없음';
+
+  @override
+  String get clearEndTime => '종료 시간 지우기';
 
   @override
   String get deadlineLabel => '마감 시간';

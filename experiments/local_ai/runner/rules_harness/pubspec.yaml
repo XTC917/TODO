@@ -1,0 +1,22 @@
+name: rules_harness
+description: Runs the existing JUJU Dart rule parser over the experiment dataset.
+publish_to: none
+version: 0.0.1
+
+environment:
+  sdk: ">=3.5.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # Direct file references to the real parser sources. No business logic is
+  # copied; the harness imports the exact files from lib/.
+  soft_schedule_rules:
+    path: ../../../..
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true

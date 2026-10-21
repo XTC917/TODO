@@ -393,19 +393,99 @@ flutter run -d <device_id>
 
 
 
+### 双版本（prod / private）
+
+同一个仓库、同一套 `lib` 源码和同一个 `pubspec.yaml` 版本号，构建出两个可同时安装的 App：
+
+| 版本 | 桌面名称 | Flavor | applicationId | AI Smart Add |
+| --- | --- | --- | --- | --- |
+| 公开版 | JUJU Schedule | `prod` | `com.juju.schedule` | 不显示、不注入 Key |
+| 私人版 | JUJU aiSchedule | `private` | `com.juju.schedule.dev` | 显示，走云端 Gemini |
+
+私人版沿用历史 `com.juju.schedule.dev`，因此可以直接覆盖升级现有安装，数据目录、SQLite 文件和偏好设置都保持不变。不要改成 `com.juju.schedule.private`。
+
 ### 构建 Release APK
 
-```bash
-flutter build apk --release
+```powershell
+# 公开版（官网发布用）
+flutter build apk --release --flavor prod
+
+# 私人 AI 版（仅自己的设备，需本地 dev_config.json）
+flutter build apk --release --flavor private --dart-define-from-file=dev_config.json
 ```
 
-产物在 `build/app/outputs/flutter-apk/`。构建完成后会额外复制一份 `JUJUSchedule-v<version>.apk`。
+调试运行同理：
+
+```powershell
+flutter run --flavor prod
+flutter run --flavor private --dart-define-from-file=dev_config.json
+```
+
+产物在 `build/app/outputs/flutter-apk/`，并会额外复制一份：
+
+- `JUJUSchedule-v<version>.apk`（prod）
+- `JUJUaiSchedule-v<version>.apk`（private）
 
 Windows 上若已连接手机并打开 USB 调试，可以用：
 
 ```powershell
 .\scripts\install_release.ps1
 ```
+
+### Gemini API Key 配置（仅 private）
+
+```powershell
+Copy-Item dev_config.example.json dev_config.json
+```
+
+编辑 `dev_config.json`：
+
+```json
+{
+  "APP_FLAVOR": "private",
+  "GEMINI_API_KEY": "你的真实 Key",
+  "GEMINI_MODEL": "可用的 Gemini 模型名"
+}
+```
+
+- `dev_config.json` 已被 `.gitignore` 忽略，**不要提交**。
+- 公开版构建不传 `--dart-define-from-file`，因此不会包含 Key，也不会初始化 Gemini。
+- `--dart-define` 只能防止源码泄漏，APK 里仍可能被提取 Key；带真实 Key 的 private APK 只给自己和家人安装，不要上传官网或公开分发。
+
+### 给家人安装私人版
+
+1. 用自己电脑构建 `app-private-release.apk`（或品牌副本 `JUJUaiSchedule-vX.Y.Z.apk`）。
+2. 通过数据线 `adb install -r ...`，或把 APK 发给家人手动点击安装（允许“未知来源”）。
+3. 桌面名称显示 `JUJU aiSchedule`，和公开版 `JUJU Schedule` 可以同时存在。
+4. 提醒家人：这个包内含你的 Key，不要转发给其他人。
+
+### 覆盖更新且不丢数据
+
+- 保持 `applicationId = com.juju.schedule.dev` 和同一套签名，直接覆盖安装即可升级，数据不会清空。
+- 推荐：`adb install -r build\app\outputs\flutter-apk\app-private-release.apk`（不带 `-r` 的重复安装可能失败）。
+- **不要卸载后再装**。卸载会删除应用数据目录。
+- 若更换了签名，系统会拒绝覆盖；此时只能先导出备份再卸载重装，尽量避免更换签名。
+- prod 用户升级同理：包名 `com.juju.schedule` 不变即可正常覆盖升级。
+
+### 安全发布公开版到官网
+
+1. 只构建 `--flavor prod`，永远不要把 private 包上传。
+2. 更新 `website/js/config.js` 的 `changelog`。
+3. 执行 `.\website\deploy.ps1 -Version X.Y.Z` 增量发布 APK 与 config。
+4. 详见 `website/README.md`。
+
+### 把 AI 源码提交到 GitHub 而不泄露 Key
+
+- AI 源码位于 `lib/core/ai/`、`lib/core/config/ai_config.dart`，可以正常提交。
+- `dev_config.json`、`*.apk`、SQLite 数据库、备份文件和签名文件都已忽略，不要 `git add -f` 强制加入。
+- 提交前检查：
+
+```powershell
+git status
+git check-ignore dev_config.json
+```
+
+- 永远不要在 Dart 源码里写死 Key；只用 `--dart-define` / `--dart-define-from-file` 注入。
 
 
 

@@ -6,12 +6,16 @@
 #
 # Usage:
 #   .\scripts\install_release.ps1
+#   .\scripts\install_release.ps1 -Flavor private -DartDefineFile dev_config.json
 #   .\scripts\install_release.ps1 -SkipBuild    # install existing APK only
 #   .\scripts\install_release.ps1 -DeviceId abc123   # when multiple devices
 
 param(
     [switch]$SkipBuild,
-    [string]$DeviceId = ""
+    [string]$DeviceId = "",
+    [ValidateSet("prod", "private")]
+    [string]$Flavor = "prod",
+    [string]$DartDefineFile = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -54,17 +58,34 @@ if ($DeviceId -ne "") {
 
 if (-not $SkipBuild) {
     Write-Host ""
-    Write-Host "Building release APK..."
-    flutter build apk --release
+    Write-Host "Building $Flavor release APK..."
+    $buildArgs = @("build", "apk", "--release", "--flavor", $Flavor)
+    if ($DartDefineFile -ne "") {
+        $buildArgs += @("--dart-define-from-file", $DartDefineFile)
+    }
+    & flutter @buildArgs
     if ($LASTEXITCODE -ne 0) {
-        throw "flutter build apk --release failed."
+        throw "flutter $($buildArgs -join ' ') failed."
     }
 }
 
 $apkDir = Join-Path $ProjectRoot "build\app\outputs\flutter-apk"
-$apk = Get-ChildItem $apkDir -Filter "JUJUSchedule-v*.apk" -ErrorAction SilentlyContinue |
+if ($Flavor -eq "private") {
+    $brandPattern = "JUJUaiSchedule-v*.apk"
+    $fallbackName = "app-private-release.apk"
+    $appLabel = "JUJU aiSchedule"
+} else {
+    $brandPattern = "JUJUSchedule-v*.apk"
+    $fallbackName = "app-prod-release.apk"
+    $appLabel = "JUJU Schedule"
+}
+
+$apk = Get-ChildItem $apkDir -Filter $brandPattern -ErrorAction SilentlyContinue |
     Sort-Object LastWriteTime -Descending |
     Select-Object -First 1
+if ($null -eq $apk) {
+    $apk = Get-Item (Join-Path $apkDir $fallbackName) -ErrorAction SilentlyContinue
+}
 if ($null -eq $apk) {
     $apk = Get-Item (Join-Path $apkDir "app-release.apk") -ErrorAction SilentlyContinue
 }
@@ -81,4 +102,4 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Host ""
-Write-Host "Done. JUJU Schedule (release) is installed on your phone."
+Write-Host "Done. $appLabel (release) is installed on your phone."

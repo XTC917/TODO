@@ -26,3 +26,22 @@ build/
 *.aab
 app.*.symbols
 app.*.map.json
+
+# Local databases and backups (may contain private schedule data).
+*.sqlite
+*.sqlite3
+*.sqlite-wal
+*.sqlite-shm
+*.db
+
+# Private AI dev config (contains the Gemini API key): never commit.
+dev_config.json
+dev_config.*.json
+!dev_config.example.json
+
+# Local AI experiment (Stage 2B-A): never commit models or large artifacts
+experiments/local_ai/models/
+experiments/local_ai/out/
+experiments/local_ai/.venv/
+experiments/local_ai/**/*.gguf
+experiments/local_ai/**/__pycache__/

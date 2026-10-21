@@ -325,6 +325,15 @@ class _TimelineTimeColumn extends StatelessWidget {
       );
     }
 
+    if (event.isSchedule &&
+        event.startTime.isNotEmpty &&
+        event.endTime.isEmpty) {
+      return Align(
+        alignment: Alignment.centerLeft,
+        child: Text(event.startTime, style: style),
+      );
+    }
+
     if (event.startTime.isEmpty || event.endTime.isEmpty) {
       return const SizedBox.shrink();
     }

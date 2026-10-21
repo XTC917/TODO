@@ -1126,6 +1126,66 @@ abstract class AppLocalizations {
   /// **'Confirm date'**
   String get quickAddConfirmDate;
 
+  /// No description provided for @aiSmartAddButton.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Smart Add'**
+  String get aiSmartAddButton;
+
+  /// No description provided for @aiSmartAddRecognizing.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognizing…'**
+  String get aiSmartAddRecognizing;
+
+  /// No description provided for @aiSmartAddBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Gemini AI'**
+  String get aiSmartAddBadge;
+
+  /// No description provided for @aiSmartAddNoKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Gemini API key is not configured. Add GEMINI_API_KEY to your local dev config.'**
+  String get aiSmartAddNoKey;
+
+  /// No description provided for @aiSmartAddTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'AI request timed out. Please retry or use rule-based parsing.'**
+  String get aiSmartAddTimeout;
+
+  /// No description provided for @aiSmartAddNetworkError.
+  ///
+  /// In en, this message translates to:
+  /// **'Network unavailable. Check your connection and retry.'**
+  String get aiSmartAddNetworkError;
+
+  /// No description provided for @aiSmartAddAuthError.
+  ///
+  /// In en, this message translates to:
+  /// **'AI service rejected the key (401/403). Please check your API key.'**
+  String get aiSmartAddAuthError;
+
+  /// No description provided for @aiSmartAddRateLimited.
+  ///
+  /// In en, this message translates to:
+  /// **'AI quota exceeded (429). Please try again later.'**
+  String get aiSmartAddRateLimited;
+
+  /// No description provided for @aiSmartAddServerError.
+  ///
+  /// In en, this message translates to:
+  /// **'AI service is temporarily unavailable. Please try again later.'**
+  String get aiSmartAddServerError;
+
+  /// No description provided for @aiSmartAddInvalidResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t understand the AI result. Retry or use rule-based parsing.'**
+  String get aiSmartAddInvalidResponse;
+
   /// No description provided for @editTitle.
   ///
   /// In en, this message translates to:
@@ -1197,6 +1257,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'End'**
   String get endLabel;
+
+  /// No description provided for @noEndTime.
+  ///
+  /// In en, this message translates to:
+  /// **'No end time'**
+  String get noEndTime;
+
+  /// No description provided for @clearEndTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear end time'**
+  String get clearEndTime;
 
   /// No description provided for @deadlineLabel.
   ///

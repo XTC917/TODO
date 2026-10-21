@@ -62,12 +62,19 @@ EventDraft parsedTaskToDraft(ParsedTask parsed, WidgetRef ref) {
       );
     }
     final start = parsed.startTime!;
-    final end = parsed.endTime ?? _endFromStart(start);
+    // Schedules may be a single time point; never invent an end time.
+    // Todo time blocks keep their legacy one-hour default.
+    final String endTime;
+    if (taskType == TaskType.schedule) {
+      endTime = parsed.endTime == null ? '' : _formatTime(parsed.endTime!);
+    } else {
+      endTime = _formatTime(parsed.endTime ?? _endFromStart(start));
+    }
     return EventDraft(
       title: parsed.title,
       date: dateStr,
       startTime: _formatTime(start),
-      endTime: _formatTime(end),
+      endTime: endTime,
       note: parsed.note,
       color: color,
       taskType: taskType,

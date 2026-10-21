@@ -1,7 +1,12 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/ai/ai_error.dart';
+import '../../core/ai/ai_smart_add_service.dart';
+import '../../core/config/ai_config.dart';
 import '../../core/providers/app_providers.dart';
+import '../../core/providers/l10n_providers.dart';
 import '../../core/utils/date_time_formats.dart';
 import '../../core/utils/parsed_task.dart';
 import '../../core/utils/parsed_task_draft.dart';
@@ -18,10 +23,14 @@ class QuickAddPage extends ConsumerStatefulWidget {
     super.key,
     this.initialDate,
     this.forceTaskType,
+    this.aiService,
   });
 
   final DateTime? initialDate;
   final TaskType? forceTaskType;
+
+  /// Injectable for tests; defaults to the Gemini-backed service.
+  final AiSmartAddService? aiService;
 
   @override
   ConsumerState<QuickAddPage> createState() => _QuickAddPageState();
@@ -29,9 +38,16 @@ class QuickAddPage extends ConsumerStatefulWidget {
 
 class _QuickAddPageState extends ConsumerState<QuickAddPage> {
   final _inputController = TextEditingController();
+  AiSmartAddService? _aiServiceInstance;
   _QuickAddStep _step = _QuickAddStep.input;
   ParsedTask? _parsed;
   bool _saving = false;
+  bool _aiLoading = false;
+  bool _parsedByAi = false;
+
+  /// Created on first dev-only use so prod never initializes Gemini.
+  AiSmartAddService get _aiService =>
+      _aiServiceInstance ??= (widget.aiService ?? AiSmartAddService());
 
   QuickAddParserLanguage? get _parserLanguage =>
       resolveQuickAddParserLanguage(ref.read(appLanguageProvider));
@@ -73,8 +89,75 @@ class _QuickAddPageState extends ConsumerState<QuickAddPage> {
 
     setState(() {
       _parsed = parsed;
+      _parsedByAi = false;
       _step = _QuickAddStep.preview;
     });
+  }
+
+  Future<void> _goToPreviewAi() async {
+    if (!AiConfig.isEnabled || _aiLoading) return;
+
+    final l10n = AppLocalizations.of(context);
+    final text = _inputController.text.trim();
+    if (text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.quickAddEmptyInput)),
+      );
+      return;
+    }
+    if (!_aiService.isConfigured) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.aiSmartAddNoKey)),
+      );
+      return;
+    }
+
+    setState(() => _aiLoading = true);
+    try {
+      final parsed = await _aiService.parse(
+        text,
+        reference: DateTime.now(),
+        languageCode:
+            resolveAppLocale(ref.read(appLanguageProvider)).languageCode,
+      );
+      if (!mounted) return;
+      setState(() {
+        _aiLoading = false;
+        _parsed = parsed;
+        _parsedByAi = true;
+        _step = _QuickAddStep.preview;
+      });
+    } on AiSmartAddException catch (error) {
+      if (kDebugMode) {
+        debugPrint(
+          '[JUJU-AI] smart add failed kind=${error.kind.name} '
+          'status=${error.statusCode} detail=${error.detail}',
+        );
+      }
+      if (!mounted) return;
+      setState(() => _aiLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_aiErrorMessage(l10n, error.kind))),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _aiLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.aiSmartAddInvalidResponse)),
+      );
+    }
+  }
+
+  String _aiErrorMessage(AppLocalizations l10n, AiErrorKind kind) {
+    return switch (kind) {
+      AiErrorKind.missingKey => l10n.aiSmartAddNoKey,
+      AiErrorKind.timeout => l10n.aiSmartAddTimeout,
+      AiErrorKind.network => l10n.aiSmartAddNetworkError,
+      AiErrorKind.unauthorized => l10n.aiSmartAddAuthError,
+      AiErrorKind.rateLimited => l10n.aiSmartAddRateLimited,
+      AiErrorKind.server => l10n.aiSmartAddServerError,
+      AiErrorKind.invalidResponse => l10n.aiSmartAddInvalidResponse,
+    };
   }
 
   Future<void> _confirmAdd() async {
@@ -131,7 +214,10 @@ class _QuickAddPageState extends ConsumerState<QuickAddPage> {
         leading: _step == _QuickAddStep.preview
             ? IconButton(
                 icon: const Icon(Icons.arrow_back_rounded),
-                onPressed: () => setState(() => _step = _QuickAddStep.input),
+                onPressed: () => setState(() {
+                  _step = _QuickAddStep.input;
+                  _parsedByAi = false;
+                }),
               )
             : null,
       ),
@@ -139,12 +225,16 @@ class _QuickAddPageState extends ConsumerState<QuickAddPage> {
           ? _InputStep(
               controller: _inputController,
               hint: l10n.quickAddHint,
+              aiEnabled: AiConfig.isEnabled,
+              aiLoading: _aiLoading,
               onNext: _goToPreview,
+              onAiRecognize: _goToPreviewAi,
             )
           : _PreviewStep(
               parsed: _parsed!,
               rawInput: _inputController.text.trim(),
               saving: _saving,
+              parsedByAi: _parsedByAi,
               onConfirm: _confirmAdd,
               onEdit: _openEditor,
               onSwitchTaskType: _switchTaskType,
@@ -157,12 +247,18 @@ class _InputStep extends StatelessWidget {
   const _InputStep({
     required this.controller,
     required this.hint,
+    required this.aiEnabled,
+    required this.aiLoading,
     required this.onNext,
+    required this.onAiRecognize,
   });
 
   final TextEditingController controller;
   final String hint;
+  final bool aiEnabled;
+  final bool aiLoading;
   final VoidCallback onNext;
+  final VoidCallback onAiRecognize;
 
   @override
   Widget build(BuildContext context) {
@@ -195,15 +291,46 @@ class _InputStep extends StatelessWidget {
           top: false,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-            child: FilledButton(
-              onPressed: onNext,
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(48),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (aiEnabled) ...[
+                  FilledButton.tonalIcon(
+                    onPressed: aiLoading ? null : onAiRecognize,
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(48),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    icon: aiLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator.adaptive(
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Icon(Icons.auto_awesome_rounded),
+                    label: Text(
+                      aiLoading
+                          ? l10n.aiSmartAddRecognizing
+                          : l10n.aiSmartAddButton,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                FilledButton(
+                  onPressed: aiLoading ? null : onNext,
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: Text(l10n.quickAddNext),
                 ),
-              ),
-              child: Text(l10n.quickAddNext),
+              ],
             ),
           ),
         ),
@@ -217,6 +344,7 @@ class _PreviewStep extends StatelessWidget {
     required this.parsed,
     required this.rawInput,
     required this.saving,
+    required this.parsedByAi,
     required this.onConfirm,
     required this.onEdit,
     required this.onSwitchTaskType,
@@ -225,6 +353,7 @@ class _PreviewStep extends StatelessWidget {
   final ParsedTask parsed;
   final String rawInput;
   final bool saving;
+  final bool parsedByAi;
   final VoidCallback onConfirm;
   final VoidCallback onEdit;
   final ValueChanged<TaskType> onSwitchTaskType;
@@ -248,9 +377,23 @@ class _PreviewStep extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              Text(
-                l10n.quickAddParseResult,
-                style: theme.textTheme.labelLarge,
+              Row(
+                children: [
+                  Text(
+                    l10n.quickAddParseResult,
+                    style: theme.textTheme.labelLarge,
+                  ),
+                  if (parsedByAi) ...[
+                    const SizedBox(width: 8),
+                    Chip(
+                      avatar: const Icon(Icons.auto_awesome_rounded, size: 14),
+                      label: Text(l10n.aiSmartAddBadge),
+                      visualDensity: VisualDensity.compact,
+                      materialTapTargetSize:
+                          MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ],
+                ],
               ),
               const SizedBox(height: 10),
               SegmentedButton<TaskType>(

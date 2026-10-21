@@ -6,7 +6,9 @@
 #   .\deploy.ps1 -Version 2.6.5
 #
 # Prerequisites:
-#   1. flutter build apk --release  (creates build/app/outputs/flutter-apk/app-release.apk)
+#   1. flutter build apk --release --flavor prod
+#      (creates build/app/outputs/flutter-apk/app-prod-release.apk)
+#      Legacy non-flavored builds (app-release.apk) are still accepted.
 #   2. CloudBase CLI: npm i -g @cloudbase/cli
 #   3. tcb login
 
@@ -47,7 +49,14 @@ if ([string]::IsNullOrWhiteSpace($EnvId)) {
 
 $WebsiteRoot = $PSScriptRoot
 $ProjectRoot = Split-Path -Parent $WebsiteRoot
-$SourceApk = Join-Path $ProjectRoot "build\app\outputs\flutter-apk\app-release.apk"
+$ApkCandidates = @(
+    (Join-Path $ProjectRoot "build\app\outputs\flutter-apk\app-prod-release.apk"),
+    (Join-Path $ProjectRoot "build\app\outputs\flutter-apk\app-release.apk")
+)
+$SourceApk = $ApkCandidates |
+    Where-Object { Test-Path -LiteralPath $_ } |
+    Select-Object -First 1
+if (-not $SourceApk) { $SourceApk = $ApkCandidates[0] }
 $DownloadsDir = Join-Path $WebsiteRoot "downloads"
 $ApkName = "JUJUSchedule-v$Version.apk"
 $LocalApk = Join-Path $DownloadsDir $ApkName
@@ -62,7 +71,7 @@ Release APK not found:
   $SourceApk
 
 Run this first in the project root:
-  flutter build apk --release
+  flutter build apk --release --flavor prod
 "@
 }
 

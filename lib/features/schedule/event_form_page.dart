@@ -69,7 +69,13 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
 
   late DateTime _date;
   late TimeOfDay _start;
-  late TimeOfDay _end;
+
+  /// Null means "no end time" (only valid for single-timepoint schedules).
+  TimeOfDay? _end;
+
+  /// True when the user explicitly picked/cleared the end time, so switching
+  /// task type never resurrects an auto-filled end.
+  bool _endExplicit = false;
   late TimeOfDay _deadline;
   late TaskType _taskType;
   late TodoTimeMode _todoTimeMode;
@@ -86,13 +92,18 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
     final now = DateTime.now();
     _date = DateTimeFormats.dateOnly(widget.initialDate ?? now);
     _start = TimeOfDay(hour: now.hour, minute: (now.minute ~/ 5) * 5);
-    final endMinutes = _start.hour * 60 + _start.minute + 60;
-    _end = TimeOfDay(hour: (endMinutes ~/ 60) % 24, minute: endMinutes % 60);
     _deadline = const TimeOfDay(hour: 23, minute: 59);
     _taskType = widget.forceTaskType ?? widget.initialTaskType ?? TaskType.todo;
     _todoTimeMode = widget.forceTodoTimeMode ??
         widget.initialTodoTimeMode ??
         TodoTimeMode.timeBlock;
+    // Todo time blocks keep the legacy one-hour default; schedules start with
+    // no end time so nothing is auto-invented.
+    _end = _taskType == TaskType.todo &&
+            _todoTimeMode == TodoTimeMode.timeBlock
+        ? _endFromStart(_start)
+        : null;
+    _endExplicit = false;
     _repeatType = RepeatType.oneTime;
     _reminderOffsetsSeconds = const [];
     _dateUnresolved = widget.initialDateUnresolved;
@@ -109,10 +120,13 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
       }
       if (widget.initialEndTime != null) {
         _end = widget.initialEndTime!;
-      } else if (widget.initialStartTime != null) {
-        final startMin = _start.hour * 60 + _start.minute;
-        final endMin = startMin + 60;
-        _end = TimeOfDay(hour: (endMin ~/ 60) % 24, minute: endMin % 60);
+        _endExplicit = true;
+      } else if (_taskType == TaskType.schedule) {
+        _end = null;
+        _endExplicit = false;
+      } else if (_todoTimeMode == TodoTimeMode.timeBlock) {
+        _end = _endFromStart(_start);
+        _endExplicit = false;
       }
       if (widget.forceTodoTimeMode == TodoTimeMode.deadline ||
           widget.initialTodoTimeMode == TodoTimeMode.deadline) {
@@ -165,12 +179,20 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
       if (event.startTime.isNotEmpty) {
         _start = _parseTime(event.startTime);
       }
+      _taskType = event.taskType;
+      _todoTimeMode = event.todoTimeMode;
+      // Preserve an empty end time for single-timepoint schedules.
       if (event.endTime.isNotEmpty) {
         _end = _parseTime(event.endTime);
         _deadline = _parseTime(event.endTime);
+        _endExplicit = true;
+      } else {
+        _end = _taskType == TaskType.todo &&
+                _todoTimeMode == TodoTimeMode.timeBlock
+            ? _endFromStart(_start)
+            : null;
+        _endExplicit = false;
       }
-      _taskType = event.taskType;
-      _todoTimeMode = event.todoTimeMode;
       _repeatType = repeatType;
       _reminderOffsetsSeconds = display.reminderOffsetsSeconds;
       _initialized = true;
@@ -186,6 +208,53 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
     final h = time.hour.toString().padLeft(2, '0');
     final m = time.minute.toString().padLeft(2, '0');
     return '$h:$m';
+  }
+
+  TimeOfDay _endFromStart(TimeOfDay start) {
+    final minutes = start.hour * 60 + start.minute + 60;
+    return TimeOfDay(hour: (minutes ~/ 60) % 24, minute: minutes % 60);
+  }
+
+  /// End time actually used for todos (which still require one). Schedules
+  /// may legitimately have none.
+  TimeOfDay? get _effectiveEnd {
+    if (_end != null) return _end;
+    if (_taskType == TaskType.todo &&
+        _todoTimeMode == TodoTimeMode.timeBlock) {
+      return _endFromStart(_start);
+    }
+    return null;
+  }
+
+  void _setTaskType(TaskType type) {
+    setState(() {
+      _taskType = type;
+      if (type == TaskType.schedule) {
+        if (!_endExplicit) _end = null;
+      } else if (_todoTimeMode == TodoTimeMode.timeBlock && _end == null) {
+        _end = _endFromStart(_start);
+        _endExplicit = false;
+      }
+    });
+  }
+
+  void _setTodoTimeMode(TodoTimeMode mode) {
+    setState(() {
+      _todoTimeMode = mode;
+      if (_taskType == TaskType.todo &&
+          mode == TodoTimeMode.timeBlock &&
+          _end == null) {
+        _end = _endFromStart(_start);
+        _endExplicit = false;
+      }
+    });
+  }
+
+  void _clearEnd() {
+    setState(() {
+      _end = null;
+      _endExplicit = true;
+    });
   }
 
   @override
@@ -214,21 +283,26 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
       } else {
         _dateUnresolved = prefill.dateUnresolved;
       }
-      if (widget.forceTaskType == null) {
-        _taskType = prefill.taskType;
-      }
-      if (widget.forceTodoTimeMode == null) {
-        _todoTimeMode = prefill.todoTimeMode;
-      }
+      final taskType = widget.forceTaskType ?? prefill.taskType;
+      final mode = widget.forceTodoTimeMode ?? prefill.todoTimeMode;
+      _taskType = taskType;
+      _todoTimeMode = mode;
       if (prefill.startTime != null) {
         _start = prefill.startTime!;
       }
       if (prefill.endTime != null) {
         _end = prefill.endTime!;
-      } else if (prefill.startTime != null) {
-        final startMin = _start.hour * 60 + _start.minute;
-        final endMin = startMin + 60;
-        _end = TimeOfDay(hour: (endMin ~/ 60) % 24, minute: endMin % 60);
+        _endExplicit = true;
+      } else if (taskType == TaskType.schedule) {
+        // Single-timepoint schedule: keep the end time empty.
+        _end = null;
+        _endExplicit = false;
+      } else if (mode == TodoTimeMode.timeBlock) {
+        _end = _endFromStart(_start);
+        _endExplicit = false;
+      } else {
+        _end = null;
+        _endExplicit = false;
       }
       if (prefill.deadline != null) {
         _deadline = prefill.deadline!;
@@ -377,7 +451,7 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
             ),
           ],
           selected: {_taskType},
-          onSelectionChanged: (s) => setState(() => _taskType = s.first),
+          onSelectionChanged: (s) => _setTaskType(s.first),
         ),
         const SizedBox(height: 10),
       ],
@@ -400,7 +474,7 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
             ),
           ],
           selected: {_todoTimeMode},
-          onSelectionChanged: (s) => setState(() => _todoTimeMode = s.first),
+          onSelectionChanged: (s) => _setTodoTimeMode(s.first),
         ),
         const SizedBox(height: 10),
       ],
@@ -458,11 +532,25 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: _PickerTile(
-                label: l10n.endLabel,
-                value: _formatTime(_end),
-                icon: Icons.schedule_rounded,
-                onTap: () => _pickTime(isStart: false),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _PickerTile(
+                      label: l10n.endLabel,
+                      value: _end == null
+                          ? l10n.noEndTime
+                          : _formatTime(_end!),
+                      icon: Icons.schedule_rounded,
+                      onTap: () => _pickTime(isStart: false),
+                    ),
+                  ),
+                  if (_taskType == TaskType.schedule && _end != null)
+                    IconButton(
+                      tooltip: l10n.clearEndTime,
+                      onPressed: _clearEnd,
+                      icon: const Icon(Icons.close_rounded, size: 20),
+                    ),
+                ],
               ),
             ),
           ],
@@ -600,7 +688,7 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
     _dismissKeyboard();
     final picked = await showTimePicker(
       context: context,
-      initialTime: isStart ? _start : _end,
+      initialTime: isStart ? _start : (_effectiveEnd ?? _start),
       builder: (context, child) => MediaQuery(
         data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
         child: child!,
@@ -612,6 +700,7 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
         _start = picked;
       } else {
         _end = picked;
+        _endExplicit = true;
       }
     });
   }
@@ -634,9 +723,16 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
       return (kNoDate, '', '');
     }
     final dateStr = DateTimeFormats.formatDate(_date);
-    if (_taskType == TaskType.schedule ||
-        _todoTimeMode == TodoTimeMode.timeBlock) {
-      return (dateStr, _formatTime(_start), _formatTime(_end));
+    if (_taskType == TaskType.schedule) {
+      return (
+        dateStr,
+        _formatTime(_start),
+        _end == null ? '' : _formatTime(_end!),
+      );
+    }
+    if (_todoTimeMode == TodoTimeMode.timeBlock) {
+      final end = _effectiveEnd ?? _endFromStart(_start);
+      return (dateStr, _formatTime(_start), _formatTime(end));
     }
     if (_todoTimeMode == TodoTimeMode.deadline) {
       return (dateStr, '00:00', _formatTime(_deadline));
@@ -663,14 +759,18 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
     if (!_formKey.currentState!.validate()) return;
 
     if (_showStartEnd) {
-      final startMin = _start.hour * 60 + _start.minute;
-      final endMin = _end.hour * 60 + _end.minute;
-      if (endMin <= startMin) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(AppLocalizations.of(context).endTimeAfterStart)),
-        );
-        return;
+      final end = _effectiveEnd;
+      if (end != null) {
+        final startMin = _start.hour * 60 + _start.minute;
+        final endMin = end.hour * 60 + end.minute;
+        if (endMin <= startMin) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(AppLocalizations.of(context).endTimeAfterStart),
+            ),
+          );
+          return;
+        }
       }
     }
 

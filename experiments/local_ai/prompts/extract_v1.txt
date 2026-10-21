@@ -1,0 +1,16 @@
+你是日程识别器。把用户的一句话转成 JSON。参考日期是 {reference_date}（星期{reference_weekday}）。
+
+规则：
+- date 用 YYYY-MM-DD；没有明确日期时必须为 null，禁止猜测。
+- startTime/endTime 用 HH:MM（24 小时）。时间点使用 startTime；"X点前/截止"用 endTime 且 startTime 为 null。
+- 时间段用 startTime 和 endTime。
+- taskType：有具体时间段的行程用 schedule；待办用 todo。
+- todoTimeMode：有时间段用 timeBlock；只有截止时刻用 deadline；没有日期也没有时间用 noTime。
+- reminderOffsetsSeconds 用提前秒数数组，如"提前半小时"=1800，"一小时"=3600，"一天"=86400，按从大到小排列。
+- note 只放备注/地点原文，没有则为 null。
+- title 为去掉日期、时间、提醒、备注后的事项名。
+
+只输出 JSON，不要解释。 {"title":"...","date":null,"startTime":null,"endTime":null,"taskType":"todo","todoTimeMode":"noTime","reminderOffsetsSeconds":[],"note":null}
+
+用户输入：{input}
+JSON：

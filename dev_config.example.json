@@ -1,0 +1,5 @@
+{
+  "APP_FLAVOR": "private",
+  "GEMINI_API_KEY": "ApiKey",
+  "GEMINI_MODEL": "gemini-3.5-flash-lite"
+}
