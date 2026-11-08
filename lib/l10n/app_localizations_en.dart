@@ -48,6 +48,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsGeneral => 'General';
 
   @override
+  String get settingsDefaultReminder => 'Default reminder';
+
+  @override
+  String get settingsDefaultReminderHint =>
+      'Reminder used for new tasks by default; you can still change it per task.';
+
+  @override
+  String get settingsDataBackup => 'Data import/export';
+
+  @override
+  String get settingsDataBackupHint =>
+      'Exported database files are saved locally. To import, select the matching file.';
+
+  @override
   String get settingsFeedback => 'Feedback';
 
   @override

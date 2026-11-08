@@ -48,6 +48,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsGeneral => '通用';
 
   @override
+  String get settingsDefaultReminder => '默认提醒';
+
+  @override
+  String get settingsDefaultReminderHint => '新建任务时默认使用的提醒，仍可在任务中单独调整。';
+
+  @override
+  String get settingsDataBackup => '数据导入/导出';
+
+  @override
+  String get settingsDataBackupHint => '导出的数据库文件保存在本地，导入时选择对应的文件即可。';
+
+  @override
   String get settingsFeedback => '反馈问题';
 
   @override

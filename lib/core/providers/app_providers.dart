@@ -26,6 +26,7 @@ const _bgModeKey = 'bg_mode';
 const _bgCustomLightKey = 'bg_custom_light';
 const _bgCustomDarkKey = 'bg_custom_dark';
 const _remindersEnabledKey = 'reminders_enabled';
+const _defaultReminderOffsetsKey = 'default_reminder_offsets';
 const _appLanguageKey = 'app_language';
 const notificationPermissionPromptedKey = 'notification_permission_prompted';
 
@@ -184,7 +185,8 @@ class RemindersEnabledController extends StateNotifier<bool> {
         await NotificationService.instance.cancelAll();
         return;
       }
-      await NotificationService.instance.requestPermissionsWhenReady(force: true);
+      await NotificationService.instance
+          .requestPermissionsWhenReady(force: true);
       if (await NotificationService.instance.hasPermission()) {
         await NotificationService.instance.rescheduleAll(
           _ref.read(eventRepositoryProvider),
@@ -196,9 +198,27 @@ class RemindersEnabledController extends StateNotifier<bool> {
   }
 }
 
+class DefaultReminderOffsetsController extends StateNotifier<List<int>> {
+  DefaultReminderOffsetsController(this._prefs) : super(_read(_prefs));
+
+  final SharedPreferences _prefs;
+
+  static List<int> _read(SharedPreferences prefs) {
+    final raw = prefs.getString(_defaultReminderOffsetsKey);
+    if (raw == null) return kDefaultReminderOffsetsSeconds;
+    if (raw == 'none') return const [];
+    return decodeReminderOffsets(json: raw);
+  }
+
+  Future<void> setOffsets(List<int> offsets) async {
+    state = List.unmodifiable(offsets);
+    final encoded = encodeReminderOffsets(offsets);
+    await _prefs.setString(_defaultReminderOffsetsKey, encoded ?? 'none');
+  }
+}
+
 class AppLanguageController extends StateNotifier<AppLanguage> {
-  AppLanguageController(this._prefs)
-      : super(_readLanguage(_prefs));
+  AppLanguageController(this._prefs) : super(_readLanguage(_prefs));
 
   final SharedPreferences _prefs;
 
@@ -225,6 +245,11 @@ class AppLanguageController extends StateNotifier<AppLanguage> {
 final remindersEnabledProvider =
     StateNotifierProvider<RemindersEnabledController, bool>((ref) {
   return RemindersEnabledController(ref.watch(sharedPreferencesProvider), ref);
+});
+
+final defaultReminderOffsetsProvider =
+    StateNotifierProvider<DefaultReminderOffsetsController, List<int>>((ref) {
+  return DefaultReminderOffsetsController(ref.watch(sharedPreferencesProvider));
 });
 
 final appLanguageProvider =
@@ -306,8 +331,7 @@ final daySummaryProvider =
     final todos = events.where((e) => e.isTodo).toList();
     final schedules = events.where((e) => e.isSchedule).toList();
     final completed = todos.where((e) => e.isTodoDone()).length;
-    final focusSeconds =
-        records.fold<int>(0, (s, r) => s + r.durationSeconds);
+    final focusSeconds = records.fold<int>(0, (s, r) => s + r.durationSeconds);
     yield DaySummary(
       focusSeconds: focusSeconds,
       scheduleTotal: schedules.length,
@@ -373,8 +397,7 @@ class EventActions {
   }
 
   Future<void> update(Event event) async {
-    final previous =
-        await _ref.read(eventRepositoryProvider).getById(event.id);
+    final previous = await _ref.read(eventRepositoryProvider).getById(event.id);
     await _ref.read(eventRepositoryProvider).update(event);
     await _syncReminder(event, previous: previous);
   }
@@ -404,7 +427,8 @@ class EventActions {
     }
   }
 
-  Future<void> toggleTimelineOccurrence(Event occurrence, bool completed) async {
+  Future<void> toggleTimelineOccurrence(
+      Event occurrence, bool completed) async {
     await _ref.read(eventRepositoryProvider).toggleTimelineForOccurrence(
           occurrence,
           completed: completed,
@@ -416,9 +440,10 @@ class EventActions {
             .read(eventRepositoryProvider)
             .getSeriesTemplate(occurrence.repeatGroupId!);
         if (master != null) {
-          await _syncReminder(master, groupRows: await _ref
-              .read(eventRepositoryProvider)
-              .getEventsByRepeatGroup(occurrence.repeatGroupId!));
+          await _syncReminder(master,
+              groupRows: await _ref
+                  .read(eventRepositoryProvider)
+                  .getEventsByRepeatGroup(occurrence.repeatGroupId!));
         }
       }
     } else {
@@ -477,8 +502,7 @@ class EventActions {
   Future<void> deleteWithScope(Event event, RepeatScope scope) async {
     final repo = _ref.read(eventRepositoryProvider);
     if (scope == RepeatScope.all && event.repeatGroupId != null) {
-      final rows =
-          await repo.getEventsByRepeatGroup(event.repeatGroupId!);
+      final rows = await repo.getEventsByRepeatGroup(event.repeatGroupId!);
       for (final row in rows) {
         await NotificationService.instance.deleteEventReminders(row.id);
       }

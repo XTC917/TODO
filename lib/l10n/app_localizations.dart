@@ -178,6 +178,30 @@ abstract class AppLocalizations {
   /// **'General'**
   String get settingsGeneral;
 
+  /// No description provided for @settingsDefaultReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Default reminder'**
+  String get settingsDefaultReminder;
+
+  /// No description provided for @settingsDefaultReminderHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder used for new tasks by default; you can still change it per task.'**
+  String get settingsDefaultReminderHint;
+
+  /// No description provided for @settingsDataBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Data import/export'**
+  String get settingsDataBackup;
+
+  /// No description provided for @settingsDataBackupHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Exported database files are saved locally. To import, select the matching file.'**
+  String get settingsDataBackupHint;
+
   /// No description provided for @settingsFeedback.
   ///
   /// In en, this message translates to:

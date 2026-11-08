@@ -22,6 +22,7 @@ const _clearEndTime = '\u6e05\u9664\u7ed3\u675f\u65f6\u95f4'; // clear end time
 const _schedule = '\u65e5\u7a0b'; // schedule
 const _todo = '\u5f85\u529e'; // todo
 const _input = '11.1\u4e0b\u5348\u4e09\u70b9\u5f00\u4f1a'; // 11.1 3pm meeting
+const _atDueTime = '\u51c6\u65f6'; // at due time
 const _rangeSeparator = ' \u2013 '; // en dash
 
 Event _event({
@@ -112,6 +113,7 @@ void main() {
       final prefill = QuickAddPrefill.fromParsed(parsed: parsed);
       expect(prefill.startTime, const TimeOfDay(hour: 15, minute: 0));
       expect(prefill.endTime, isNull);
+      expect(prefill.reminderOffsetsSeconds, [0]);
 
       late EventDraft draft;
       await tester.pumpWidget(
@@ -130,6 +132,7 @@ void main() {
       expect(draft.endTime, '');
       expect(draft.taskType, TaskType.schedule);
       expect(draft.todoTimeMode, TodoTimeMode.timeBlock);
+      expect(draft.reminderOffsetsSeconds, [0]);
     });
 
     testWidgets('todo time block still gets the legacy default end',
@@ -162,6 +165,34 @@ void main() {
       expect(draft.taskType, TaskType.todo);
       expect(draft.startTime, '15:00');
       expect(draft.endTime, '16:00');
+      expect(draft.reminderOffsetsSeconds, [0]);
+    });
+
+    testWidgets('timeless todo has no reminder anchor', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      const parsed = ParsedTask(
+        rawInput: _input,
+        title: _title,
+        taskType: TaskType.todo,
+        todoTimeMode: TodoTimeMode.noTime,
+      );
+
+      late EventDraft draft;
+      await tester.pumpWidget(
+        _wrap(
+          Consumer(
+            builder: (context, ref, _) {
+              draft = parsedTaskToDraft(parsed, ref);
+              return const SizedBox.shrink();
+            },
+          ),
+          prefs,
+        ),
+      );
+
+      expect(draft.todoTimeMode, TodoTimeMode.noTime);
+      expect(draft.reminderOffsetsSeconds, isEmpty);
     });
   });
 
@@ -183,6 +214,42 @@ void main() {
 
       expect(find.text(_noEndTime), findsOneWidget);
       expect(find.text('16:00'), findsNothing);
+    });
+
+    testWidgets('new tasks default to an at-time reminder', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+
+      await tester.pumpWidget(
+        _wrap(
+          const EventFormPage(
+            initialTaskType: TaskType.schedule,
+            initialStartTime: TimeOfDay(hour: 15, minute: 0),
+          ),
+          prefs,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text(_atDueTime), findsOneWidget);
+    });
+
+    testWidgets('timeless todo hides the reminder row', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+
+      await tester.pumpWidget(
+        _wrap(
+          const EventFormPage(
+            initialTaskType: TaskType.todo,
+            initialTodoTimeMode: TodoTimeMode.noTime,
+          ),
+          prefs,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text(_atDueTime), findsNothing);
     });
 
     testWidgets('switching todo -> schedule drops the auto end time',

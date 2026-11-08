@@ -21,6 +21,7 @@ class AppSettingsBackupService {
     'bg_custom_light',
     'bg_custom_dark',
     'app_language',
+    'default_reminder_offsets',
     'focus_countdown_presets',
   ];
 
@@ -43,6 +44,7 @@ class AppSettingsBackupService {
       'bg_custom_light' => _prefs.getString(key),
       'bg_custom_dark' => _prefs.getString(key),
       'app_language' => _prefs.getString(key),
+      'default_reminder_offsets' => _prefs.getString(key),
       'focus_countdown_presets' => _prefs.getString(key),
       _ => null,
     };

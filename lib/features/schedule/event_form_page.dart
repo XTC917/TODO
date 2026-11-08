@@ -99,13 +99,12 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
         TodoTimeMode.timeBlock;
     // Todo time blocks keep the legacy one-hour default; schedules start with
     // no end time so nothing is auto-invented.
-    _end = _taskType == TaskType.todo &&
-            _todoTimeMode == TodoTimeMode.timeBlock
+    _end = _taskType == TaskType.todo && _todoTimeMode == TodoTimeMode.timeBlock
         ? _endFromStart(_start)
         : null;
     _endExplicit = false;
     _repeatType = RepeatType.oneTime;
-    _reminderOffsetsSeconds = const [];
+    _reminderOffsetsSeconds = ref.read(defaultReminderOffsetsProvider);
     _dateUnresolved = widget.initialDateUnresolved;
 
     if (!widget.isEditing) {
@@ -219,8 +218,7 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
   /// may legitimately have none.
   TimeOfDay? get _effectiveEnd {
     if (_end != null) return _end;
-    if (_taskType == TaskType.todo &&
-        _todoTimeMode == TodoTimeMode.timeBlock) {
+    if (_taskType == TaskType.todo && _todoTimeMode == TodoTimeMode.timeBlock) {
       return _endFromStart(_start);
     }
     return null;
@@ -307,7 +305,9 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
       if (prefill.deadline != null) {
         _deadline = prefill.deadline!;
       }
-      _reminderOffsetsSeconds = prefill.reminderOffsetsSeconds;
+      _reminderOffsetsSeconds = prefill.reminderOffsetsSeconds.isEmpty
+          ? ref.read(defaultReminderOffsetsProvider)
+          : prefill.reminderOffsetsSeconds;
     });
   }
 
@@ -537,9 +537,7 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
                   Expanded(
                     child: _PickerTile(
                       label: l10n.endLabel,
-                      value: _end == null
-                          ? l10n.noEndTime
-                          : _formatTime(_end!),
+                      value: _end == null ? l10n.noEndTime : _formatTime(_end!),
                       icon: Icons.schedule_rounded,
                       onTap: () => _pickTime(isStart: false),
                     ),
@@ -780,6 +778,9 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
     final color = themeEventColorHex(ref);
     final todoMode =
         _taskType == TaskType.schedule ? TodoTimeMode.timeBlock : _todoTimeMode;
+    // A timeless todo has no anchor to fire against, so never persist offsets.
+    final reminderOffsets =
+        _showNoTime ? const <int>[] : _reminderOffsetsSeconds;
 
     try {
       if (widget.isEditing && _existing != null) {
@@ -793,8 +794,8 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
           taskType: _taskType,
           todoTimeMode: todoMode,
           repeatType: _repeatType,
-          reminderOffsetsSeconds: _reminderOffsetsSeconds,
-          clearReminderOffsets: _reminderOffsetsSeconds.isEmpty,
+          reminderOffsetsSeconds: reminderOffsets,
+          clearReminderOffsets: reminderOffsets.isEmpty,
         );
         final occurrence =
             (_occurrence ?? _existing!).copyWith(date: fields.$1);
@@ -824,7 +825,7 @@ class _EventFormPageState extends ConsumerState<EventFormPage> {
             taskType: _taskType,
             todoTimeMode: todoMode,
             repeatType: _repeatType,
-            reminderOffsetsSeconds: _reminderOffsetsSeconds,
+            reminderOffsetsSeconds: reminderOffsets,
           ),
         );
       }

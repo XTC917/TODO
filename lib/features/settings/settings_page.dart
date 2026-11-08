@@ -3,14 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/feedback_form_url.dart';
 import '../../core/providers/app_providers.dart';
-import '../../core/providers/focus_providers.dart';
 import '../../core/utils/launch_external_url.dart';
 import '../../l10n/app_localizations.dart';
 import 'about_settings_page.dart';
 import 'appearance_settings_page.dart';
-import 'focus_settings_page.dart';
 import 'general_settings_page.dart';
-import 'language_settings_page.dart';
 import 'notification_settings_page.dart';
 import 'widget_settings_page.dart';
 import 'settings_summaries.dart';
@@ -24,8 +21,6 @@ class SettingsPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final themeMode = ref.watch(themeModeProvider);
     final remindersEnabled = ref.watch(remindersEnabledProvider);
-    final language = ref.watch(appLanguageProvider);
-    final defaultCountdown = ref.watch(defaultCountdownSecondsProvider);
     final appVersion = ref.watch(packageInfoProvider).version;
 
     return Scaffold(
@@ -45,8 +40,7 @@ class SettingsPage extends ConsumerWidget {
                 SettingsNavTile(
                   icon: Icons.palette_outlined,
                   title: l10n.settingsAppearance,
-                  trailingText:
-                      settingsAppearanceSummary(l10n, themeMode),
+                  trailingText: settingsAppearanceSummary(l10n, themeMode),
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => const AppearanceSettingsPage(),
@@ -61,27 +55,6 @@ class SettingsPage extends ConsumerWidget {
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => const NotificationSettingsPage(),
-                    ),
-                  ),
-                ),
-                SettingsNavTile(
-                  icon: Icons.timer_outlined,
-                  title: l10n.settingsFocus,
-                  trailingText:
-                      settingsFocusSummary(l10n, defaultCountdown),
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const FocusSettingsPage(),
-                    ),
-                  ),
-                ),
-                SettingsNavTile(
-                  icon: Icons.language_outlined,
-                  title: l10n.settingsLanguage,
-                  trailingText: settingsLanguageSummary(l10n, language),
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const LanguageSettingsPage(),
                     ),
                   ),
                 ),

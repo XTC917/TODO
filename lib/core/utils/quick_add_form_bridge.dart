@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../features/schedule/event_form_page.dart';
 import '../../models/enums.dart';
+import '../../models/reminder_config.dart';
 import 'parsed_task.dart';
 
 /// Resolved field values to prefill [EventFormPage] from a [ParsedTask].
@@ -35,6 +36,7 @@ class QuickAddPrefill {
   factory QuickAddPrefill.fromParsed({
     required ParsedTask parsed,
     TaskType? taskTypeOverride,
+    List<int> defaultOffsets = kDefaultReminderOffsetsSeconds,
   }) {
     final taskType = taskTypeOverride ?? parsed.taskType;
     final todoMode = QuickAddFormBridge.effectiveTodoMode(parsed, taskType);
@@ -44,6 +46,7 @@ class QuickAddPrefill {
       taskType,
       todoMode,
       times,
+      defaultOffsets: defaultOffsets,
     );
 
     TimeOfDay? deadline;
@@ -74,10 +77,12 @@ class QuickAddFormBridge {
     required ParsedTask parsed,
     TaskType? taskTypeOverride,
     DateTime? fallbackDate,
+    List<int> defaultOffsets = kDefaultReminderOffsetsSeconds,
   }) {
     final prefill = QuickAddPrefill.fromParsed(
       parsed: parsed,
       taskTypeOverride: taskTypeOverride,
+      defaultOffsets: defaultOffsets,
     );
 
     return EventFormPage(
@@ -95,10 +100,15 @@ class QuickAddFormBridge {
   }
 
   /// Preview-only: switch task type without leaving [QuickAddPage].
-  static ParsedTask parsedForTaskType(ParsedTask parsed, TaskType taskType) {
+  static ParsedTask parsedForTaskType(
+    ParsedTask parsed,
+    TaskType taskType, {
+    List<int> defaultOffsets = kDefaultReminderOffsetsSeconds,
+  }) {
     final prefill = QuickAddPrefill.fromParsed(
       parsed: parsed,
       taskTypeOverride: taskType,
+      defaultOffsets: defaultOffsets,
     );
     return ParsedTask(
       rawInput: parsed.rawInput,
@@ -159,15 +169,20 @@ class QuickAddFormBridge {
     ParsedTask parsed,
     TaskType taskType,
     TodoTimeMode todoMode,
-    ({TimeOfDay? start, TimeOfDay? end}) times,
-  ) {
-    if (!parsed.hasReminders) return const [];
+    ({TimeOfDay? start, TimeOfDay? end}) times, {
+    List<int> defaultOffsets = kDefaultReminderOffsetsSeconds,
+  }) {
+    final reminders = parsed.effectiveReminderOffsetsSeconds(
+      taskTypeOverride: taskType,
+      todoTimeModeOverride: todoMode,
+      defaultOffsets: defaultOffsets,
+    );
 
     if (taskType == TaskType.schedule || todoMode == TodoTimeMode.timeBlock) {
-      return times.start != null ? parsed.reminderOffsetsSeconds : const [];
+      return times.start != null ? reminders : const [];
     }
     if (todoMode == TodoTimeMode.deadline) {
-      return times.end != null ? parsed.reminderOffsetsSeconds : const [];
+      return times.end != null ? reminders : const [];
     }
     return const [];
   }

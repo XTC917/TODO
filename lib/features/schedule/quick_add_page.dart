@@ -200,7 +200,11 @@ class _QuickAddPageState extends ConsumerState<QuickAddPage> {
     final parsed = _parsed;
     if (parsed == null || newType == parsed.taskType) return;
     setState(() {
-      _parsed = QuickAddFormBridge.parsedForTaskType(parsed, newType);
+      _parsed = QuickAddFormBridge.parsedForTaskType(
+        parsed,
+        newType,
+        defaultOffsets: ref.read(defaultReminderOffsetsProvider),
+      );
     });
   }
 
@@ -235,6 +239,7 @@ class _QuickAddPageState extends ConsumerState<QuickAddPage> {
               rawInput: _inputController.text.trim(),
               saving: _saving,
               parsedByAi: _parsedByAi,
+              defaultReminderOffsets: ref.watch(defaultReminderOffsetsProvider),
               onConfirm: _confirmAdd,
               onEdit: _openEditor,
               onSwitchTaskType: _switchTaskType,
@@ -345,6 +350,7 @@ class _PreviewStep extends StatelessWidget {
     required this.rawInput,
     required this.saving,
     required this.parsedByAi,
+    required this.defaultReminderOffsets,
     required this.onConfirm,
     required this.onEdit,
     required this.onSwitchTaskType,
@@ -354,6 +360,7 @@ class _PreviewStep extends StatelessWidget {
   final String rawInput;
   final bool saving;
   final bool parsedByAi;
+  final List<int> defaultReminderOffsets;
   final VoidCallback onConfirm;
   final VoidCallback onEdit;
   final ValueChanged<TaskType> onSwitchTaskType;
@@ -362,6 +369,9 @@ class _PreviewStep extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final reminders = parsed.effectiveReminderOffsetsSeconds(
+      defaultOffsets: defaultReminderOffsets,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -389,8 +399,7 @@ class _PreviewStep extends StatelessWidget {
                       avatar: const Icon(Icons.auto_awesome_rounded, size: 14),
                       label: Text(l10n.aiSmartAddBadge),
                       visualDensity: VisualDensity.compact,
-                      materialTapTargetSize:
-                          MaterialTapTargetSize.shrinkWrap,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                   ],
                 ],
@@ -464,13 +473,10 @@ class _PreviewStep extends StatelessWidget {
                           text:
                               '${_formatClock(parsed.startTime!)} – ${_formatClock(parsed.endTime!)}',
                         ),
-                      if (parsed.hasReminders)
+                      if (reminders.isNotEmpty)
                         _PreviewRow(
                           icon: Icons.notifications_outlined,
-                          text: formatReminderOffsetsSummary(
-                            l10n,
-                            parsed.reminderOffsetsSeconds,
-                          ),
+                          text: formatReminderOffsetsSummary(l10n, reminders),
                         ),
                       if (parsed.note != null && parsed.note!.isNotEmpty)
                         _PreviewRow(

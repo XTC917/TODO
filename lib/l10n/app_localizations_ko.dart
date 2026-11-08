@@ -48,6 +48,20 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settingsGeneral => '일반';
 
   @override
+  String get settingsDefaultReminder => '기본 알림';
+
+  @override
+  String get settingsDefaultReminderHint =>
+      '새 작업에 기본으로 적용되는 알림이며, 작업마다 따로 변경할 수 있습니다.';
+
+  @override
+  String get settingsDataBackup => '데이터 가져오기/내보내기';
+
+  @override
+  String get settingsDataBackupHint =>
+      '내보낸 데이터베이스 파일은 기기에 저장되며, 가져올 때 해당 파일을 선택하면 됩니다.';
+
+  @override
   String get settingsFeedback => '피드백';
 
   @override

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../providers/app_providers.dart';
 import '../../models/enums.dart';
 import '../../models/event.dart';
 import '../utils/date_time_formats.dart';
@@ -25,7 +26,9 @@ EventDraft parsedTaskToDraft(ParsedTask parsed, WidgetRef ref) {
   final todoMode = taskType == TaskType.schedule
       ? TodoTimeMode.timeBlock
       : parsed.todoTimeMode;
-  final reminders = parsed.reminderOffsetsSeconds;
+  final reminders = parsed.effectiveReminderOffsetsSeconds(
+    defaultOffsets: ref.read(defaultReminderOffsetsProvider),
+  );
 
   if (parsed.needsDateConfirmation) {
     throw StateError('Date must be confirmed before creating an event draft.');

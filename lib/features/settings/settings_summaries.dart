@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/providers/app_providers.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/focus_session.dart';
+import '../../models/reminder_config.dart';
 
 String settingsAppearanceSummary(AppLocalizations l10n, ThemeMode mode) {
   return mode == ThemeMode.dark ? l10n.themeDark : l10n.themeLight;
@@ -15,6 +16,13 @@ String settingsNotificationsSummary(AppLocalizations l10n, bool enabled) {
 String settingsFocusSummary(AppLocalizations l10n, int defaultSeconds) {
   final minutes = defaultSeconds ~/ 60;
   return l10n.focusMinutes(minutes);
+}
+
+String settingsDefaultReminderSummary(
+  AppLocalizations l10n,
+  List<int> offsets,
+) {
+  return formatReminderOffsetsForTile(l10n, offsets);
 }
 
 String settingsLanguageSummary(AppLocalizations l10n, AppLanguage language) {

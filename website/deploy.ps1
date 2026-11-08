@@ -1,4 +1,4 @@
-﻿# Incremental JUJU Schedule website publish for Tencent CloudBase static hosting.
+# Incremental JUJU Schedule website publish for Tencent CloudBase static hosting.
 # Uploads only the new APK and js/config.js. Does not replace the whole website.
 #
 # Usage (from repo root or this folder):

@@ -1,5 +1,15 @@
 # Changelog
 
+## v2.6.9
+
+### Added
+- New tasks now default to an **at-time reminder** instead of having no reminder. This applies to the create form, rule-based quick add, and AI smart add, while each task can still change or clear its reminders. Timeless todos keep no reminder because they have no start/deadline anchor.
+- Settings → General → **Default reminder**: choose what new tasks are pre-filled with — none, at time, or 5/10/15/20/30 minutes, 1/2 hours, or 1 day before. The choice is persisted and included in database/settings exports.
+- Settings → General → **Data import/export**: database export and import now live in their own sub-page, with a note that exported files are stored locally and imports use the matching file.
+
+### Changed
+- Settings reorganized: Focus and Language moved into **General**, together with Default reminder and Data import/export. Top-level settings are now Appearance, Notifications, Widgets, General, Feedback, About.
+
 ## v2.6.8
 
 ### Added

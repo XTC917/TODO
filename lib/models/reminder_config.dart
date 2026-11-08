@@ -11,6 +11,10 @@ const kMaxRemindersPerEvent = 20;
 /// Upper bound used in notification IDs. Per-type lookahead is smaller.
 const kMaxScheduledOccurrences = 24;
 
+/// Reminders pre-selected for every newly created task: one alert exactly at
+/// the start/deadline time. Users can still clear it or add more reminders.
+const List<int> kDefaultReminderOffsetsSeconds = [0];
+
 /// Default reminder offsets in seconds before the due/start time.
 class ReminderPresets {
   ReminderPresets._();
@@ -93,7 +97,8 @@ int notificationIdForEvent(int eventId, int index, {int occurrence = 0}) {
 }
 
 /// Pre-lookahead ids (`eventId * 100 + index`). Cancelled during reschedule.
-int legacyNotificationIdForEvent(int eventId, int index) => eventId * 100 + index;
+int legacyNotificationIdForEvent(int eventId, int index) =>
+    eventId * 100 + index;
 
 /// Human-readable relative reminder label for UI.
 String formatReminderOffset(AppLocalizations l10n, int? offsetSeconds) {
@@ -156,7 +161,8 @@ String formatDurationUntil(AppLocalizations l10n, Duration duration) {
 }
 
 /// Notification body suffix: time remaining until event start at fire time.
-String formatNotificationTimeUntilStart(AppLocalizations l10n, int offsetSeconds) {
+String formatNotificationTimeUntilStart(
+    AppLocalizations l10n, int offsetSeconds) {
   if (offsetSeconds <= 0) return l10n.timeUntilStartNow;
   return formatDurationUntil(l10n, Duration(seconds: offsetSeconds));
 }
